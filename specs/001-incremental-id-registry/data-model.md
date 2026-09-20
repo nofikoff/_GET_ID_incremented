@@ -27,10 +27,16 @@
 | `google_id` | `varchar(255)` | UNIQUE, nullable |
 | `avatar_url` | `varchar(2048)` | nullable |
 | `role` | `enum('member','admin')` | NOT NULL, default `member` |
+| `deactivated_at` | `timestamp` | nullable — сотрудник выведен из обращения (FR-021b) |
 | `created_at`, `updated_at` | `timestamp` | |
 
 Пароля нет: вход только через Google, локальной аутентификации не существует. `email_verified_at`
 не заводится по той же причине — подтверждение адреса делает Google.
+
+Пользователь не удаляется: на него ссылаются `projects.created_by` и `identifiers.created_by` с
+`ON DELETE RESTRICT`, и авторство выданных номеров обязано пережить уход сотрудника.
+Деактивация проставляет `deactivated_at` и сносит все токены этого пользователя; попытка снять роль
+у последнего администратора отвергается (FR-021a).
 
 ## personal_access_tokens
 
