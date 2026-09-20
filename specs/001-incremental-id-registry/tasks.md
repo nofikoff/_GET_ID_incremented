@@ -71,7 +71,7 @@ tier: strong
 - [ ] T005 [P] Написать `Makefile` с целями `up`, `down`, `migrate`, `fresh`, `test`, `test-race`, `shell` — все через `docker compose exec app`
 - [ ] T006 Установить зависимости: `composer require laravel/sanctum laravel/socialite laravel/mcp` и опубликовать конфиги Sanctum
 - [ ] T007 [P] Установить инструменты качества: `composer require --dev larastan/larastan laravel/pint pestphp/pest`, настроить `phpstan.neon` на уровень 6 и `pint.json`
-- [ ] T008 [P] Заполнить `.env.example` ключами `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `ADMIN_EMAILS`, `ALLOWED_EMAIL_DOMAIN=cas.ai`, `API_LOG_RETENTION_DAYS=90`, `TRUSTED_PROXIES` (сети Cloudflare, см. T103)
+- [ ] T008 [P] Заполнить `.env.example` ключами `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `ADMIN_EMAILS`, `ALLOWED_EMAIL_DOMAIN=cas.ai`, `API_LOG_RETENTION_DAYS=90`
 - [ ] T009 Добавить в `Makefile` цель `init` (`cp -n .env.example .env`, `composer install`, `php artisan key:generate`) и проверить, что `make up && make init && make migrate` поднимает окружение с нуля и стандартные миграции Laravel проходят
 
 **Checkpoint**: приложение отвечает на `http://localhost:8080`, тесты запускаются в контейнере
@@ -186,7 +186,7 @@ tier: strong
 
 
 - [ ] T028 Определить в `app/Providers/AppServiceProvider.php` именованный `RateLimiter::for('getid')`, ключующийся по `$request->user()?->currentAccessToken()?->id` с порогом 60 в минуту. Стандартный `throttle:60,1` ключуется по идентификатору пользователя, а FR-020a требует счёта **по токену** — у пользователя их несколько; вдобавок два независимых лимита на группах `api` и `/mcp` дали бы суммарно 120 запросов в минуту вместо 60
-- [ ] T103 Настроить доверенные прокси в `bootstrap/app.php`: `$middleware->trustProxies(at: [<сети Cloudflare>], headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_HOST | Request::HEADER_X_FORWARDED_PORT | Request::HEADER_X_FORWARDED_PROTO)`. Список сетей вынести в `config/getid.php` из `.env`, источник — https://www.cloudflare.com/ips/. Не `'*'`: origin доступен и напрямую по IP, и тогда любой запрос в обход Cloudflare подставит произвольный `X-Forwarded-For` (FR-025a). Без этой настройки ломаются две вещи молча — журнал пишет адреса Cloudflare, а `url()` отдаёт `http://`, из-за чего redirect URI перестаёт совпадать с зарегистрированным в Google
+- [ ] T103 Настроить доверенные прокси в `bootstrap/app.php`: `$middleware->trustProxies(at: '*', headers: Request::HEADER_X_FORWARDED_PROTO)`. Доверяется только схема — ровно то, что нужно, чтобы за Cloudflare `url()` отдавал `https://` и redirect URI совпадал с зарегистрированным в Google; без этого вход ломается с ошибкой, не упоминающей прокси. `X-Forwarded-For` и `X-Forwarded-Host` в доверенные не входят: адрес клиента нигде не используется, а подмена host через запрос в обход Cloudflare исключается на корню
 - [ ] T028a Настроить `bootstrap/app.php` целиком за один заход: группа `api` с `auth:sanctum` и `throttle:getid`, отдельная группа для маршрутов MCP, и регистрация `LogApiRequest` (класс появится в T084 — регистрируется по имени). Вместе с T103 это единственное место, где правится `bootstrap/app.php`, и обе задачи лежат в одном шаге: две разные фазы, пишущие этот файл, при исполнении бандлами конфликтуют
 - [ ] T029 [P] Создать иерархию доменных исключений в `app/Domain/Sequence/Exceptions/`: `UnknownProject`, `InactiveProject`, `TypeNotEnabled`, `InactiveKeyType`, `UnparsableOrigin`, `EmptyDocumentName` — каждое несёт код из `DomainError.error.code` контракта
 - [ ] T030 Отрисовать доменные исключения в JSON формы `DomainError` (contracts/rest-api.yaml) через `withExceptions()->render()` со статусом 422. Отдельно привести к той же форме исключения фреймворка, которые контракт тоже описывает как `DomainError`: `AuthenticationException` → 401 `unauthenticated`, `AccessDeniedHttpException` → 403 `forbidden`, `NotFoundHttpException` → 404 `not_found`, `ThrottleRequestsException` → 429 `rate_limited`
@@ -484,7 +484,7 @@ gate_commands:
 tier: standard
 -->
 
-- [ ] T081 [P] [US5] `tests/Feature/ApiLoggingTest.php`: состав записи для REST и для MCP (FR-025, FR-024a); отдельным случаем — запрос с заголовком `X-Forwarded-For` от доверенного прокси пишет адрес клиента, а от недоверенного источника подменить адрес не удаётся (FR-025a)
+- [ ] T081 [P] [US5] `tests/Feature/ApiLoggingTest.php`: состав записи для REST и для MCP — пользователь, токен, endpoint, параметры, код, длительность; сетевой адрес не пишется (FR-025, FR-024a)
 - [ ] T082 [P] [US5] `tests/Feature/ApiLoggingFailureTest.php`: при падении записи клиент получает выданный номер, а не ошибку (FR-026)
 - [ ] T083 [P] [US5] `tests/Feature/PruneApiLogsTest.php`: чистка сносит записи старше горизонта и не трогает реестр
 

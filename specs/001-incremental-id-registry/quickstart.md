@@ -151,21 +151,12 @@ make test-race      # только tests/Concurrency
 
 ### Проверка Cloudflare после выкладки
 
-Приложение стоит за проксёй, поэтому две вещи проверяются отдельно — обе ломаются молча.
+Приложение стоит за проксёй, и одна вещь ломается молча — схема в сгенерированных ссылках.
 
 ```bash
-# 1. Схема в сгенерированных ссылках должна быть https
 php artisan tinker --execute="echo route('tokens.index');"
 ```
 
 Ожидаемо: `https://id.x3mal.com/tokens`. Если `http://` — `trustProxies` не настроен, и вход через
-Google не пройдёт: redirect URI не совпадёт с зарегистрированным.
-
-```bash
-# 2. В журнале должен оказаться адрес клиента, а не Cloudflare
-curl -s -H "Authorization: Bearer $GETID_TOKEN" https://id.x3mal.com/api/v1/projects/resolve?origin=git@example.com:a/b.git > /dev/null
-php artisan tinker --execute="echo App\Models\ApiLog::latest()->first()->ip_address;"
-```
-
-Ожидаемо: твой собственный адрес. Если это адрес из сетей Cloudflare — журнал бесполезен
-(FR-025), потому что все обращения выглядят пришедшими с одного узла.
+Google не пройдёт: redirect URI не совпадёт с зарегистрированным, а ошибка Google про прокси не
+скажет.
