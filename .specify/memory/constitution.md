@@ -1,50 +1,115 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+Version change: (нет) → 1.0.0
+Ratification: первая редакция, принципы I–VII заведены одновременно с репозиторием.
+Modified principles: нет (документ создан с нуля).
+Added sections: Core Principles (I–VII), Технологические ограничения, Порядок работы, Governance.
+Removed sections: нет.
+Deferred: CLAUDE.md репозитория ещё не написан, поэтому текст каждого принципа хранится здесь.
+  Как только принцип получает источник в репозитории (CLAUDE.md, ADR, runbook), его текст
+  заменяется одной строкой со ссылкой — см. Governance.
+-->
+
+# get-id Constitution
+
+Сервис выдаёт инкрементальные номера для ADR и спецификаций. Его единственная ценность — что
+выданный номер не будет выдан второй раз и что повтор того же запроса не создаст второй номер.
+Всё ниже защищает ровно это.
+
+Каждый принцип хранит здесь свой текст, потому что CLAUDE.md репозитория пока не существует и
+ссылаться некуда. Это временное состояние, а не формат документа.
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Идемпотентность выдачи
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Повторный запрос с той же тройкой «проект + тип ключа + имя документа» MUST вернуть ранее выданный
+номер и MUST NOT создать новый. Признак `is_new` в ответе отличает первую выдачу от повтора, но сам
+номер в обоих случаях один и тот же.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+Доказательством служит автотест, а не рассуждение в review: агент или разработчик повторяет запрос
+после сетевого сбоя, не зная, дошёл ли первый, и без идемпотентности получает два документа с
+разными номерами на одну тему.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Номер не переиспользуется
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+Записи реестра выданных номеров MUST NOT удаляться. Освободившийся номер MUST NOT выдаваться
+повторно ни при каких условиях, включая удаление документа в репозитории-потребителе. Проекты и типы
+ключей выводятся из обращения флагом активности, а не `DELETE`.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+Номер уже ушёл в имя файла, в git history, в ссылку из соседнего документа. Повторная выдача делает
+две разные сущности одноимёнными задним числом, и обнаруживается это годы спустя.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. Реестр закрытый
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Ключ проекта MUST выводиться из origin репозитория детерминированной нормализацией, а не
+назначаться человеком в момент запроса. Неизвестный ключ проекта и не включённый в проекте тип ключа
+MUST отвергаться ответом, который называет нормализованный ключ и говорит, что делать дальше.
+Авторегистрация проекта по факту первого обращения запрещена.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+Без этого опечатка в origin или форк репозитория молча заводят проект-призрак, нумерация уходит в
+него, и расхождение всплывает, когда номера уже разошлись по двум местам.
+
+### IV. Framework-native решение вместо самописного
+
+Там, где Laravel даёт готовый механизм — middleware, FormRequest, Policy и Gate, Socialite, Sanctum,
+`laravel/mcp` — MUST использоваться он. Обход фреймворка допустим, но MUST нести записанную причину
+в коде или в ADR.
+
+### V. Конкурентность доказывается параллельным тестом
+
+Гонка за следующим номером MUST проверяться тестом с реально одновременными соединениями к БД.
+Последовательный цикл в одном процессе не считается доказательством и MUST NOT приниматься как
+покрытие этого требования.
+
+Последовательный цикл здесь зелёный всегда, включая заведомо сломанную реализацию, поэтому такой
+тест не отличает рабочий код от нерабочего.
+
+### VI. Один слой домена на два транспорта
+
+REST-контроллер и MCP-tool MUST вызывать один и тот же сервисный слой. Бизнес-логика выдачи,
+нормализации ключа и проверки реестра MUST NOT дублироваться в транспортном слое.
+
+Два транспорта, разошедшиеся в поведении, дают AI-агенту и человеку разные номера на один запрос —
+и сторона, которая ошиблась, не узнает об этом.
+
+### VII. Прогон тестов в Docker до объявления готовности
+
+Заявление о готовности работы MUST опираться на вывод тестов, запущенных в Docker-окружении проекта
+в рамках этой же сессии. Локальный PHP разработчика не является этим окружением.
+
+## Технологические ограничения
+
+- PHP 8.3+, Laravel 13.x, MySQL 8.0+ либо MariaDB. Версии зафиксированы в `composer.json`; здесь они
+  названы как нижняя граница, а не как источник истины.
+- Аутентификация людей — Google OAuth через `laravel/socialite`, допускается только домен `@cas.ai`.
+  Аутентификация клиентов — Bearer-токен Sanctum, один и тот же для REST и MCP.
+- MCP-сервер реализуется пакетом `laravel/mcp` поверх HTTP-транспорта в этом же приложении.
+  Отдельный stdio-процесс не поднимается.
+- Реестр, справочник проектов и справочник типов ключей живут в одной базе с приложением.
+  Распределённое хранилище выдачи номеров не вводится, пока нагрузка этого не потребует.
+
+## Порядок работы
+
+- Проектирование идёт пакетами Spec Kit в `specs/NNN-<slug>/`. Решение, закрывающее альтернативу,
+  которую кто-то предложит повторно, оформляется ADR в `docs/adr/`.
+- Миграции схемы необратимых сущностей (реестр выданных номеров) пишутся так, чтобы `down` не
+  удалял данные.
+- Каждый API-endpoint закрывается feature-тестом на успешный сценарий и на отказ.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+Эта конституция имеет приоритет над привычками и над содержимым отдельных задач. Планы и задачи,
+порождённые `/speckit-plan` и `/speckit-tasks`, проверяются на соответствие ей до реализации.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Поправка вносится отдельным commit, который называет изменившийся принцип и причину. Версия
+изменяется по semver: MAJOR — принцип удалён или переопределён несовместимо, MINOR — принцип или
+раздел добавлен либо существенно расширен, PATCH — формулировка, опечатка, уточнение без смены
+смысла.
+
+Текст принципа живёт здесь только до тех пор, пока у него нет источника в репозитории. Как только
+CLAUDE.md, ADR или runbook начинает описывать то же правило, принцип сокращается до одной строки со
+ссылкой на этот источник — две копии одного правила расходятся за недели, и тогда нельзя сказать,
+какая из них действующая.
+
+**Version**: 1.0.0 | **Ratified**: 2026-09-20 | **Last Amended**: 2026-09-20
