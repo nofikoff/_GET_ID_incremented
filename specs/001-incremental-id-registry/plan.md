@@ -127,8 +127,8 @@ resources/views/                       # Blade: layout, login, tokens, admin/pro
 
 routes/
 ├── web.php                            # вход через Google, кабинет, админские экраны
-├── api.php                            # /api/v1/*
-└── ai.php                             # Mcp::web('/mcp', GetIdServer::class)
+├── api.php                            # /api/v1/* и Mcp::web('/mcp', GetIdServer::class)
+└── console.php                        # планировщик чистки журнала
 
 tests/
 ├── Unit/                              # ProjectKey, DocumentName, IdentifierFormat

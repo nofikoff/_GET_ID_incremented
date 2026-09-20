@@ -5,7 +5,9 @@
 Сервер регистрируется как обычный маршрут Laravel и авторизуется тем же токеном, что REST:
 
 ```php
-// routes/ai.php
+// routes/api.php
+use Laravel\Mcp\Facades\Mcp;
+
 Mcp::web('/mcp', GetIdServer::class)->middleware(['auth:sanctum', 'throttle:60,1']);
 ```
 
