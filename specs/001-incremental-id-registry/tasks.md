@@ -5,6 +5,9 @@ description: "Task list for incremental id registry"
 
 # Tasks: Реестр инкрементальных идентификаторов
 
+> **Reviewed:** 2026-09-20 by /plan
+> **Fixed:** 2026-09-20 by /plan-fix
+
 **Input**: Design documents from `/specs/001-incremental-id-registry/`
 
 **Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md),
@@ -34,15 +37,42 @@ description: "Task list for incremental id registry"
 
 **Purpose**: пустой каталог превращается в работающее приложение Laravel под Docker
 
-- [ ] T001 Создать приложение Laravel 13 поверх существующего репозитория: `composer create-project laravel/laravel:^13.0 tmp-app && mv tmp-app/* tmp-app/.* . && rm -rf tmp-app`, сохранив `README.md`, `.gitignore` и `specs/`
+### Step 1.1: Laravel, Docker и инструменты
+
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+  - "docker/**"
+  - "composer.json"
+  - "docker-compose.yml"
+  - "Makefile"
+  - ".env.example"
+  - ".dockerignore"
+  - ".gitignore"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --testsuite=Unit"
+  test_full: "make test"
+tier: strong
+-->
+
+- [ ] T001 Создать приложение Laravel 13 поверх существующего репозитория, не затирая уже лежащие файлы: `composer create-project laravel/laravel:^13.0 tmp-app --no-install`, затем `rsync -a --ignore-existing tmp-app/ ./ && rm -rf tmp-app && composer install`. Глоб `.*` не применять — он раскрывается в `.` и `..`. Skeleton несёт собственные `.gitignore` и `README.md`; `--ignore-existing` оставит наши, поэтому правила Laravel (`/vendor`, `/public/build`, `/storage/*.key`) в `.gitignore` смержить вручную
 - [ ] T002 Зафиксировать PHP 8.3 в `composer.json` (`"php": "^8.3"`) и сверить, что `composer.lock` не тянет пакеты с более низкой границей
 - [ ] T003 [P] Написать `docker/php/Dockerfile` (php-fpm 8.3 с `pdo_mysql`, `bcmath`, `mbstring`, `intl`), `docker/nginx/default.conf` с корнем в `public/`
-- [ ] T004 [P] Написать `docker-compose.yml`: сервисы `app`, `nginx` (порт 8080), `mysql` 8.0 с томом и healthcheck
+- [ ] T004 [P] Написать `docker-compose.yml`: сервисы `app`, `nginx` (порт 8080), `mysql` 8.0 с томом и healthcheck; `app` зависит от `mysql` через `depends_on.condition: service_healthy`, иначе `make migrate` сразу после `make up` падает на первом запуске
+- [ ] T004a [P] Написать `.dockerignore`: `vendor/`, `node_modules/`, `.git/`, `storage/logs/`, `.env` — без него содержимое этих каталогов уезжает в образ
 - [ ] T005 [P] Написать `Makefile` с целями `up`, `down`, `migrate`, `fresh`, `test`, `test-race`, `shell` — все через `docker compose exec app`
 - [ ] T006 Установить зависимости: `composer require laravel/sanctum laravel/socialite laravel/mcp` и опубликовать конфиги Sanctum
 - [ ] T007 [P] Установить инструменты качества: `composer require --dev larastan/larastan laravel/pint pestphp/pest`, настроить `phpstan.neon` на уровень 6 и `pint.json`
-- [ ] T008 [P] Заполнить `.env.example` ключами `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `ADMIN_EMAILS`, `ALLOWED_EMAIL_DOMAIN=cas.ai`, `API_LOG_RETENTION_DAYS=90`
-- [ ] T009 Проверить, что `make up && make migrate` поднимает окружение и стандартные миграции Laravel проходят
+- [ ] T008 [P] Заполнить `.env.example` ключами `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `ADMIN_EMAILS`, `ALLOWED_EMAIL_DOMAIN=cas.ai`, `API_LOG_RETENTION_DAYS=90`, `TRUSTED_PROXIES` (сети Cloudflare, см. T103)
+- [ ] T009 Добавить в `Makefile` цель `init` (`cp -n .env.example .env`, `composer install`, `php artisan key:generate`) и проверить, что `make up && make init && make migrate` поднимает окружение с нуля и стандартные миграции Laravel проходят
 
 **Checkpoint**: приложение отвечает на `http://localhost:8080`, тесты запускаются в контейнере
 
@@ -54,16 +84,52 @@ description: "Task list for incremental id registry"
 
 **⚠️ CRITICAL**: ни одна история не начинается, пока эта фаза не закрыта
 
-### Схема данных
+### Step 2.1: Схема данных
 
-- [ ] T010 Миграция `database/migrations/*_add_role_and_deactivation_to_users_table.php`: `google_id`, `avatar_url`, `role` enum(`member`,`admin`) default `member`, `deactivated_at`, снятие `password` и `email_verified_at`
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan migrate:fresh --seed"
+  test_full: "make test"
+tier: strong
+-->
+
+
+- [ ] T010 Отредактировать исходную миграцию `database/migrations/0001_01_01_000000_create_users_table.php`: добавить `google_id`, `avatar_url`, `role` enum(`member`,`admin`) default `member`, `deactivated_at`; убрать `password` и `email_verified_at`. Приложение ещё не развёрнуто, поэтому отдельная миграция «поправить то, что сами же создали строкой выше» осталась бы в дереве навсегда
 - [ ] T011 [P] Миграция `database/migrations/*_create_projects_table.php` по [data-model.md](./data-model.md) §projects, включая UNIQUE по `key` с учётом лимита длины индекса InnoDB
 - [ ] T012 [P] Миграция `database/migrations/*_create_key_types_table.php` по §key_types
 - [ ] T013 Миграция `database/migrations/*_create_project_key_type_table.php` по §project_key_type: `seed_sequence`, `last_sequence`, UNIQUE `(project_id, key_type_id)`
 - [ ] T014 Миграция `database/migrations/*_create_identifiers_table.php` по §identifiers: оба UNIQUE-индекса, индекс для перечня по убыванию, `down()` только дропает таблицу и не трогает данные
 - [ ] T015 [P] Миграция `database/migrations/*_create_api_logs_table.php` по §api_logs с индексом по `created_at`
 
-### Модели
+### Step 2.2: Модели
+
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --testsuite=Unit"
+  test_full: "make test"
+tier: standard
+-->
+
 
 - [ ] T016 [P] Модель `app/Models/Project.php`: связь `keyTypes()` через `project_key_type` с `withPivot`, scope `active()`
 - [ ] T017 [P] Модель `app/Models/KeyType.php` со scope `active()`
@@ -72,7 +138,25 @@ description: "Task list for incremental id registry"
 - [ ] T020 [P] Модель `app/Models/ApiLog.php`
 - [ ] T021 Дополнить `app/Models/User.php`: `HasApiTokens`, каст `role` в enum `app/Enums/UserRole.php`, метод `isAdmin()`, scope `active()`
 
-### Value objects и их тесты
+### Step 2.3: Value objects
+
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --testsuite=Unit"
+  test_full: "make test"
+tier: strong
+-->
+
 
 - [ ] T022 [P] Тест `tests/Unit/ProjectKeyTest.php`: таблица примеров SSH/HTTPS/порт/`.git`/регистр → один ключ, плюс неразбираемые строки (research.md §R5)
 - [ ] T023 [P] Тест `tests/Unit/DocumentNameTest.php`: регистр, пробелы, подчёркивания, повторы разделителей, пустой результат (FR-007, FR-007a)
@@ -81,11 +165,31 @@ description: "Task list for incremental id registry"
 - [ ] T026 [P] Реализовать `app/Domain/KeyType/DocumentName.php` — хранит исходную строку и slug
 - [ ] T027 [P] Реализовать `app/Domain/KeyType/IdentifierFormat.php` — разбор шаблона и применение, без `sprintf` от чужой строки
 
-### Инфраструктура запроса
+### Step 2.4: Инфраструктура запроса
 
-- [ ] T028 Настроить `bootstrap/app.php`: группа `api` с `auth:sanctum` и `throttle:60,1` (FR-020a), отдельная группа для маршрутов MCP
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --testsuite=Feature"
+  test_full: "make test"
+tier: strong
+-->
+
+
+- [ ] T028 Определить в `app/Providers/AppServiceProvider.php` именованный `RateLimiter::for('getid')`, ключующийся по `$request->user()?->currentAccessToken()?->id` с порогом 60 в минуту. Стандартный `throttle:60,1` ключуется по идентификатору пользователя, а FR-020a требует счёта **по токену** — у пользователя их несколько; вдобавок два независимых лимита на группах `api` и `/mcp` дали бы суммарно 120 запросов в минуту вместо 60
+- [ ] T103 Настроить доверенные прокси в `bootstrap/app.php`: `$middleware->trustProxies(at: [<сети Cloudflare>], headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_HOST | Request::HEADER_X_FORWARDED_PORT | Request::HEADER_X_FORWARDED_PROTO)`. Список сетей вынести в `config/getid.php` из `.env`, источник — https://www.cloudflare.com/ips/. Не `'*'`: origin доступен и напрямую по IP, и тогда любой запрос в обход Cloudflare подставит произвольный `X-Forwarded-For` (FR-025a). Без этой настройки ломаются две вещи молча — журнал пишет адреса Cloudflare, а `url()` отдаёт `http://`, из-за чего redirect URI перестаёт совпадать с зарегистрированным в Google
+- [ ] T028a Настроить `bootstrap/app.php` целиком за один заход: группа `api` с `auth:sanctum` и `throttle:getid`, отдельная группа для маршрутов MCP, и регистрация `LogApiRequest` (класс появится в T084 — регистрируется по имени). Вместе с T103 это единственное место, где правится `bootstrap/app.php`, и обе задачи лежат в одном шаге: две разные фазы, пишущие этот файл, при исполнении бандлами конфликтуют
 - [ ] T029 [P] Создать иерархию доменных исключений в `app/Domain/Sequence/Exceptions/`: `UnknownProject`, `InactiveProject`, `TypeNotEnabled`, `InactiveKeyType`, `UnparsableOrigin`, `EmptyDocumentName` — каждое несёт код из `DomainError.error.code` контракта
-- [ ] T030 Отрисовать доменные исключения в JSON формы `DomainError` (contracts/rest-api.yaml) через `bootstrap/app.php` → `withExceptions()->render()`, статус 422
+- [ ] T030 Отрисовать доменные исключения в JSON формы `DomainError` (contracts/rest-api.yaml) через `withExceptions()->render()` со статусом 422. Отдельно привести к той же форме исключения фреймворка, которые контракт тоже описывает как `DomainError`: `AuthenticationException` → 401 `unauthenticated`, `AccessDeniedHttpException` → 403 `forbidden`, `NotFoundHttpException` → 404 `not_found`, `ThrottleRequestsException` → 429 `rate_limited`
 - [ ] T031 [P] Фабрики `database/factories/` для `Project`, `KeyType`, `ProjectKeyType`, `Identifier`
 - [ ] T032 [P] Seeder `database/seeders/KeyTypeSeeder.php`: `ADR` → `ADR-{number:04d}`, `spec` → `{number:03d}-{name}`
 
@@ -100,21 +204,58 @@ description: "Task list for incremental id registry"
 **Independent Test**: на заполненном фабриками справочнике — два одновременных запроса дают разные
 номера, повтор одного из них возвращает прежний
 
-### Тесты (пишутся первыми и падают)
+### Step 3.1: Тесты выдачи номера
+
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --filter=Sequence"
+  test_full: "make test"
+tier: strong
+-->
+
+Тесты пишутся первыми и падают до Step 3.2.
+
 
 - [ ] T033 [P] [US1] `tests/Feature/Sequence/NextIdTest.php`: первая выдача, `formatted_id` по шаблону, `is_new: true` (FR-001, FR-005)
 - [ ] T034 [P] [US1] `tests/Feature/Sequence/IdempotencyTest.php`: повтор той же тройки, повтор с другим регистром и разделителем, отсутствие второй записи в реестре (FR-002, FR-007)
 - [ ] T035 [P] [US1] `tests/Feature/Sequence/RejectionTest.php`: незарегистрированный проект, погашенный проект, невключённый тип, погашенный тип, пустая после нормализации тема — каждый со своим `error.code` и нормализованным ключом в теле (FR-010, FR-015, FR-007a, SC-003)
 - [ ] T036 [P] [US1] `tests/Feature/Sequence/ListTest.php`: порядок по убыванию, поля перечня, отказ по незарегистрированному проекту (FR-006)
 - [ ] T037 [P] [US1] `tests/Feature/Sequence/SeedSequenceTest.php`: при `seed_sequence = 42` первая выдача возвращает 43 (FR-014a)
-- [ ] T038 [US1] `tests/Concurrency/ConcurrentIssueTest.php`: 50 процессов через `Process::pool` на одну пару «проект + тип», проверка — ровно 50 различных номеров без пропусков; набор не оборачивается в транзакцию и чистит таблицы усечением (SC-001, принцип V)
-- [ ] T039 [US1] Команда `app/Console/Commands/IssueIdentifier.php` — точка входа для процессов теста конкурентности, печатает выданный номер в stdout
-- [ ] T095 [US1] `tests/Concurrency/ConcurrentSameNameTest.php`: 10 процессов запрашивают номер с **одной и той же** темой одновременно; проверка — все получают один номер, в реестре ровно одна запись (SC-002, FR-004b). Отличается от T038, где темы разные: тот проверяет сериализацию счётчика, этот — разрешение столкновения по уникальному индексу
+- [ ] T038 [US1] `tests/Concurrency/ConcurrentIssueTest.php`: 50 процессов через `Process::pool` на одну пару «проект + тип», все со своей меткой старта `--at`, проверка — ровно 50 различных номеров без пропусков; набор не оборачивается в транзакцию и чистит таблицы усечением (SC-001, принцип V)
+- [ ] T039 [US1] Команда `app/Console/Commands/IssueIdentifier.php` — точка входа для процессов теста конкурентности: принимает `--at=<unix ms>` и ждёт до этой метки перед вызовом `SequenceIssuer`, печатает выданный номер в stdout. Барьер обязателен: `Process::pool` стартует процессы последовательно, холодный старт Laravel занимает сотни миллисекунд, и без общей метки первый процесс успевает закоммитить транзакцию раньше, чем второй дойдёт до `lockForUpdate()` — тест станет зелёным на заведомо сломанной реализации
+- [ ] T095 [US1] `tests/Concurrency/ConcurrentSameNameTest.php`: 10 процессов запрашивают номер с **одной и той же** темой одновременно, с тем же барьером `--at`, что и T038; проверка — все получают один номер, в реестре ровно одна запись (SC-002, FR-004b). Отличается от T038, где темы разные: тот проверяет сериализацию счётчика, этот — разрешение столкновения по уникальному индексу
 - [ ] T096 [P] [US1] `tests/Feature/Sequence/StorageFailureTest.php`: отказ хранилища в момент выдачи — клиент получает ошибку, номер не выдан, счётчик не сдвинут, повтор после восстановления безопасен (FR-004c)
 - [ ] T097 [P] [US1] `tests/Feature/Sequence/ImmutabilityTest.php`: реестр не допускает обновления и удаления записи; `down()` миграции реестра не выполняет операций над данными (FR-004, FR-016)
 - [ ] T098 [P] [US1] `tests/Feature/UnauthenticatedAccessTest.php`: каждый маршрут `/api/v1/*` без заголовка авторизации и с отозванным токеном отвергается (FR-020); проект не заводится сам по факту обращения (FR-011)
 
-### Реализация
+### Step 3.2: Доменный сервис и REST
+
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --filter=Sequence"
+  test_full: "make test"
+tier: strong
+-->
 
 - [ ] T040 [US1] `app/Domain/Sequence/IssuedIdentifier.php` — неизменяемый результат выдачи (номер, форматированный вид, признак новизны, исходная тема)
 - [ ] T041 [US1] `app/Domain/Sequence/SequenceIssuer.php`: поиск существующей записи по `(project, type, name_slug)` до транзакции; иначе транзакция с `lockForUpdate()` на строке `project_key_type`, следующий номер `GREATEST(seed_sequence, last_sequence) + 1`, инкремент счётчика, вставка (research.md §R1, FR-003, FR-004a)
@@ -135,7 +276,24 @@ description: "Task list for incremental id registry"
 **Independent Test**: администратор проходит цепочку «завести проект → завести тип → включить тип»;
 обычный пользователь получает отказ на каждой операции и не видит перечня проектов
 
-### Тесты
+### Step 4.1: Тесты справочников
+
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --filter=Admin"
+  test_full: "make test"
+tier: standard
+-->
 
 - [ ] T047 [P] [US2] `tests/Feature/Admin/ProjectCrudTest.php`: заведение с вычислением ключа из адреса, переименование, гашение, повторный адрес как ошибка валидации (FR-008, FR-012)
 - [ ] T048 [P] [US2] `tests/Feature/Admin/KeyTypeCrudTest.php`: заведение, валидация шаблона (нет номера, неизвестный плейсхолдер), гашение (FR-013, FR-013a)
@@ -143,7 +301,24 @@ description: "Task list for incremental id registry"
 - [ ] T050 [P] [US2] `tests/Feature/Admin/AuthorizationTest.php`: обычный пользователь получает 403 на каждой административной операции и не получает перечня проектов (FR-017)
 - [ ] T051 [P] [US2] `tests/Feature/ProjectResolveTest.php`: SSH- и HTTPS-формы дают один ключ, незарегистрированный проект отдаёт `registered: false` и `hint`, неразбираемый адрес — 422, перечень чужих проектов не раскрывается (FR-009, FR-010)
 
-### Реализация
+### Step 4.2: Административные операции
+
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --filter=Admin"
+  test_full: "make test"
+tier: strong
+-->
 
 - [ ] T052 [P] [US2] `app/Policies/ProjectPolicy.php` и `app/Policies/KeyTypePolicy.php`, регистрация в `AppServiceProvider`
 - [ ] T053 [P] [US2] FormRequest'ы в `app/Http/Requests/Api/Admin/`: `StoreProjectRequest`, `UpdateProjectRequest`, `StoreKeyTypeRequest`, `UpdateKeyTypeRequest`, `SetProjectKeyTypesRequest` — правило валидации шаблона опирается на `IdentifierFormat`, правило `seed_sequence` сверяется с `last_sequence`
@@ -165,7 +340,24 @@ description: "Task list for incremental id registry"
 **Independent Test**: вход корпоративным аккаунтом создаёт пользователя и даёт создать токен; вход
 посторонним доменом отвергается без создания учётной записи
 
-### Тесты
+### Step 5.1: Тесты входа и токенов
+
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --filter=Auth"
+  test_full: "make test"
+tier: standard
+-->
 
 - [ ] T060 [P] [US3] `tests/Feature/Auth/GoogleLoginTest.php`: корпоративный домен проходит, посторонний отвергается и пользователь не создаётся, адрес из `ADMIN_EMAILS` получает роль администратора при первом входе (FR-018, FR-021)
 - [ ] T061 [P] [US3] `tests/Feature/Auth/TokenManagementTest.php`: несколько именованных токенов, значение показывается один раз, отзыв одного не трогает остальные (FR-019, FR-019a)
@@ -173,12 +365,30 @@ description: "Task list for incremental id registry"
 - [ ] T063 [P] [US3] `tests/Feature/Auth/RateLimitTest.php`: превышение порога даёт 429 с кодом, отличным от отказа по правам (FR-020a)
 - [ ] T099 [P] [US3] `tests/Feature/Auth/ProviderOutageTest.php`: при недоступности Google вход людей отвергается, а запросы с уже выданными токенами продолжают обслуживаться — проверка токена не обращается к провайдеру (FR-021c)
 
-### Реализация
+### Step 5.2: Google OAuth, токены и интерфейс
+
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --filter=Auth"
+  test_full: "make test"
+tier: strong
+-->
 
 - [ ] T064 [US3] `config/services.php` — секция `google`; `config/getid.php` — `allowed_email_domain`, `admin_emails`, `api_log_retention_days`
 - [ ] T065 [US3] `app/Http/Controllers/Web/GoogleAuthController.php` — редирект и колбэк, проверка домена до создания пользователя, повышение по `ADMIN_EMAILS`
 - [ ] T066 [P] [US3] `app/Http/Controllers/Web/TokenController.php` — перечень, создание, отзыв; значение токена кладётся в flash один раз
 - [ ] T067 [P] [US3] `app/Actions/DeactivateUser.php` — гашение сотрудника со сносом токенов и проверкой «последний администратор»
+- [ ] T101 [P] [US3] `app/Console/Commands/PromoteUserToAdmin.php` — назначение роли по адресу почты из консоли. Путь восстановления, когда администраторов не осталось, а `ADMIN_EMAILS` применяется только при первом входе; команда заявлена в [plan.md](./plan.md) §Project Structure и без этой задачи не существовала бы
 - [ ] T068 [P] [US3] Blade: `resources/views/layouts/app.blade.php`, `auth/login.blade.php`, `tokens/index.blade.php`
 - [ ] T069 [P] [US3] Blade административных экранов: `admin/projects/index.blade.php`, `admin/key-types/index.blade.php`
 - [ ] T070 [US3] Маршруты в `routes/web.php`: вход, кабинет токенов, административные экраны под Gate
@@ -194,7 +404,24 @@ description: "Task list for incremental id registry"
 **Independent Test**: подключить сервер клиентом, вызвать `resolve_project` и `next_id` — результат
 совпадает с REST на тех же данных
 
-### Тесты
+### Step 6.1: Тесты MCP
+
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --testsuite=Mcp"
+  test_full: "make test"
+tier: standard
+-->
 
 - [ ] T071 [P] [US4] `tests/Mcp/ResolveProjectToolTest.php`: схема инструмента, зарегистрированный и незарегистрированный проект, неразбираемый адрес как `Response::error`
 - [ ] T072 [P] [US4] `tests/Mcp/NextIdToolTest.php`: выдача, идемпотентность, отказ с текстом, называющим ключ и следующий шаг
@@ -202,13 +429,30 @@ description: "Task list for incremental id registry"
 - [ ] T074 [US4] `tests/Mcp/ParityWithRestTest.php`: для каждой пары «tool ↔ endpoint» результат на одних и тех же входных данных совпадает (FR-024)
 - [ ] T075 [P] [US4] `tests/Mcp/AuthorizationTest.php`: обращение без заголовка авторизации отвергается на маршруте, до инструмента
 
-### Реализация
+### Step 6.2: MCP-сервер и инструменты
+
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --testsuite=Mcp"
+  test_full: "make test"
+tier: strong
+-->
 
 - [ ] T076 [US4] `app/Mcp/Servers/GetIdServer.php` — имя, инструкция сервера, регистрация трёх инструментов
 - [ ] T077 [P] [US4] `app/Mcp/Tools/ResolveProjectTool.php` — схема и текст описания из [contracts/mcp-tools.md](./contracts/mcp-tools.md), включая фразу о том, что origin читает клиент (FR-023)
 - [ ] T078 [P] [US4] `app/Mcp/Tools/NextIdTool.php` — вызывает `SequenceIssuer`, своей логики выдачи не содержит (принцип VI)
 - [ ] T079 [P] [US4] `app/Mcp/Tools/ListIdentifiersTool.php`
-- [ ] T080 [US4] Зарегистрировать сервер в `routes/api.php`: `Mcp::web('/mcp', GetIdServer::class)->middleware(['auth:sanctum', 'throttle:60,1'])` — отдельного файла маршрутов пакет не заводит (FR-022)
+- [ ] T080 [US4] Зарегистрировать сервер в `routes/api.php`: `Mcp::web('/mcp', GetIdServer::class)->middleware(['auth:sanctum', 'throttle:getid'])` — тот же именованный limiter, что у REST (T028), отдельного файла маршрутов пакет не заводит (FR-020a, FR-022)
 
 **Checkpoint**: `claude mcp add --transport http` подключает сервер, номер выдаётся из сессии ассистента
 
@@ -221,16 +465,50 @@ description: "Task list for incremental id registry"
 **Independent Test**: обращение к API и к MCP оставляет запись с пользователем, параметрами, кодом
 ответа и длительностью; сбой записи не отменяет выдачу
 
-### Тесты
+### Step 7.1: Тесты журнала
 
-- [ ] T081 [P] [US5] `tests/Feature/ApiLoggingTest.php`: состав записи для REST и для MCP (FR-025, FR-024a)
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --filter=ApiLog"
+  test_full: "make test"
+tier: standard
+-->
+
+- [ ] T081 [P] [US5] `tests/Feature/ApiLoggingTest.php`: состав записи для REST и для MCP (FR-025, FR-024a); отдельным случаем — запрос с заголовком `X-Forwarded-For` от доверенного прокси пишет адрес клиента, а от недоверенного источника подменить адрес не удаётся (FR-025a)
 - [ ] T082 [P] [US5] `tests/Feature/ApiLoggingFailureTest.php`: при падении записи клиент получает выданный номер, а не ошибку (FR-026)
 - [ ] T083 [P] [US5] `tests/Feature/PruneApiLogsTest.php`: чистка сносит записи старше горизонта и не трогает реестр
 
-### Реализация
+### Step 7.2: Middleware журнала и чистка
 
-- [ ] T084 [US5] `app/Http/Middleware/LogApiRequest.php` — замер длительности, запись после ответа, перехват исключения записи в лог приложения
-- [ ] T085 [US5] Повесить middleware на группы `api` и маршрут MCP в `bootstrap/app.php`
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --filter=ApiLog"
+  test_full: "make test"
+tier: standard
+-->
+
+- [ ] T084 [US5] `app/Http/Middleware/LogApiRequest.php` — замер длительности, запись после ответа, перехват исключения записи в лог приложения; сохраняемый `payload` обрезается сверху (4 КБ), чтобы одна крупная посылка не раздувала журнал
+- [ ] T085 [US5] Проверить, что `LogApiRequest` уже зарегистрирован на группах `api` и `/mcp` в T028a, и что записи появляются для обеих поверхностей; сам `bootstrap/app.php` здесь не правится
 - [ ] T086 [P] [US5] `app/Console/Commands/PruneApiLogs.php` и регистрация в планировщике `routes/console.php` с горизонтом из `config/getid.php`
 
 **Checkpoint**: обращения журналируются, журнал не растёт бесконечно
@@ -239,14 +517,48 @@ description: "Task list for incremental id registry"
 
 ## Phase 8: Polish & Cross-Cutting Concerns
 
+### Step 8.1: Прогон качества
+
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+  - "specs/001-incremental-id-registry/quickstart.md"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_full: "make test"
+tier: standard
+-->
+
 - [ ] T087 Прогнать весь набор в Docker: `make test` — зелёный, включая `tests/Concurrency` (принцип VII, SC-006)
 - [ ] T088 [P] Прогнать `vendor/bin/pint` и `vendor/bin/phpstan analyse` до чистого вывода
 - [ ] T089 [P] Пройти [quickstart.md](./quickstart.md) целиком на чистом окружении, включая подключение MCP и выдачу номера из сессии ассистента без ручного ввода ключа проекта; расхождения исправить в самом quickstart (SC-004, SC-005)
+### Step 8.2: Документация и закрытие пакета
+
+<!-- plan-meta:
+allowed_paths:
+  - "docs/**"
+  - "CLAUDE.md"
+  - "README.md"
+  - "specs/001-incremental-id-registry/**"
+  - ".specify/memory/constitution.md"
+gate_commands:
+  test_full: "make test"
+tier: standard
+-->
+
 - [ ] T090 [P] Написать `CLAUDE.md` репозитория: непрозрачные решения (счётчик в pivot, нормализация ключа, граница MCP-поверхности) и указатели на живые документы
 - [ ] T091 [P] Написать ADR `docs/adr/adr-001-sequence-locking.md` — блокировка строки-счётчика против `SELECT MAX() FOR UPDATE`, с отвергнутыми альтернативами из research.md §R1
 - [ ] T092 [P] Написать ADR `docs/adr/adr-002-mcp-surface-boundary.md` — почему административные операции не публикуются в MCP
 - [ ] T093 Сократить принципы конституции до строк-указателей на CLAUDE.md и ADR там, где источник появился (Governance конституции)
 - [ ] T094 Закрыть пакет: отметить выполненные пункты [checklists/integrity.md](./checklists/integrity.md), обновить статус в [spec.md](./spec.md)
+- [ ] T102 Записать в ledger прогнанные гейты: `~/.claude/skills/speckit-gates/scripts/gates.sh record analyze --package specs/001-incremental-id-registry` и то же для `converge` после его прогона. `/speckit-analyze` read-only и сам ничего не фиксирует, поэтому без этой записи гейт остаётся `MISSING`, хотя анализ был выполнен
 
 ---
 
@@ -273,14 +585,14 @@ US3 (вход) не блокирует ничего: тесты аутентиф
 
 ## Parallel Opportunities
 
-- **Phase 1**: T003, T004, T005 (docker и Makefile), T007, T008 — разные файлы
+- **Phase 1**: T003, T004, T004a, T005 (docker и Makefile), T007, T008 — разные файлы
 - **Phase 2**: миграции T011, T012, T015 параллельны между собой; T013 и T014 после T011 и T012
   из-за внешних ключей. Модели T016–T020 параллельны. Тесты T022–T024 и реализации T025–T027
   параллельны попарно
-- **Phase 3**: тесты T033–T037 и T096–T098 параллельны; T038, T039 и T095 идут вместе и после T041
+- **Phase 3**: тесты T033–T037 и T096–T098 параллельны; T038, T039 и T095 пишутся до реализации и идут одним куском (общий барьер), зелёными становятся после T041
 - **Phase 4**: тесты T047–T051 параллельны; T052–T054 параллельны, контроллеры T055–T058 — после них
 - **Phase 6**: инструменты T077–T079 параллельны после T076
-- **Phase 8**: T088–T092 параллельны
+- **Phase 8**: T088–T089 параллельны в Step 8.1; T090–T092 параллельны в Step 8.2, T093, T094 и T102 после них
 
 ## Implementation Strategy
 

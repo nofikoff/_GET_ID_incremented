@@ -8,8 +8,12 @@
 // routes/api.php
 use Laravel\Mcp\Facades\Mcp;
 
-Mcp::web('/mcp', GetIdServer::class)->middleware(['auth:sanctum', 'throttle:60,1']);
+Mcp::web('/mcp', GetIdServer::class)->middleware(['auth:sanctum', 'throttle:getid']);
 ```
+
+`getid` — именованный limiter, общий с REST и ключуемый по идентификатору токена, а не
+пользователя: порог FR-020a считается на токен, и два независимых лимита по 60 на двух группах
+дали бы 120.
 
 Подключение на стороне клиента:
 

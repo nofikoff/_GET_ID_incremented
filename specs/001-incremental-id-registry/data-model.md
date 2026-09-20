@@ -129,7 +129,7 @@ InnoDB при `utf8mb4` (767 байт при `DYNAMIC` row format — 1024 ба�
 | `user_id` | `bigint unsigned` | FK → `users.id`, `ON DELETE SET NULL`, nullable |
 | `method` | `varchar(10)` | |
 | `endpoint` | `varchar(255)` | путь маршрута |
-| `payload` | `json` | nullable, параметры запроса |
+| `payload` | `json` | nullable, параметры запроса, обрезаются до 4 КБ при записи |
 | `status_code` | `smallint unsigned` | |
 | `duration_ms` | `int unsigned` | |
 | `ip_address` | `varchar(45)` | вмещает IPv6 |

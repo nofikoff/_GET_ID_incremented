@@ -137,9 +137,35 @@ make test-race      # только tests/Concurrency
 
 ## Развёртывание на LAMP
 
+Целевая площадка: сервер `ruspan.pogonyalo.com`, каталог `/home/develop/domains/id.x3mal.com`,
+публичный адрес `https://id.x3mal.com` за Cloudflare. Сводка — в [README](../../README.md)
+§Развёртывание.
+
 - PHP 8.3 с расширениями `pdo_mysql`, `bcmath`, `mbstring`, `curl`, `openssl`.
-- DocumentRoot — каталог `public/`.
-- `.env`: доступы к базе провайдера, ключи Google, `APP_URL` с боевым доменом, `ADMIN_EMAILS`.
+- DocumentRoot — `/home/develop/domains/id.x3mal.com/public`, а не корень каталога домена.
+- `.env`: доступы к базе провайдера, ключи Google, `APP_URL=https://id.x3mal.com`, `ADMIN_EMAILS`.
 - `php artisan migrate --force`, затем `config:cache`, `route:cache`, `view:cache`.
 - Планировщик: `php artisan schedule:run` раз в минуту — им чистится журнал обращений.
-- Redirect URI в Google Console должен совпадать с `APP_URL` боевого домена, иначе вход не пройдёт.
+- Redirect URI в Google Cloud Console — `https://id.x3mal.com/auth/google/callback`, дословно
+  совпадающий с `APP_URL`.
+
+### Проверка Cloudflare после выкладки
+
+Приложение стоит за проксёй, поэтому две вещи проверяются отдельно — обе ломаются молча.
+
+```bash
+# 1. Схема в сгенерированных ссылках должна быть https
+php artisan tinker --execute="echo route('tokens.index');"
+```
+
+Ожидаемо: `https://id.x3mal.com/tokens`. Если `http://` — `trustProxies` не настроен, и вход через
+Google не пройдёт: redirect URI не совпадёт с зарегистрированным.
+
+```bash
+# 2. В журнале должен оказаться адрес клиента, а не Cloudflare
+curl -s -H "Authorization: Bearer $GETID_TOKEN" https://id.x3mal.com/api/v1/projects/resolve?origin=git@example.com:a/b.git > /dev/null
+php artisan tinker --execute="echo App\Models\ApiLog::latest()->first()->ip_address;"
+```
+
+Ожидаемо: твой собственный адрес. Если это адрес из сетей Cloudflare — журнал бесполезен
+(FR-025), потому что все обращения выглядят пришедшими с одного узла.
