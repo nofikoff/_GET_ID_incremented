@@ -7,3 +7,26 @@
 сам проект и типы ключей заводит администратор.
 
 Проектирование идёт через Spec Kit: `specs/NNN-<slug>/`.
+
+## Развёртывание
+
+| Что | Значение |
+|-----|----------|
+| Публичный адрес | `https://id.x3mal.com` |
+| Сервер хостинга | `ruspan.pogonyalo.com` |
+| Каталог на сервере | `/home/develop/domains/id.x3mal.com` |
+| DocumentRoot | `/home/develop/domains/id.x3mal.com/public` |
+| DNS и TLS | Cloudflare (проксирование включено) |
+
+`APP_URL=https://id.x3mal.com`, redirect URI в Google Cloud Console —
+`https://id.x3mal.com/auth/google/callback`. Адрес должен совпадать с `APP_URL` дословно, иначе
+вход через Google не проходит.
+
+**Cloudflare стоит перед приложением, поэтому доверенные прокси настраиваются обязательно.** Без
+`trustProxies` в `bootstrap/app.php` происходят две вещи, и обе тихие: журнал обращений пишет
+адреса Cloudflare вместо адресов клиентов, а `url()` генерирует `http://`, из-за чего redirect URI
+перестаёт совпадать с зарегистрированным в Google. Доверять следует списку сетей Cloudflare
+(https://www.cloudflare.com/ips/), а не `'*'` — origin на этом хостинге доступен и напрямую по IP,
+и при `'*'` любой запрос в обход Cloudflare сможет подставить произвольный `X-Forwarded-For`.
+
+Доступы, ключи и учётные данные в репозитории не хранятся.
