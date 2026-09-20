@@ -1,0 +1,588 @@
+openapi: 3.1.0
+info:
+  title: get-id REST API
+  version: "1.0.0"
+  description: |
+    Выдача инкрементальных номеров для ADR и спецификаций.
+
+    Все операции требуют заголовок `Authorization: Bearer <token>`. Токен создаётся человеком в
+    веб-интерфейсе после входа через Google; у пользователя может быть несколько именованных
+    токенов.
+
+    Ключ проекта клиент не выбирает — он вычисляется сервисом из адреса origin репозитория
+    (`GET /v1/projects/resolve`). Незарегистрированный проект не заводится автоматически.
+
+servers:
+  - url: https://get-id.cas.ai/api
+    description: production
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: sequence
+    description: выдача и чтение номеров
+  - name: projects
+    description: определение проекта по адресу репозитория
+  - name: admin
+    description: справочники, только для роли admin
+
+paths:
+  /v1/sequence/next:
+    post:
+      tags: [sequence]
+      summary: Получить номер для документа
+      description: |
+        Идемпотентно. Повтор с той же тройкой «project_key + type + name» возвращает ранее выданный
+        номер и `is_new: false`. Тема сравнивается по нормализованному виду: `add-oauth-auth`,
+        `Add OAuth Auth` и `add_oauth_auth` — одна тема.
+      operationId: nextSequence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [project_key, type, name]
+              additionalProperties: false
+              properties:
+                project_key:
+                  type: string
+                  maxLength: 255
+                  description: Нормализованный ключ проекта из /v1/projects/resolve
+                  examples: ["gitlab.cas.ai/team/backend"]
+                type:
+                  type: string
+                  maxLength: 32
+                  description: Код типа ключа, включённого в этом проекте
+                  examples: ["ADR"]
+                name:
+                  type: string
+                  maxLength: 255
+                  description: Тема документа. После нормализации не должна быть пустой
+                  examples: ["add-oauth-auth"]
+      responses:
+        "200":
+          description: Номер выдан или возвращён повторно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IssuedIdentifier"
+              examples:
+                first:
+                  summary: Первая выдача
+                  value:
+                    project_key: "gitlab.cas.ai/team/backend"
+                    type: "ADR"
+                    name: "add-oauth-auth"
+                    sequence_number: 12
+                    formatted_id: "ADR-0012"
+                    is_new: true
+                    created_at: "2026-09-20T14:30:00Z"
+                repeat:
+                  summary: Повтор той же тройки
+                  value:
+                    project_key: "gitlab.cas.ai/team/backend"
+                    type: "ADR"
+                    name: "add-oauth-auth"
+                    sequence_number: 12
+                    formatted_id: "ADR-0012"
+                    is_new: false
+                    created_at: "2026-09-20T14:30:00Z"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "422":
+          description: |
+            Запрос синтаксически верен, но не может быть обработан: проект не зарегистрирован,
+            выведен из обращения, тип не включён в проекте, либо тема пуста после нормализации.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DomainError"
+              examples:
+                unknown_project:
+                  value:
+                    message: "Проект не зарегистрирован. Попросите администратора завести его."
+                    error:
+                      code: "project_not_registered"
+                      project_key: "gitlab.cas.ai/team/backend"
+                type_not_enabled:
+                  value:
+                    message: "Тип ADR не включён в этом проекте."
+                    error:
+                      code: "type_not_enabled"
+                      project_key: "gitlab.cas.ai/team/backend"
+                      type: "ADR"
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /v1/sequence/list:
+    get:
+      tags: [sequence]
+      summary: Перечень выданных идентификаторов
+      operationId: listSequence
+      parameters:
+        - name: project_key
+          in: query
+          required: true
+          schema: { type: string, maxLength: 255 }
+        - name: type
+          in: query
+          required: true
+          schema: { type: string, maxLength: 32 }
+      responses:
+        "200":
+          description: Перечень в порядке убывания номера
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [project_key, type, items]
+                properties:
+                  project_key: { type: string }
+                  type: { type: string }
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [sequence_number, name, formatted_id, created_at]
+                      properties:
+                        sequence_number: { type: integer, minimum: 1 }
+                        name: { type: string }
+                        formatted_id: { type: string }
+                        created_at: { type: string, format: date-time }
+              example:
+                project_key: "gitlab.cas.ai/team/backend"
+                type: "ADR"
+                items:
+                  - sequence_number: 2
+                    name: "add-docker-support"
+                    formatted_id: "ADR-0002"
+                    created_at: "2026-09-19T14:30:00Z"
+                  - sequence_number: 1
+                    name: "init-project"
+                    formatted_id: "ADR-0001"
+                    created_at: "2026-09-18T10:00:00Z"
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "422":
+          description: Проект не зарегистрирован или тип не включён
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DomainError" }
+
+  /v1/projects/resolve:
+    get:
+      tags: [projects]
+      summary: Нормализовать адрес репозитория и узнать статус проекта
+      description: |
+        Отвечает только про переданный адрес. Перечня проектов не раскрывает — он доступен
+        исключительно администратору.
+      operationId: resolveProject
+      parameters:
+        - name: origin
+          in: query
+          required: true
+          description: Значение `git remote get-url origin`, как есть
+          schema: { type: string, maxLength: 2048 }
+          examples:
+            ssh: { value: "git@gitlab.cas.ai:team/backend.git" }
+            https: { value: "https://gitlab.cas.ai/team/backend" }
+      responses:
+        "200":
+          description: Адрес разобран
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [project_key, registered, active, types]
+                properties:
+                  project_key: { type: string }
+                  registered: { type: boolean }
+                  active:
+                    type: boolean
+                    description: false, если проект зарегистрирован, но выведен из обращения
+                  name:
+                    type: [string, "null"]
+                    description: Имя проекта; null, если проект не зарегистрирован
+                  types:
+                    type: array
+                    description: Коды типов, включённых в проекте. Пуст, если проект не зарегистрирован
+                    items:
+                      type: object
+                      required: [code, name, next_number]
+                      properties:
+                        code: { type: string }
+                        name: { type: string }
+                        next_number: { type: integer, minimum: 1 }
+                  hint:
+                    type: [string, "null"]
+                    description: Что делать дальше, если проект не зарегистрирован
+              examples:
+                registered:
+                  value:
+                    project_key: "gitlab.cas.ai/team/backend"
+                    registered: true
+                    active: true
+                    name: "Backend"
+                    types:
+                      - { code: "ADR", name: "Architecture Decision Record", next_number: 13 }
+                      - { code: "spec", name: "Specification", next_number: 4 }
+                    hint: null
+                unknown:
+                  value:
+                    project_key: "gitlab.cas.ai/team/sandbox"
+                    registered: false
+                    active: false
+                    name: null
+                    types: []
+                    hint: "Проект не зарегистрирован. Попросите администратора завести его, указав этот ключ."
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "422":
+          description: Адрес не разбирается как адрес репозитория
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DomainError" }
+
+  /v1/admin/projects:
+    get:
+      tags: [admin]
+      summary: Перечень проектов
+      operationId: listProjects
+      responses:
+        "200":
+          description: Все проекты, включая выведенные из обращения
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Project" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [admin]
+      summary: Завести проект
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [repo_url, name]
+              additionalProperties: false
+              properties:
+                repo_url:
+                  type: string
+                  maxLength: 2048
+                  description: Ключ проекта вычисляется из него и не задаётся напрямую
+                name: { type: string, maxLength: 255 }
+                description: { type: [string, "null"] }
+      responses:
+        "201":
+          description: Проект заведён
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422":
+          description: Адрес не разбирается или такой ключ уже зарегистрирован
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+  /v1/admin/projects/{project}:
+    parameters:
+      - name: project
+        in: path
+        required: true
+        schema: { type: integer }
+    patch:
+      tags: [admin]
+      summary: Переименовать проект или вывести его из обращения
+      operationId: updateProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                name: { type: string, maxLength: 255 }
+                description: { type: [string, "null"] }
+                is_active: { type: boolean }
+      responses:
+        "200":
+          description: Проект изменён
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Project" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /v1/admin/projects/{project}/key-types:
+    parameters:
+      - name: project
+        in: path
+        required: true
+        schema: { type: integer }
+    put:
+      tags: [admin]
+      summary: Задать набор типов, включённых в проекте
+      description: |
+        Полная замена набора. Тип, исчезнувший из набора, выключается — выданные по нему номера
+        сохраняются, и при повторном включении нумерация продолжается с прежнего места.
+      operationId: setProjectKeyTypes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [types]
+              additionalProperties: false
+              properties:
+                types:
+                  type: array
+                  items:
+                    type: object
+                    required: [code]
+                    additionalProperties: false
+                    properties:
+                      code: { type: string, maxLength: 32 }
+                      seed_sequence:
+                        type: integer
+                        minimum: 0
+                        default: 0
+                        description: |
+                          Последний номер, занятый вне сервиса. Указывается, когда в репозитории
+                          уже есть документы этого типа. Нельзя задать ниже уже выданного сервисом.
+            example:
+              types:
+                - { code: "ADR", seed_sequence: 42 }
+                - { code: "spec", seed_sequence: 0 }
+      responses:
+        "200":
+          description: Набор применён
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/EnabledKeyType" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422":
+          description: |
+            Неизвестный код типа, тип выведен из обращения глобально, либо seed_sequence ниже
+            максимального уже выданного номера.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+  /v1/admin/key-types:
+    get:
+      tags: [admin]
+      summary: Перечень типов ключей
+      operationId: listKeyTypes
+      responses:
+        "200":
+          description: Все типы, включая выведенные из обращения
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/KeyType" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [admin]
+      summary: Завести тип ключа
+      operationId: createKeyType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, name, format_template]
+              additionalProperties: false
+              properties:
+                code: { type: string, maxLength: 32 }
+                name: { type: string, maxLength: 255 }
+                format_template:
+                  type: string
+                  maxLength: 255
+                  description: |
+                    Плейсхолдеры: {number}, {number:0Nd}, {name}. Обязан содержать номер.
+                  examples: ["ADR-{number:04d}", "{number:03d}-{name}"]
+                description: { type: [string, "null"] }
+      responses:
+        "201":
+          description: Тип заведён
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyType" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422":
+          description: Шаблон содержит неизвестный плейсхолдер, не содержит номера, либо код занят
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationError" }
+
+  /v1/admin/key-types/{keyType}:
+    parameters:
+      - name: keyType
+        in: path
+        required: true
+        schema: { type: integer }
+    patch:
+      tags: [admin]
+      summary: Изменить тип ключа или вывести его из обращения
+      operationId: updateKeyType
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                name: { type: string, maxLength: 255 }
+                format_template: { type: string, maxLength: 255 }
+                description: { type: [string, "null"] }
+                is_active: { type: boolean }
+      responses:
+        "200":
+          description: Тип изменён
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyType" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Токен Sanctum, созданный в веб-интерфейсе
+
+  responses:
+    Unauthenticated:
+      description: Токен отсутствует, недействителен или отозван
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/DomainError" }
+    Forbidden:
+      description: Требуется роль администратора
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/DomainError" }
+    NotFound:
+      description: Сущность не найдена
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/DomainError" }
+    TooManyRequests:
+      description: Превышен предел частоты обращений по токену
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/DomainError" }
+
+  schemas:
+    IssuedIdentifier:
+      type: object
+      required: [project_key, type, name, sequence_number, formatted_id, is_new, created_at]
+      properties:
+        project_key: { type: string }
+        type: { type: string }
+        name:
+          type: string
+          description: Исходная формулировка первой выдачи, не нормализованная
+        sequence_number: { type: integer, minimum: 1 }
+        formatted_id: { type: string }
+        is_new:
+          type: boolean
+          description: false, если номер был выдан ранее и возвращён повторно
+        created_at: { type: string, format: date-time }
+
+    Project:
+      type: object
+      required: [id, key, name, repo_url, is_active, created_at]
+      properties:
+        id: { type: integer }
+        key: { type: string }
+        name: { type: string }
+        repo_url: { type: string }
+        description: { type: [string, "null"] }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+
+    KeyType:
+      type: object
+      required: [id, code, name, format_template, is_active]
+      properties:
+        id: { type: integer }
+        code: { type: string }
+        name: { type: string }
+        format_template: { type: string }
+        description: { type: [string, "null"] }
+        is_active: { type: boolean }
+
+    EnabledKeyType:
+      type: object
+      required: [code, name, seed_sequence, last_sequence, next_number]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        seed_sequence: { type: integer, minimum: 0 }
+        last_sequence: { type: integer, minimum: 0 }
+        next_number:
+          type: integer
+          minimum: 1
+          description: Что вернёт следующая выдача
+
+    DomainError:
+      type: object
+      required: [message]
+      properties:
+        message: { type: string }
+        error:
+          type: object
+          required: [code]
+          properties:
+            code:
+              type: string
+              enum:
+                - project_not_registered
+                - project_inactive
+                - type_not_enabled
+                - type_inactive
+                - origin_unparsable
+                - name_empty_after_normalization
+                - forbidden
+                - unauthenticated
+                - not_found
+                - rate_limited
+            project_key: { type: string }
+            type: { type: string }
+
+    ValidationError:
+      type: object
+      required: [message, errors]
+      properties:
+        message: { type: string }
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
