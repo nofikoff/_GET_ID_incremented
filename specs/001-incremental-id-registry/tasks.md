@@ -709,3 +709,6 @@ decided: the skeleton's tests/Unit/ExampleTest.php was removed in 2.3; tests/Fea
 
 ### S1 — dispatch 1 (2026-09-23)
 `kind=bundle agent=implementer tier=strong model=claude-opus-5-5 effort=xhigh turns=103 minutes=35.2 input=206 cache_write=348952 cache_read=22169222 output=181069`
+
+### S1 — dispatch 2 (2026-09-23)
+`kind=spec-verify agent=verifier model=claude-sonnet-5 effort=high turns=27 minutes=4.3 input=54 cache_write=112070 cache_read=1838713 output=24401`
