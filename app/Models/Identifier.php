@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Models\Builders\AppendOnlyQueryBuilder;
+use Database\Factories\IdentifierFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -15,6 +17,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['name', 'name_slug', 'sequence_number'])]
 class Identifier extends Model
 {
+    /** @use HasFactory<IdentifierFactory> */
+    use HasFactory;
+
     /**
      * @return array<string, string>
      */

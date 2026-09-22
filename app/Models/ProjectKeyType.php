@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use Database\Factories\ProjectKeyTypeFactory;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
@@ -20,6 +22,9 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 #[Table('project_key_type', incrementing: true)]
 class ProjectKeyType extends Pivot
 {
+    /** @use HasFactory<ProjectKeyTypeFactory> */
+    use HasFactory;
+
     /**
      * @return array<string, string>
      */
