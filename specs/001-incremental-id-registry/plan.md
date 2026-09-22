@@ -100,8 +100,11 @@ app/
 │   ├── KeyType/
 │   │   ├── DocumentName.php          # value object: нормализация темы в slug
 │   │   └── IdentifierFormat.php      # разбор и применение шаблона форматирования
+├── Actions/                           # DeactivateUser — гашение с проверкой «последний админ»
+├── Enums/                             # UserRole
 ├── Models/                            # User, PersonalAccessToken, Project, KeyType,
 │                                      # ProjectKeyType, Identifier, ApiLog
+├── Providers/                         # AppServiceProvider: Policy, RateLimiter «getid»
 ├── Http/
 │   ├── Controllers/
 │   │   ├── Api/                       # SequenceController, ProjectResolveController
@@ -116,7 +119,8 @@ app/
 │   ├── Servers/GetIdServer.php
 │   └── Tools/                         # ResolveProjectTool, NextIdTool, ListIdentifiersTool
 ├── Policies/                          # ProjectPolicy, KeyTypePolicy
-└── Console/Commands/                  # PruneApiLogs, PromoteUserToAdmin
+└── Console/Commands/                  # PruneApiLogs, IssueIdentifier (тест гонки),
+                                       # SetUserRoleCommand, DeactivateUserCommand
 
 database/
 ├── migrations/                        # семь миграций, см. data-model.md
@@ -136,9 +140,14 @@ tests/
 ├── Mcp/                               # три tool, сверка с REST на тех же входных данных
 └── Concurrency/                       # параллельная выдача номеров
 
-docker/                                # Dockerfile php-fpm, конфиг nginx
+config/
+└── getid.php                          # домен почты, ADMIN_EMAILS, горизонт журнала
+
+docker/                                # Dockerfile php-fpm, конфиг nginx, init-скрипт тестовой базы
 docker-compose.yml
-Makefile                               # up, test, migrate, fresh
+.dockerignore
+phpunit.xml                            # MySQL вместо sqlite; suites Unit, Feature, Mcp, Concurrency
+Makefile                               # up, init, test, test-race, migrate, fresh
 ```
 
 **Structure Decision**: стандартная раскладка Laravel плюс каталог `app/Domain/`. Доменный слой

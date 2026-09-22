@@ -15,9 +15,9 @@
 ## 1. Поднять окружение
 
 ```bash
-cp .env.example .env
-# заполнить GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ADMIN_EMAILS
 make up          # docker compose up -d --build
+make init        # .env из .env.example, composer install, key:generate
+# заполнить в .env GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ADMIN_EMAILS
 make migrate     # artisan migrate --seed
 ```
 

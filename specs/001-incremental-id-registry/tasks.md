@@ -52,6 +52,7 @@ allowed_paths:
   - "composer.json"
   - "docker-compose.yml"
   - "Makefile"
+  - "phpunit.xml"
   - ".env.example"
   - ".dockerignore"
   - ".gitignore"
@@ -68,10 +69,11 @@ tier: strong
 - [ ] T003 [P] Написать `docker/php/Dockerfile` (php-fpm 8.3 с `pdo_mysql`, `bcmath`, `mbstring`, `intl`), `docker/nginx/default.conf` с корнем в `public/`
 - [ ] T004 [P] Написать `docker-compose.yml`: сервисы `app`, `nginx` (порт 8080), `mysql` 8.0 с томом и healthcheck; `app` зависит от `mysql` через `depends_on.condition: service_healthy`, иначе `make migrate` сразу после `make up` падает на первом запуске
 - [ ] T004a [P] Написать `.dockerignore`: `vendor/`, `node_modules/`, `.git/`, `storage/logs/`, `.env` — без него содержимое этих каталогов уезжает в образ
-- [ ] T005 [P] Написать `Makefile` с целями `up`, `down`, `migrate`, `fresh`, `test`, `test-race`, `shell` — все через `docker compose exec app`
+- [ ] T005 [P] Написать `Makefile` с целями `up`, `down`, `migrate`, `fresh`, `test` (все четыре suite), `test-race` (`php artisan test --testsuite=Concurrency`), `shell` — все через `docker compose exec app`
 - [ ] T006 Установить зависимости: `composer require laravel/sanctum laravel/socialite laravel/mcp` и опубликовать конфиги Sanctum
 - [ ] T007 [P] Установить инструменты качества: `composer require --dev larastan/larastan laravel/pint pestphp/pest`, настроить `phpstan.neon` на уровень 6 и `pint.json`
 - [ ] T008 [P] Заполнить `.env.example` ключами `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `ADMIN_EMAILS`, `ALLOWED_EMAIL_DOMAIN=cas.ai`, `API_LOG_RETENTION_DAYS=90`
+- [ ] T104 Перевести тесты на MySQL в `phpunit.xml`: `DB_CONNECTION=mysql`, `DB_DATABASE=getid_test` вместо `sqlite`/`:memory:` из skeleton; базу `getid_test` создавать init-скриптом контейнера `mysql` (`docker/mysql/init/01-test-db.sql`). Переменные `DB_*` объявлять с `force="true"`: без него `<env>` не перекрывает значение, уже заданное окружением контейнера, и тесты молча уходят в рабочую базу — а набор `Concurrency` её усекает. Добавить testsuites `Mcp` (`tests/Mcp`) и `Concurrency` (`tests/Concurrency`) к `Unit` и `Feature`. Без этого `lockForUpdate()` не проверяется вообще — SQLite не поддерживает `SELECT ... FOR UPDATE`, — 50 процессов теста гонки получают 50 разных пустых баз в памяти, а `make test` молча пропускает `tests/Mcp` и `tests/Concurrency` (принципы V и VII)
 - [ ] T009 Добавить в `Makefile` цель `init` (`cp -n .env.example .env`, `composer install`, `php artisan key:generate`) и проверить, что `make up && make init && make migrate` поднимает окружение с нуля и стандартные миграции Laravel проходят
 
 **Checkpoint**: приложение отвечает на `http://localhost:8080`, тесты запускаются в контейнере
@@ -107,8 +109,8 @@ tier: strong
 - [ ] T010 Отредактировать исходную миграцию `database/migrations/0001_01_01_000000_create_users_table.php`: добавить `google_id`, `avatar_url`, `role` enum(`member`,`admin`) default `member`, `deactivated_at`; убрать `password` и `email_verified_at`. Приложение ещё не развёрнуто, поэтому отдельная миграция «поправить то, что сами же создали строкой выше» осталась бы в дереве навсегда
 - [ ] T011 [P] Миграция `database/migrations/*_create_projects_table.php` по [data-model.md](./data-model.md) §projects, включая UNIQUE по `key` с учётом лимита длины индекса InnoDB
 - [ ] T012 [P] Миграция `database/migrations/*_create_key_types_table.php` по §key_types
-- [ ] T013 Миграция `database/migrations/*_create_project_key_type_table.php` по §project_key_type: `seed_sequence`, `last_sequence`, UNIQUE `(project_id, key_type_id)`
-- [ ] T014 Миграция `database/migrations/*_create_identifiers_table.php` по §identifiers: оба UNIQUE-индекса, индекс для перечня по убыванию, `down()` только дропает таблицу и не трогает данные
+- [ ] T013 Миграция `database/migrations/*_create_project_key_type_table.php` по §project_key_type: `seed_sequence`, `last_sequence`, `is_enabled`, UNIQUE `(project_id, key_type_id)`
+- [ ] T014 Миграция `database/migrations/*_create_identifiers_table.php` по §identifiers: оба UNIQUE-индекса, индекс для перечня по убыванию; `down()` дропает таблицу, только если она пуста, а на непустой бросает исключение (data-model.md §identifiers, конституция §Порядок работы)
 - [ ] T015 [P] Миграция `database/migrations/*_create_api_logs_table.php` по §api_logs с индексом по `created_at`
 
 ### Step 2.2: Модели
@@ -158,8 +160,8 @@ tier: strong
 -->
 
 
-- [ ] T022 [P] Тест `tests/Unit/ProjectKeyTest.php`: таблица примеров SSH/HTTPS/порт/`.git`/регистр → один ключ, плюс неразбираемые строки (research.md §R5)
-- [ ] T023 [P] Тест `tests/Unit/DocumentNameTest.php`: регистр, пробелы, подчёркивания, повторы разделителей, пустой результат (FR-007, FR-007a)
+- [ ] T022 [P] Тест `tests/Unit/ProjectKeyTest.php`: таблица примеров SSH/HTTPS/порт/`.git`/регистр → один ключ, уже нормализованный ключ на входе → тот же ключ (идемпотентность), плюс неразбираемые строки (FR-008, FR-008a, research.md §R5)
+- [ ] T023 [P] Тест `tests/Unit/DocumentNameTest.php`: регистр, пробелы, подчёркивания, точки и прочая пунктуация, повторы разделителей, кириллица без транслитерации, одна и та же буква в составной и разложенной форме Unicode, пустой результат (FR-007, FR-007a)
 - [ ] T024 [P] Тест `tests/Unit/IdentifierFormatTest.php`: `{number}`, `{number:04d}`, `{name}`, неизвестный плейсхолдер, отсутствие номера, номер шире ширины шаблона (FR-013a, Edge Cases)
 - [ ] T025 [P] Реализовать `app/Domain/Project/ProjectKey.php` — разбор без `parse_url` для SCP-формы
 - [ ] T026 [P] Реализовать `app/Domain/KeyType/DocumentName.php` — хранит исходную строку и slug
@@ -232,10 +234,10 @@ tier: strong
 - [ ] T036 [P] [US1] `tests/Feature/Sequence/ListTest.php`: порядок по убыванию, поля перечня, отказ по незарегистрированному проекту (FR-006)
 - [ ] T037 [P] [US1] `tests/Feature/Sequence/SeedSequenceTest.php`: при `seed_sequence = 42` первая выдача возвращает 43 (FR-014a)
 - [ ] T038 [US1] `tests/Concurrency/ConcurrentIssueTest.php`: 50 процессов через `Process::pool` на одну пару «проект + тип», все со своей меткой старта `--at`, проверка — ровно 50 различных номеров без пропусков; набор не оборачивается в транзакцию и чистит таблицы усечением (SC-001, принцип V)
-- [ ] T039 [US1] Команда `app/Console/Commands/IssueIdentifier.php` — точка входа для процессов теста конкурентности: принимает `--at=<unix ms>` и ждёт до этой метки перед вызовом `SequenceIssuer`, печатает выданный номер в stdout. Барьер обязателен: `Process::pool` стартует процессы последовательно, холодный старт Laravel занимает сотни миллисекунд, и без общей метки первый процесс успевает закоммитить транзакцию раньше, чем второй дойдёт до `lockForUpdate()` — тест станет зелёным на заведомо сломанной реализации
-- [ ] T095 [US1] `tests/Concurrency/ConcurrentSameNameTest.php`: 10 процессов запрашивают номер с **одной и той же** темой одновременно, с тем же барьером `--at`, что и T038; проверка — все получают один номер, в реестре ровно одна запись (SC-002, FR-004b). Отличается от T038, где темы разные: тот проверяет сериализацию счётчика, этот — разрешение столкновения по уникальному индексу
+- [ ] T039 [US1] Команда `app/Console/Commands/IssueIdentifier.php` — точка входа для процессов теста конкурентности: принимает `--at=<unix ms>` и ждёт до этой метки перед вызовом `SequenceIssuer`, печатает выданный номер в stdout. Дочерние процессы запускаются с тем же `APP_ENV=testing` и `DB_DATABASE=getid_test`, что и сам тест, — окружение передаётся в `Process::env()` явно, а не наследуется на удачу. Барьер обязателен: `Process::pool` стартует процессы последовательно, холодный старт Laravel занимает сотни миллисекунд, и без общей метки первый процесс успевает закоммитить транзакцию раньше, чем второй дойдёт до `lockForUpdate()` — тест станет зелёным на заведомо сломанной реализации
+- [ ] T095 [US1] `tests/Concurrency/ConcurrentSameNameTest.php`: 10 процессов запрашивают номер с **одной и той же** темой одновременно, с тем же барьером `--at`, что и T038; проверка — все получают один номер, в реестре ровно одна запись, и `project_key_type.last_sequence` сдвинулся ровно на единицу — проигравшие гонку не сожгли номера (SC-002, FR-004a, FR-004b). Отличается от T038, где темы разные: тот проверяет сериализацию счётчика, этот — разрешение столкновения по уникальному индексу
 - [ ] T096 [P] [US1] `tests/Feature/Sequence/StorageFailureTest.php`: отказ хранилища в момент выдачи — клиент получает ошибку, номер не выдан, счётчик не сдвинут, повтор после восстановления безопасен (FR-004c)
-- [ ] T097 [P] [US1] `tests/Feature/Sequence/ImmutabilityTest.php`: реестр не допускает обновления и удаления записи; `down()` миграции реестра не выполняет операций над данными (FR-004, FR-016)
+- [ ] T097 [P] [US1] `tests/Feature/Sequence/ImmutabilityTest.php`: реестр не допускает обновления и удаления записи; `down()` миграции реестра на непустой таблице бросает исключение, а на пустой отрабатывает (FR-004, FR-016)
 - [ ] T098 [P] [US1] `tests/Feature/UnauthenticatedAccessTest.php`: каждый маршрут `/api/v1/*` без заголовка авторизации и с отозванным токеном отвергается (FR-020); проект не заводится сам по факту обращения (FR-011)
 
 ### Step 3.2: Доменный сервис и REST
@@ -259,7 +261,7 @@ tier: strong
 
 - [ ] T040 [US1] `app/Domain/Sequence/IssuedIdentifier.php` — неизменяемый результат выдачи (номер, форматированный вид, признак новизны, исходная тема)
 - [ ] T041 [US1] `app/Domain/Sequence/SequenceIssuer.php`: поиск существующей записи по `(project, type, name_slug)` до транзакции; иначе транзакция с `lockForUpdate()` на строке `project_key_type`, следующий номер `GREATEST(seed_sequence, last_sequence) + 1`, инкремент счётчика, вставка (research.md §R1, FR-003, FR-004a)
-- [ ] T042 [US1] Обработать в `SequenceIssuer` нарушение UNIQUE по `(project, type, name_slug)` как повтор — перечитать и вернуть существующую запись; нарушение по `(project, type, sequence_number)` пробросить как дефект с записью в лог приложения (FR-004b)
+- [ ] T042 [US1] Обработать `UniqueConstraintViolationException` **снаружи** `DB::transaction()`, а не внутри: исключение обязано выйти из замыкания, чтобы транзакция откатилась целиком вместе с инкрементом счётчика. Если поймать его внутри и перечитать запись там же, инкремент закоммитится и номер сгорит — пропуск, который запрещает FR-004a. После отката перечитать запись по `name_slug`: нашлась — это штатный повтор, вернуть её с `is_new: false`; не нашлась — столкнулся `sequence_number`, то есть сериализация не сработала: дефект, запись в лог приложения и ошибка сервера (FR-004a, FR-004b). `DB::transaction()` вызывать с числом попыток больше единицы, чтобы редкий deadlock не дошёл до клиента (FR-003)
 - [ ] T043 [P] [US1] `app/Http/Requests/Api/NextSequenceRequest.php` и `ListSequenceRequest.php` по схемам contracts/rest-api.yaml
 - [ ] T044 [P] [US1] `app/Http/Resources/IssuedIdentifierResource.php` и `IdentifierListResource.php` — форма ответа из контракта, `name` отдаётся исходный, не нормализованный
 - [ ] T045 [US1] `app/Http/Controllers/Api/SequenceController.php` — два действия, вся работа делегируется `SequenceIssuer`
@@ -298,7 +300,7 @@ tier: standard
 - [ ] T047 [P] [US2] `tests/Feature/Admin/ProjectCrudTest.php`: заведение с вычислением ключа из адреса, переименование, гашение, повторный адрес как ошибка валидации (FR-008, FR-012)
 - [ ] T048 [P] [US2] `tests/Feature/Admin/KeyTypeCrudTest.php`: заведение, валидация шаблона (нет номера, неизвестный плейсхолдер), гашение (FR-013, FR-013a)
 - [ ] T049 [P] [US2] `tests/Feature/Admin/ProjectKeyTypeTest.php`: замена набора типов, `seed_sequence`, запрет `seed_sequence` ниже выданного, запрет включения погашенного типа, продолжение нумерации после выключения и повторного включения (FR-014, FR-014a, FR-014b, Edge Cases)
-- [ ] T050 [P] [US2] `tests/Feature/Admin/AuthorizationTest.php`: обычный пользователь получает 403 на каждой административной операции и не получает перечня проектов (FR-017)
+- [ ] T050 [P] [US2] `tests/Feature/Admin/AuthorizationTest.php`: обычный пользователь получает 403 на каждой административной операции и не получает перечня проектов; 403 приходит и для несуществующего идентификатора, то есть проверка роли срабатывает до поиска сущности, и по коду ответа нельзя узнать, существует ли объект (FR-017)
 - [ ] T051 [P] [US2] `tests/Feature/ProjectResolveTest.php`: SSH- и HTTPS-формы дают один ключ, незарегистрированный проект отдаёт `registered: false` и `hint`, неразбираемый адрес — 422, перечень чужих проектов не раскрывается (FR-009, FR-010)
 
 ### Step 4.2: Административные операции
@@ -325,7 +327,7 @@ tier: strong
 - [ ] T054 [P] [US2] Ресурсы `app/Http/Resources/ProjectResource.php`, `KeyTypeResource.php`, `EnabledKeyTypeResource.php`
 - [ ] T055 [US2] `app/Http/Controllers/Api/Admin/ProjectController.php` — перечень, заведение, изменение
 - [ ] T056 [US2] `app/Http/Controllers/Api/Admin/KeyTypeController.php` — перечень, заведение, изменение
-- [ ] T057 [US2] `app/Http/Controllers/Api/Admin/ProjectKeyTypeController.php` — полная замена набора типов проекта с сохранением счётчиков
+- [ ] T057 [US2] `app/Http/Controllers/Api/Admin/ProjectKeyTypeController.php` — полная замена набора типов проекта: тип, пропавший из набора, получает `is_enabled = false`, вернувшийся — `true`; строки связи не удаляются никогда, иначе теряется счётчик (FR-016, data-model.md §project_key_type)
 - [ ] T058 [US2] `app/Http/Controllers/Api/ProjectResolveController.php` — нормализация адреса и статус проекта, без раскрытия перечня
 - [ ] T059 [US2] Зарегистрировать административные маршруты и `GET /api/v1/projects/resolve` в `routes/api.php`
 
@@ -388,10 +390,10 @@ tier: strong
 - [ ] T065 [US3] `app/Http/Controllers/Web/GoogleAuthController.php` — редирект и колбэк, проверка домена до создания пользователя, повышение по `ADMIN_EMAILS`
 - [ ] T066 [P] [US3] `app/Http/Controllers/Web/TokenController.php` — перечень, создание, отзыв; значение токена кладётся в flash один раз
 - [ ] T067 [P] [US3] `app/Actions/DeactivateUser.php` — гашение сотрудника со сносом токенов и проверкой «последний администратор»
-- [ ] T101 [P] [US3] `app/Console/Commands/PromoteUserToAdmin.php` — назначение роли по адресу почты из консоли. Путь восстановления, когда администраторов не осталось, а `ADMIN_EMAILS` применяется только при первом входе; команда заявлена в [plan.md](./plan.md) §Project Structure и без этой задачи не существовала бы
+- [ ] T101 [P] [US3] Консольные команды управления пользователями — единственный путь для этих операций (FR-021): `app/Console/Commands/SetUserRoleCommand.php` (`user:role {email} {admin|member}`, отказ при снятии роли у последнего администратора — FR-021a) и `app/Console/Commands/DeactivateUserCommand.php` (`user:deactivate {email}`, тонкая обёртка над `App\Actions\DeactivateUser` — FR-021b). Тесты — в `tests/Feature/Auth/AdminLifecycleTest.php` (T062)
 - [ ] T068 [P] [US3] Blade: `resources/views/layouts/app.blade.php`, `auth/login.blade.php`, `tokens/index.blade.php`
 - [ ] T069 [P] [US3] Blade административных экранов: `admin/projects/index.blade.php`, `admin/key-types/index.blade.php`
-- [ ] T070 [US3] Маршруты в `routes/web.php`: вход, кабинет токенов, административные экраны под Gate
+- [ ] T070 [US3] Маршруты в `routes/web.php`: вход, кабинет токенов, административные экраны под Gate. Все маршруты именованные (`auth.google.redirect`, `auth.google.callback`, `tokens.index`, `admin.projects.index`, `admin.key-types.index`) — на `tokens.index` опирается проверка схемы ссылок после выкладки в quickstart.md
 
 **Checkpoint**: сервисом можно пользоваться без ручной правки базы
 
@@ -424,9 +426,9 @@ tier: standard
 -->
 
 - [ ] T071 [P] [US4] `tests/Mcp/ResolveProjectToolTest.php`: схема инструмента, зарегистрированный и незарегистрированный проект, неразбираемый адрес как `Response::error`
-- [ ] T072 [P] [US4] `tests/Mcp/NextIdToolTest.php`: выдача, идемпотентность, отказ с текстом, называющим ключ и следующий шаг
+- [ ] T072 [P] [US4] `tests/Mcp/NextIdToolTest.php`: выдача, идемпотентность, отказ с текстом, который начинается с кода причины из REST-контракта (`project_not_registered: …`) и называет ключ и следующий шаг (FR-024)
 - [ ] T073 [P] [US4] `tests/Mcp/ListIdentifiersToolTest.php`: порядок и состав перечня
-- [ ] T074 [US4] `tests/Mcp/ParityWithRestTest.php`: для каждой пары «tool ↔ endpoint» результат на одних и тех же входных данных совпадает (FR-024)
+- [ ] T074 [US4] `tests/Mcp/ParityWithRestTest.php`: для каждой пары «tool ↔ endpoint» результат на одних и тех же входных данных совпадает, включая отказы — код причины в MCP совпадает с `error.code` REST для всех четырёх причин из FR-015 (FR-024)
 - [ ] T075 [P] [US4] `tests/Mcp/AuthorizationTest.php`: обращение без заголовка авторизации отвергается на маршруте, до инструмента
 
 ### Step 6.2: MCP-сервер и инструменты
@@ -507,7 +509,7 @@ gate_commands:
 tier: standard
 -->
 
-- [ ] T084 [US5] `app/Http/Middleware/LogApiRequest.php` — замер длительности, запись после ответа, перехват исключения записи в лог приложения; сохраняемый `payload` обрезается сверху (4 КБ), чтобы одна крупная посылка не раздувала журнал
+- [ ] T084 [US5] `app/Http/Middleware/LogApiRequest.php` — пользователь и снимок имени токена (`$request->user()->currentAccessToken()->name`, см. data-model.md §api_logs), замер длительности, запись после ответа, перехват исключения записи в лог приложения; сохраняемый `payload` обрезается сверху (4 КБ), чтобы одна крупная посылка не раздувала журнал
 - [ ] T085 [US5] Проверить, что `LogApiRequest` уже зарегистрирован на группах `api` и `/mcp` в T028a, и что записи появляются для обеих поверхностей; сам `bootstrap/app.php` здесь не правится
 - [ ] T086 [P] [US5] `app/Console/Commands/PruneApiLogs.php` и регистрация в планировщике `routes/console.php` с горизонтом из `config/getid.php`
 
@@ -626,3 +628,12 @@ US3 (вход) не блокирует ничего: тесты аутентиф
 
 Там же исправлено расхождение с документацией `laravel/mcp`: сервер регистрируется в
 `routes/api.php`, отдельного файла маршрутов пакет не создаёт.
+
+### Второй прогон (2026-09-23)
+
+| Правка | Чего не хватало |
+|--------|-----------------|
+| T104 | тесты по умолчанию шли бы на `sqlite :memory:`: блокировки не проверяются, процессы теста гонки не видят общей базы, suites `Mcp` и `Concurrency` не запускаются |
+| T042, T095 | столкновение по теме обрабатывалось внутри транзакции — инкремент счётчика коммитился, номер сгорал вопреки FR-004a |
+| T039 | окружение дочерних процессов теста гонки не было закреплено |
+| T084, T070 | журнал не знал о снимке имени токена; маршруты, на которые опирается quickstart, не были именованы |
