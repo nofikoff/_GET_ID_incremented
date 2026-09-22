@@ -64,17 +64,17 @@ gate_commands:
 tier: strong
 -->
 
-- [ ] T001 Создать приложение Laravel 13 поверх существующего репозитория, не затирая уже лежащие файлы: `composer create-project laravel/laravel:^13.0 tmp-app --no-install`, затем `rsync -a --ignore-existing tmp-app/ ./ && rm -rf tmp-app && composer install`. Глоб `.*` не применять — он раскрывается в `.` и `..`. Skeleton несёт собственные `.gitignore` и `README.md`; `--ignore-existing` оставит наши, поэтому правила Laravel (`/vendor`, `/public/build`, `/storage/*.key`) в `.gitignore` смержить вручную
-- [ ] T002 Зафиксировать PHP 8.3 в `composer.json` (`"php": "^8.3"`) и сверить, что `composer.lock` не тянет пакеты с более низкой границей
-- [ ] T003 [P] Написать `docker/php/Dockerfile` (php-fpm 8.3 с `pdo_mysql`, `bcmath`, `mbstring`, `intl`), `docker/nginx/default.conf` с корнем в `public/`
-- [ ] T004 [P] Написать `docker-compose.yml`: сервисы `app`, `nginx` (порт 8080), `mysql` 8.0 с томом и healthcheck; `app` зависит от `mysql` через `depends_on.condition: service_healthy`, иначе `make migrate` сразу после `make up` падает на первом запуске
-- [ ] T004a [P] Написать `.dockerignore`: `vendor/`, `node_modules/`, `.git/`, `storage/logs/`, `.env` — без него содержимое этих каталогов уезжает в образ
-- [ ] T005 [P] Написать `Makefile` с целями `up`, `down`, `migrate`, `fresh`, `test` (все четыре suite), `test-race` (`php artisan test --testsuite=Concurrency`), `shell` — все через `docker compose exec app`
-- [ ] T006 Установить зависимости: `composer require laravel/sanctum laravel/socialite laravel/mcp` и опубликовать конфиги Sanctum
-- [ ] T007 [P] Установить инструменты качества: `composer require --dev larastan/larastan laravel/pint pestphp/pest`, настроить `phpstan.neon` на уровень 6 и `pint.json`
-- [ ] T008 [P] Заполнить `.env.example` ключами `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `ADMIN_EMAILS`, `ALLOWED_EMAIL_DOMAIN=cas.ai`, `API_LOG_RETENTION_DAYS=90`
-- [ ] T104 Перевести тесты на MySQL в `phpunit.xml`: `DB_CONNECTION=mysql`, `DB_DATABASE=getid_test` вместо `sqlite`/`:memory:` из skeleton; базу `getid_test` создавать init-скриптом контейнера `mysql` (`docker/mysql/init/01-test-db.sql`). Переменные `DB_*` объявлять с `force="true"`: без него `<env>` не перекрывает значение, уже заданное окружением контейнера, и тесты молча уходят в рабочую базу — а набор `Concurrency` её усекает. Добавить testsuites `Mcp` (`tests/Mcp`) и `Concurrency` (`tests/Concurrency`) к `Unit` и `Feature`. Без этого `lockForUpdate()` не проверяется вообще — SQLite не поддерживает `SELECT ... FOR UPDATE`, — 50 процессов теста гонки получают 50 разных пустых баз в памяти, а `make test` молча пропускает `tests/Mcp` и `tests/Concurrency` (принципы V и VII)
-- [ ] T009 Добавить в `Makefile` цель `init` (`cp -n .env.example .env`, `composer install`, `php artisan key:generate`) и проверить, что `make up && make init && make migrate` поднимает окружение с нуля и стандартные миграции Laravel проходят
+- [x] T001 Создать приложение Laravel 13 поверх существующего репозитория, не затирая уже лежащие файлы: `composer create-project laravel/laravel:^13.0 tmp-app --no-install`, затем `rsync -a --ignore-existing tmp-app/ ./ && rm -rf tmp-app && composer install`. Глоб `.*` не применять — он раскрывается в `.` и `..`. Skeleton несёт собственные `.gitignore` и `README.md`; `--ignore-existing` оставит наши, поэтому правила Laravel (`/vendor`, `/public/build`, `/storage/*.key`) в `.gitignore` смержить вручную
+- [x] T002 Зафиксировать PHP 8.3 в `composer.json` (`"php": "^8.3"`) и сверить, что `composer.lock` не тянет пакеты с более низкой границей
+- [x] T003 [P] Написать `docker/php/Dockerfile` (php-fpm 8.3 с `pdo_mysql`, `bcmath`, `mbstring`, `intl`), `docker/nginx/default.conf` с корнем в `public/`
+- [x] T004 [P] Написать `docker-compose.yml`: сервисы `app`, `nginx` (порт 8080), `mysql` 8.0 с томом и healthcheck; `app` зависит от `mysql` через `depends_on.condition: service_healthy`, иначе `make migrate` сразу после `make up` падает на первом запуске
+- [x] T004a [P] Написать `.dockerignore`: `vendor/`, `node_modules/`, `.git/`, `storage/logs/`, `.env` — без него содержимое этих каталогов уезжает в образ
+- [x] T005 [P] Написать `Makefile` с целями `up`, `down`, `migrate`, `fresh`, `test` (все четыре suite), `test-race` (`php artisan test --testsuite=Concurrency`), `shell` — все через `docker compose exec app`
+- [x] T006 Установить зависимости: `composer require laravel/sanctum laravel/socialite laravel/mcp` и опубликовать конфиги Sanctum
+- [x] T007 [P] Установить инструменты качества: `composer require --dev larastan/larastan laravel/pint pestphp/pest`, настроить `phpstan.neon` на уровень 6 и `pint.json`
+- [x] T008 [P] Заполнить `.env.example` ключами `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `ADMIN_EMAILS`, `ALLOWED_EMAIL_DOMAIN=cas.ai`, `API_LOG_RETENTION_DAYS=90`
+- [x] T104 Перевести тесты на MySQL в `phpunit.xml`: `DB_CONNECTION=mysql`, `DB_DATABASE=getid_test` вместо `sqlite`/`:memory:` из skeleton; базу `getid_test` создавать init-скриптом контейнера `mysql` (`docker/mysql/init/01-test-db.sql`). Переменные `DB_*` объявлять с `force="true"`: без него `<env>` не перекрывает значение, уже заданное окружением контейнера, и тесты молча уходят в рабочую базу — а набор `Concurrency` её усекает. Добавить testsuites `Mcp` (`tests/Mcp`) и `Concurrency` (`tests/Concurrency`) к `Unit` и `Feature`. Без этого `lockForUpdate()` не проверяется вообще — SQLite не поддерживает `SELECT ... FOR UPDATE`, — 50 процессов теста гонки получают 50 разных пустых баз в памяти, а `make test` молча пропускает `tests/Mcp` и `tests/Concurrency` (принципы V и VII)
+- [x] T009 Добавить в `Makefile` цель `init` (`cp -n .env.example .env`, `composer install`, `php artisan key:generate`) и проверить, что `make up && make init && make migrate` поднимает окружение с нуля и стандартные миграции Laravel проходят
 
 **Checkpoint**: приложение отвечает на `http://localhost:8080`, тесты запускаются в контейнере
 
@@ -106,12 +106,12 @@ tier: strong
 -->
 
 
-- [ ] T010 Отредактировать исходную миграцию `database/migrations/0001_01_01_000000_create_users_table.php`: добавить `google_id`, `avatar_url`, `role` enum(`member`,`admin`) default `member`, `deactivated_at`; убрать `password` и `email_verified_at`. Приложение ещё не развёрнуто, поэтому отдельная миграция «поправить то, что сами же создали строкой выше» осталась бы в дереве навсегда
-- [ ] T011 [P] Миграция `database/migrations/*_create_projects_table.php` по [data-model.md](./data-model.md) §projects, включая UNIQUE по `key` с учётом лимита длины индекса InnoDB
-- [ ] T012 [P] Миграция `database/migrations/*_create_key_types_table.php` по §key_types
-- [ ] T013 Миграция `database/migrations/*_create_project_key_type_table.php` по §project_key_type: `seed_sequence`, `last_sequence`, `is_enabled`, UNIQUE `(project_id, key_type_id)`
-- [ ] T014 Миграция `database/migrations/*_create_identifiers_table.php` по §identifiers: оба UNIQUE-индекса, индекс для перечня по убыванию; `down()` дропает таблицу, только если она пуста, а на непустой бросает исключение (data-model.md §identifiers, конституция §Порядок работы)
-- [ ] T015 [P] Миграция `database/migrations/*_create_api_logs_table.php` по §api_logs с индексом по `created_at`
+- [x] T010 Отредактировать исходную миграцию `database/migrations/0001_01_01_000000_create_users_table.php`: добавить `google_id`, `avatar_url`, `role` enum(`member`,`admin`) default `member`, `deactivated_at`; убрать `password` и `email_verified_at`. Приложение ещё не развёрнуто, поэтому отдельная миграция «поправить то, что сами же создали строкой выше» осталась бы в дереве навсегда
+- [x] T011 [P] Миграция `database/migrations/*_create_projects_table.php` по [data-model.md](./data-model.md) §projects, включая UNIQUE по `key` с учётом лимита длины индекса InnoDB
+- [x] T012 [P] Миграция `database/migrations/*_create_key_types_table.php` по §key_types
+- [x] T013 Миграция `database/migrations/*_create_project_key_type_table.php` по §project_key_type: `seed_sequence`, `last_sequence`, `is_enabled`, UNIQUE `(project_id, key_type_id)`
+- [x] T014 Миграция `database/migrations/*_create_identifiers_table.php` по §identifiers: оба UNIQUE-индекса, индекс для перечня по убыванию; `down()` дропает таблицу, только если она пуста, а на непустой бросает исключение (data-model.md §identifiers, конституция §Порядок работы)
+- [x] T015 [P] Миграция `database/migrations/*_create_api_logs_table.php` по §api_logs с индексом по `created_at`
 
 ### Step 2.2: Модели
 
@@ -133,12 +133,12 @@ tier: standard
 -->
 
 
-- [ ] T016 [P] Модель `app/Models/Project.php`: связь `keyTypes()` через `project_key_type` с `withPivot`, scope `active()`
-- [ ] T017 [P] Модель `app/Models/KeyType.php` со scope `active()`
-- [ ] T018 [P] Модель `app/Models/ProjectKeyType.php` (pivot как полноценная модель — она несёт счётчик)
-- [ ] T019 [P] Модель `app/Models/Identifier.php` без `update`/`delete` в публичном интерфейсе
-- [ ] T020 [P] Модель `app/Models/ApiLog.php`
-- [ ] T021 Дополнить `app/Models/User.php`: `HasApiTokens`, каст `role` в enum `app/Enums/UserRole.php`, метод `isAdmin()`, scope `active()`
+- [x] T016 [P] Модель `app/Models/Project.php`: связь `keyTypes()` через `project_key_type` с `withPivot`, scope `active()`
+- [x] T017 [P] Модель `app/Models/KeyType.php` со scope `active()`
+- [x] T018 [P] Модель `app/Models/ProjectKeyType.php` (pivot как полноценная модель — она несёт счётчик)
+- [x] T019 [P] Модель `app/Models/Identifier.php` без `update`/`delete` в публичном интерфейсе
+- [x] T020 [P] Модель `app/Models/ApiLog.php`
+- [x] T021 Дополнить `app/Models/User.php`: `HasApiTokens`, каст `role` в enum `app/Enums/UserRole.php`, метод `isAdmin()`, scope `active()`
 
 ### Step 2.3: Value objects
 
@@ -160,12 +160,12 @@ tier: strong
 -->
 
 
-- [ ] T022 [P] Тест `tests/Unit/ProjectKeyTest.php`: таблица примеров SSH/HTTPS/порт/`.git`/регистр → один ключ, уже нормализованный ключ на входе → тот же ключ (идемпотентность), плюс неразбираемые строки (FR-008, FR-008a, research.md §R5)
-- [ ] T023 [P] Тест `tests/Unit/DocumentNameTest.php`: регистр, пробелы, подчёркивания, точки и прочая пунктуация, повторы разделителей, кириллица без транслитерации, одна и та же буква в составной и разложенной форме Unicode, пустой результат (FR-007, FR-007a)
-- [ ] T024 [P] Тест `tests/Unit/IdentifierFormatTest.php`: `{number}`, `{number:04d}`, `{name}`, неизвестный плейсхолдер, отсутствие номера, номер шире ширины шаблона (FR-013a, Edge Cases)
-- [ ] T025 [P] Реализовать `app/Domain/Project/ProjectKey.php` — разбор без `parse_url` для SCP-формы
-- [ ] T026 [P] Реализовать `app/Domain/KeyType/DocumentName.php` — хранит исходную строку и slug
-- [ ] T027 [P] Реализовать `app/Domain/KeyType/IdentifierFormat.php` — разбор шаблона и применение, без `sprintf` от чужой строки
+- [x] T022 [P] Тест `tests/Unit/ProjectKeyTest.php`: таблица примеров SSH/HTTPS/порт/`.git`/регистр → один ключ, уже нормализованный ключ на входе → тот же ключ (идемпотентность), плюс неразбираемые строки (FR-008, FR-008a, research.md §R5)
+- [x] T023 [P] Тест `tests/Unit/DocumentNameTest.php`: регистр, пробелы, подчёркивания, точки и прочая пунктуация, повторы разделителей, кириллица без транслитерации, одна и та же буква в составной и разложенной форме Unicode, пустой результат (FR-007, FR-007a)
+- [x] T024 [P] Тест `tests/Unit/IdentifierFormatTest.php`: `{number}`, `{number:04d}`, `{name}`, неизвестный плейсхолдер, отсутствие номера, номер шире ширины шаблона (FR-013a, Edge Cases)
+- [x] T025 [P] Реализовать `app/Domain/Project/ProjectKey.php` — разбор без `parse_url` для SCP-формы
+- [x] T026 [P] Реализовать `app/Domain/KeyType/DocumentName.php` — хранит исходную строку и slug
+- [x] T027 [P] Реализовать `app/Domain/KeyType/IdentifierFormat.php` — разбор шаблона и применение, без `sprintf` от чужой строки
 
 ### Step 2.4: Инфраструктура запроса
 
@@ -187,13 +187,13 @@ tier: strong
 -->
 
 
-- [ ] T028 Определить в `app/Providers/AppServiceProvider.php` именованный `RateLimiter::for('getid')`, ключующийся по `$request->user()?->currentAccessToken()?->id` с порогом 60 в минуту. Стандартный `throttle:60,1` ключуется по идентификатору пользователя, а FR-020a требует счёта **по токену** — у пользователя их несколько; вдобавок два независимых лимита на группах `api` и `/mcp` дали бы суммарно 120 запросов в минуту вместо 60
-- [ ] T103 Настроить доверенные прокси в `bootstrap/app.php`: `$middleware->trustProxies(at: '*', headers: Request::HEADER_X_FORWARDED_PROTO)`. Доверяется только схема — ровно то, что нужно, чтобы за Cloudflare `url()` отдавал `https://` и redirect URI совпадал с зарегистрированным в Google; без этого вход ломается с ошибкой, не упоминающей прокси. `X-Forwarded-For` и `X-Forwarded-Host` в доверенные не входят: адрес клиента нигде не используется, а подмена host через запрос в обход Cloudflare исключается на корню
-- [ ] T028a Настроить `bootstrap/app.php` целиком за один заход: группа `api` с `auth:sanctum` и `throttle:getid`, отдельная группа для маршрутов MCP, и регистрация `LogApiRequest` (класс появится в T084 — регистрируется по имени). Вместе с T103 это единственное место, где правится `bootstrap/app.php`, и обе задачи лежат в одном шаге: две разные фазы, пишущие этот файл, при исполнении бандлами конфликтуют
-- [ ] T029 [P] Создать иерархию доменных исключений в `app/Domain/Sequence/Exceptions/`: `UnknownProject`, `InactiveProject`, `TypeNotEnabled`, `InactiveKeyType`, `UnparsableOrigin`, `EmptyDocumentName` — каждое несёт код из `DomainError.error.code` контракта
-- [ ] T030 Отрисовать доменные исключения в JSON формы `DomainError` (contracts/rest-api.yaml) через `withExceptions()->render()` со статусом 422. Отдельно привести к той же форме исключения фреймворка, которые контракт тоже описывает как `DomainError`: `AuthenticationException` → 401 `unauthenticated`, `AccessDeniedHttpException` → 403 `forbidden`, `NotFoundHttpException` → 404 `not_found`, `ThrottleRequestsException` → 429 `rate_limited`
-- [ ] T031 [P] Фабрики `database/factories/` для `Project`, `KeyType`, `ProjectKeyType`, `Identifier`
-- [ ] T032 [P] Seeder `database/seeders/KeyTypeSeeder.php`: `ADR` → `ADR-{number:04d}`, `spec` → `{number:03d}-{name}`
+- [x] T028 Определить в `app/Providers/AppServiceProvider.php` именованный `RateLimiter::for('getid')`, ключующийся по `$request->user()?->currentAccessToken()?->id` с порогом 60 в минуту. Стандартный `throttle:60,1` ключуется по идентификатору пользователя, а FR-020a требует счёта **по токену** — у пользователя их несколько; вдобавок два независимых лимита на группах `api` и `/mcp` дали бы суммарно 120 запросов в минуту вместо 60
+- [x] T103 Настроить доверенные прокси в `bootstrap/app.php`: `$middleware->trustProxies(at: '*', headers: Request::HEADER_X_FORWARDED_PROTO)`. Доверяется только схема — ровно то, что нужно, чтобы за Cloudflare `url()` отдавал `https://` и redirect URI совпадал с зарегистрированным в Google; без этого вход ломается с ошибкой, не упоминающей прокси. `X-Forwarded-For` и `X-Forwarded-Host` в доверенные не входят: адрес клиента нигде не используется, а подмена host через запрос в обход Cloudflare исключается на корню
+- [x] T028a Настроить `bootstrap/app.php` целиком за один заход: группа `api` с `auth:sanctum` и `throttle:getid`, отдельная группа для маршрутов MCP, и регистрация `LogApiRequest` (класс появится в T084 — регистрируется по имени). Вместе с T103 это единственное место, где правится `bootstrap/app.php`, и обе задачи лежат в одном шаге: две разные фазы, пишущие этот файл, при исполнении бандлами конфликтуют
+- [x] T029 [P] Создать иерархию доменных исключений в `app/Domain/Sequence/Exceptions/`: `UnknownProject`, `InactiveProject`, `TypeNotEnabled`, `InactiveKeyType`, `UnparsableOrigin`, `EmptyDocumentName` — каждое несёт код из `DomainError.error.code` контракта
+- [x] T030 Отрисовать доменные исключения в JSON формы `DomainError` (contracts/rest-api.yaml) через `withExceptions()->render()` со статусом 422. Отдельно привести к той же форме исключения фреймворка, которые контракт тоже описывает как `DomainError`: `AuthenticationException` → 401 `unauthenticated`, `AccessDeniedHttpException` → 403 `forbidden`, `NotFoundHttpException` → 404 `not_found`, `ThrottleRequestsException` → 429 `rate_limited`
+- [x] T031 [P] Фабрики `database/factories/` для `Project`, `KeyType`, `ProjectKeyType`, `Identifier`
+- [x] T032 [P] Seeder `database/seeders/KeyTypeSeeder.php`: `ADR` → `ADR-{number:04d}`, `spec` → `{number:03d}-{name}`
 
 **Checkpoint**: схема разворачивается, unit-тесты value object зелёные, истории можно вести параллельно
 
@@ -644,3 +644,68 @@ US3 (вход) не блокирует ничего: тесты аутентиф
 - [ ] S2 (~600K) Steps 3.1, 3.2, 4.1, 4.2, 5.1
 - [ ] S3 (~550K) Steps 5.2, 6.1, 6.2, 7.1, 7.2
 - [ ] S4 (~190K) Steps 8.1, 8.2
+
+## Progress Log
+
+### S1.step-1.1 — 2026-09-23
+**Completed steps:** 1.1
+**Commits:** 37f37a4
+
+### S1.step-2.1 — 2026-09-23
+**Completed steps:** 2.1
+**Commits:** d67b5bd
+
+### S1.step-2.2 — 2026-09-23
+**Completed steps:** 2.2
+**Commits:** cd3cf51
+
+### S1.step-2.3 — 2026-09-23
+**Completed steps:** 2.3
+**Commits:** b245460
+
+### S1.step-2.4 — 2026-09-23
+**Completed steps:** 2.4
+**Commits:** ae5c997
+
+### S1 — observations (2026-09-23, dispatch 1)
+plan-wrong: this harness has no TaskCreate tool, so the bundle was tracked without it.
+plan-wrong: T001: the laravel/laravel 13.10.1 skeleton ships CLAUDE.md and AGENTS.md, a Laravel Boost bootstrap prompt (curl|bash a host PHP, composer require laravel/boost). Both were excluded from the rsync; T090 still owns the repo CLAUDE.md.
+plan-wrong: T104: <env force='true'> alone does not isolate tests. PHPUnit force writes only putenv and $_ENV (vendor/phpunit/phpunit/src/TextUI/Configuration/PhpHandler.php:133-150), while Laravel Env reads $_SERVER first (ServerConstAdapter), which CLI fills from the container environment. A hostile DB_CONNECTION/DB_DATABASE sent the suite elsewhere (reproduced); fixed with <server> twins next to each forced <env>.
+plan-wrong: T104 names docker/mysql/init/01-test-db.sql, but plain SQL cannot read the grantee from DB_USERNAME. Shipped as an executable 01-test-db.sh. Docker Desktop reports bind-mounted files as executable to root, so a non-executable script relying on the entrypoint's docker_process_sql fails on macOS (container exit 126).
+plan-wrong: T007: the php:8.3-fpm image has no php.ini, and Larastan crashes at the built-in 128M. The fixed gate command cannot pass --memory-limit, so the Dockerfile sets 512M.
+plan-wrong: T007: pestphp/pest ^4.7 needs composer -W (it pins phpunit 12.5.33 under the skeleton's locked 12.5.35); Pest 5 needs PHP 8.4. T002's pin to 8.3 is actually enforced by config.platform.php=8.3.0, not by the php requirement.
+plan-wrong: data-model.md projects: the 767-byte index limit belongs to COMPACT/REDUNDANT rows. MySQL 8.0 and MariaDB 10.2+ default to DYNAMIC (3072 bytes), so UNIQUE on utf8mb4 varchar(255) needs neither a prefix nor narrowing.
+plan-wrong: data-model.md identifiers: INDEX (project_id, key_type_id, sequence_number DESC) duplicates the UNIQUE on the same columns. EXPLAIN on MySQL 8.0.44 shows that unique index with 'Backward index scan' and no filesort, so the extra index was not created.
+plan-wrong: data-model.md specifies utf8mb4_unicode_ci everywhere, which folds cafe=café, елка=ёлка and strasse=straße (verified in MySQL) and would merge distinct themes, against FR-007. identifiers.name_slug and projects.key use utf8mb4_bin.
+plan-wrong: T028a/T080: Mcp::web('/mcp') inside routes/api.php lands at /api/mcp under the default apiPrefix, contradicting contracts/mcp-tools.md. Resolved with apiPrefix '', so T046 must declare REST under Route::prefix('api/v1') in routes/api.php.
+plan-wrong: T028a: a separate MCP middleware group would be dead config, because the MCP route lives in routes/api.php and inherits the api group. T080's repeated auth:sanctum/throttle:getid is deduplicated by Router::uniqueMiddleware; a test pins that 60 requests pass.
+plan-wrong: T028a: registering the not-yet-written LogApiRequest by name in an active group makes every API request fail (the container cannot resolve the class). A pass-through class was created; T084 fills it, and T085 has nothing to register.
+plan-wrong: T028a/T030: without redirectGuestsTo, an API request without an Accept header returns 500 on route('login'), because Authenticate computes the redirect before any renderer runs. The API surface now gets no redirect; web still defaults to route('login'), so T070 must name its sign-in page route 'login' or edit bootstrap/app.php again.
+plan-wrong: T030: abort(403) throws a plain HttpException, not AccessDeniedHttpException. Rendering is keyed by status code (403/404/429) on HttpExceptionInterface.
+plan-wrong: T025/T026 throw UnparsableOrigin/EmptyDocumentName, which the plan defines only in T029 (step 2.4). The DomainRejection base and those two classes were created in 2.3.
+plan-wrong: T097 overlaps what exists: the refusing down() on a non-empty table and every Eloquent write path are already tested (tests/Feature/Database/RegistrySchemaTest.php, tests/Feature/Models/IdentifierImmutabilityTest.php). down() on an empty table issues DDL, which implicitly commits the RefreshDatabase transaction, so that half needs DatabaseMigrations or its own cleanup.
+redone: docker/mysql/init/01-test-db.sh went from sourced to executable after the mysql container exited 126 on the virtiofs -x quirk.
+redone: phpunit.xml DB isolation: <env force> plus <server>, after the hostile-env probe failed. The failed run left a stray sqlite file 'getid' in the repo root, which was deleted.
+redone: IdentifierImmutabilityTest datasets were double-wrapped closures. Pest passes Closure-typed dataset values uninvoked, so nothing ran, and the red came from the test itself. Flattened; the instance touch() case became builder touch(), because a same-second touch is a no-op save.
+redone: Project/KeyType belongsToMany defaulted to table key_type_project, since using() does not set the table; now explicit 'project_key_type'.
+redone: IdentifierFormat moved to PREG_UNMATCHED_AS_NULL and a separate NUMBER fragment after PHPStan's regex-shape inference wrongly assumed the width group is always set.
+redone: RenderApiErrors went from class-keyed renderers (abort(403) slipped through) to one status-keyed renderer. The API-path predicate moved to App\Http\ApiSurface once redirectGuestsTo needed it too.
+decided: host port is APP_PORT (8080 in .env.example, 8090 in the local .env) and MySQL is not published to the host. Breaks host-side DB tools, which then need a configurable port mapping.
+decided: compose project name get-id (containers get-id-*-1, volume get-id_mysql-data), no container_name. The Makefile exports the host UID/GID as image build args; a plain 'docker compose build' uses 1000:1000.
+decided: make up depends on a .env file target (compose reads MySQL credentials and the port from it). init guards key:generate so a rerun keeps APP_KEY. make test runs up, then composer test (config:clear plus all four suites).
+decided: .gitignore left untouched: it already carried /vendor, /public/build and /storage/*.key.
+decided: phpstan.neon analyses app, bootstrap/app.php, config, database and routes, not tests/ (Pest binds $this at runtime). tests/Pest.php binds TestCase+RefreshDatabase to Feature and Mcp only; Concurrency stays unbound so T038 runs outside a transaction.
+decided: users lose password, email_verified_at and the password_reset_tokens table. DatabaseSeeder seeds no user, so quickstart's User::first() is the Google-signed admin. role is not mass-assignable, and a new User is 'member' in memory.
+decided: ProjectKeyType::nextSequence() is the single home of GREATEST(seed,last)+1 for the issuer, resolve and admin resources. T041 must still read it under the row lock.
+decided: Identifier immutability is enforced in the base query builder (update/upsert/delete), which closes save, update, increment, touch, upsert and relation deletes. Raw DB::table and truncate stay open (the Concurrency suite truncates).
+decided: ProjectKey accepts schemes ssh/git/http/https/git+ssh/ssh+git and follows git's scp rule (a colon before the first slash). Path segments are letters, digits and ._~- only, and IPv6 literal hosts are rejected. Breaks any origin carrying other characters, which becomes origin_unparsable.
+decided: DocumentName keeps combining marks (\p{M}); otherwise Devanagari and similar scripts split into hyphens. NFC is applied both before and after lowercasing.
+decided: IdentifierFormat widths are 1-99; {number:Nd} without the leading 0 and stray braces are rejected, and format() refuses numbers below 1.
+decided: rejection messages are Russian and name the normalized key and the next step. MCP (T072) can prefix them with errorCode(). A DomainRejection renders 422 on any path, not only the API.
+decided: LogApiRequest sits after auth:sanctum and throttle:getid, so the journal sees only authenticated, in-budget requests; 401 and 429 are not journaled. Changing that is a group-order edit in bootstrap/app.php.
+decided: the limiter keys on 'token:<id>' for a PersonalAccessToken and falls back to 'ip:'; the fallback is unreachable today because auth runs first.
+decided: KeyTypeSeeder uses firstOrCreate, so reseeding on every 'make migrate' never overwrites an administrator's edits.
+decided: the skeleton's tests/Unit/ExampleTest.php was removed in 2.3; tests/Feature/ExampleTest.php (GET / returns 200) stays until T070 replaces '/'.
+
+### S1 — dispatch 1 (2026-09-23)
+`kind=bundle agent=implementer tier=strong model=claude-opus-5-5 effort=xhigh turns=103 minutes=35.2 input=206 cache_write=348952 cache_read=22169222 output=181069`
