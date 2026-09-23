@@ -117,6 +117,7 @@ UNIQUE), `abilities`, `last_used_at`, `expires_at`. Хранится хеш — 
 | `name` | `varchar(255)` | NOT NULL, исходная формулировка первой выдачи |
 | `name_slug` | `varchar(255)` | NOT NULL, нормализованный вид |
 | `sequence_number` | `int unsigned` | NOT NULL |
+| `formatted_id` | `varchar(255)` | NOT NULL, идентификатор по шаблону типа на момент выдачи (FR-005) |
 | `created_by` | `bigint unsigned` | FK → `users.id`, `ON DELETE RESTRICT`, nullable |
 | `created_at`, `updated_at` | `timestamp` | |
 
@@ -126,7 +127,9 @@ UNIQUE), `abilities`, `last_used_at`, `expires_at`. Хранится хеш — 
   `Backward index scan` без filesort, поэтому отдельный индекс `sequence_number DESC` не заводится —
   он дублировал бы этот.
 
-Таблица неизменяема после вставки: в домене нет ни `update`, ни `delete`.
+Таблица неизменяема после вставки: в домене нет ни `update`, ни `delete`. `formatted_id` хранится,
+а не вычисляется при чтении: иначе правка `key_types.format_template` задним числом меняла бы вид
+уже выданных номеров, а файлы в репозиториях потребителей остались бы со старыми именами.
 
 `down()` миграции сносит таблицу, только если она пуста, а на непустой бросает исключение. Откат
 схемы на свежем окружении работает как обычно, а `migrate:rollback` на production остановится,

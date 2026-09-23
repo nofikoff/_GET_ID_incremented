@@ -515,6 +515,35 @@ tier: standard
 
 **Checkpoint**: обращения журналируются, журнал не растёт бесконечно
 
+### Step 7.3: Решения автора по итогам проверки S2
+
+<!-- plan-meta:
+allowed_paths:
+  - "app/**"
+  - "bootstrap/**"
+  - "config/**"
+  - "database/**"
+  - "routes/**"
+  - "resources/**"
+  - "tests/**"
+gate_commands:
+  lint: "docker compose exec -T app ./vendor/bin/pint --test"
+  type: "docker compose exec -T app ./vendor/bin/phpstan analyse --no-progress"
+  test_quick: "docker compose exec -T app php artisan test --filter=Sequence"
+  test_full: "make test"
+tier: strong
+-->
+
+Решения автора от 2026-09-23 по отступлениям, которые подтвердила проверка S2. Документы уже приведены
+к ним (spec.md FR-005, FR-013, FR-015, Edge Cases; data-model.md §identifiers; contracts/rest-api.yaml).
+
+- [ ] T105 Хранить `formatted_id` в `identifiers` (FR-005, data-model.md §identifiers): колонка `varchar(255) NOT NULL` в исходной миграции реестра — приложение не развёрнуто, поэтому правка на месте, как в T010. `SequenceIssuer` записывает вид по шаблону в момент выдачи, повтор, перечень, REST и MCP читают сохранённое значение. Тест: после `PATCH` шаблона типа ранее выданный номер в повторе и в перечне сохраняет прежний вид, а новая выдача получает новый
+- [ ] T106 Закрепить тестом поведение FR-015 для повтора: после гашения проекта, типа и пары повтор уже выданной темы возвращает прежний номер с `is_new: false` через REST и MCP, а новая тема получает отказ со своим кодом. Код уже так работает (S2), теста на этот сценарий нет
+- [ ] T107 Применять `additionalProperties: false` и `minProperties: 1` из contracts/rest-api.yaml на всех операциях, где они объявлены: неизвестное поле тела и пустой `PATCH` дают 422 `ValidationError`. Одно общее средство для всех FormRequest, а не правило в каждом; MCP-инструменты используют те же FormRequest-правила и получают то же поведение
+- [ ] T108 Закрепить тестом правило `seed_sequence` из контракта: тип в `PUT …/key-types` без `seed_sequence` сохраняет текущий seed, у новой пары он 0
+
+**Checkpoint**: выданный идентификатор неизменен, контракт применяется буквально
+
 ---
 
 ## Phase 8: Polish & Cross-Cutting Concerns
@@ -643,7 +672,7 @@ US3 (вход) не блокирует ничего: тесты аутентиф
 - [x] S1 (~600K) Steps 1.1, 2.1, 2.2, 2.3, 2.4 — done 2026-09-23
 - [x] S2 (~600K) Steps 3.1, 3.2, 4.1, 4.2, 5.1 — done 2026-09-23
 - [x] S3 (~550K) Steps 5.2, 6.1, 6.2, 7.1, 7.2 — done 2026-09-23
-- [ ] S4 (~190K) Steps 8.1, 8.2 — **current**
+- [ ] S4 (~310K) Steps 7.3, 8.1, 8.2 — **current**
 
 ## Progress Log
 
