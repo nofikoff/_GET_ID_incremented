@@ -9,17 +9,23 @@
 ## Предварительно
 
 - Docker с Compose.
-- OAuth-клиент Google с redirect URI `http://localhost:8080/auth/google/callback`.
+- OAuth-клиент Google с redirect URI `http://localhost:8080/auth/google/callback` (порт — `APP_PORT`,
+  см. шаг 1).
 - Аккаунт в домене `@cas.ai` — другой домен вход не пройдёт (FR-018).
 
 ## 1. Поднять окружение
 
 ```bash
-make up          # docker compose up -d --build
-make init        # .env из .env.example, composer install, key:generate
+cp -n .env.example .env   # APP_PORT — порт на хосте, 8080 по умолчанию
+make up                   # docker compose up -d --build --wait
+make init                 # composer install, key:generate
 # заполнить в .env GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, ADMIN_EMAILS
-make migrate     # artisan migrate --seed
+make migrate              # artisan migrate --seed
 ```
+
+Если 8080 занят, `make up` падает на публикации порта: `APP_PORT` меняется в `.env` до `make up`.
+От него строятся `APP_URL` и redirect URI, поэтому свой порт подставляется и в шагах ниже, и в
+Google Cloud Console.
 
 Seeder заводит два типа ключей: `ADR` с шаблоном `ADR-{number:04d}` и `spec` с `{number:03d}-{name}`.
 
@@ -33,7 +39,7 @@ Seeder заводит два типа ключей: `ADR` с шаблоном `A
 Проверка:
 
 ```bash
-docker compose exec app php artisan tinker --execute="dump(App\Models\User::first()->role)"
+docker compose exec app php artisan tinker --execute="echo App\Models\User::first()->role->value;"
 # admin
 ```
 
@@ -43,7 +49,7 @@ feature-тест, вручную проверять не нужно.
 ## 3. Создать токен
 
 В личном кабинете создать токен с именем (например, `laptop`). Значение показывается один раз
-(FR-019a) — сохранить.
+(FR-019a) вместе с готовой командой `claude mcp add` для шага 7 — сохранить.
 
 ```bash
 export GETID_TOKEN=<значение токена>
@@ -65,7 +71,8 @@ SCP-форма сняты.
 
 ## 5. Включить типы в проекте
 
-В репозитории уже лежат `ADR-0001..0042`, поэтому нумерация продолжается с 43 (FR-014a):
+В репозитории уже лежат `ADR-0001..0042`, поэтому нумерация продолжается с 43 (FR-014a). `1` в
+адресе — `id` проекта из ответа шага 4:
 
 ```bash
 curl -s -X PUT "$GETID_URL/api/v1/admin/projects/1/key-types" \
@@ -141,7 +148,8 @@ make test-race      # только tests/Concurrency
 публичный адрес `https://id.x3mal.com` за Cloudflare. Сводка — в [README](../../README.md)
 §Развёртывание.
 
-- PHP 8.3 с расширениями `pdo_mysql`, `bcmath`, `mbstring`, `curl`, `openssl`.
+- PHP 8.3 с расширениями `pdo_mysql`, `bcmath`, `intl`, `mbstring`, `curl`, `openssl`. `intl` несёт
+  `Normalizer`, на котором стоит нормализация темы (FR-007): без него каждая выдача номера — 500.
 - DocumentRoot — `/home/develop/domains/id.x3mal.com/public`, а не корень каталога домена.
 - `.env`: доступы к базе провайдера, ключи Google, `APP_URL=https://id.x3mal.com`, `ADMIN_EMAILS`.
 - `php artisan migrate --force`, затем `config:cache`, `route:cache`, `view:cache`.
