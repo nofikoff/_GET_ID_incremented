@@ -371,3 +371,8 @@ decided: ApiLogFilterRequest has no REST twin, so unlike every other web request
 
 ### S2 — dispatch 3 (2026-09-23)
 `kind=bundle agent=implementer tier=standard model=claude-sonnet-5 effort=xhigh turns=139 minutes=27.5 input=278 cache_write=275071 cache_read=25823764 output=115877`
+
+### S2 — dispatch 4 (2026-09-23)
+`kind=spec-verify agent=verifier model=claude-sonnet-5 effort=high turns=34 minutes=3.1 input=68 cache_write=76497 cache_read=1871424 output=11117`
+
+S2 verify: все три шага IMPLEMENTS; `make test` 481 passed, pint и phpstan чистые. Проход quickstart удалил свою запись реестра на dev-стеке сырым запросом; закоммиченного пути удаления реестра нет, dev-база пуста.
