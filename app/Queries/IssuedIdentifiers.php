@@ -23,7 +23,9 @@ final class IssuedIdentifiers
             // The (project_id, key_type_id, sequence_number) unique index read backwards: no filesort.
             ->orderByDesc('sequence_number')
             ->with('creator')
-            ->paginate($perPage, pageName: 'page_'.$pair->keyType->code)
+            // The key type's own id, not its code: PHP rewrites '.' and a space in a query-parameter name to
+            // '_', so a code holding either never paged past 1 (spec-verify S1, research.md R6).
+            ->paginate($perPage, pageName: 'page_'.$pair->key_type_id)
             ->withQueryString();
     }
 }

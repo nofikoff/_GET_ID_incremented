@@ -44,20 +44,33 @@ test('a pair lists its numbers newest first, each with its identifier, first wor
 test('sixty numbers make two pages of fifty, and paging one pair leaves the other where it is', function () {
     ($this->issue)($this->adr, 60);
     ($this->issue)($this->spec, 60);
+    $adrPage = 'page_'.$this->adr->key_type_id;
+    $specPage = 'page_'.$this->spec->key_type_id;
 
     $first = ($this->card)();
     $first->assertOk()
         ->assertSee(['ADR-0060', 'ADR-0011', 'SPEC-060', 'SPEC-011'])
         ->assertDontSee(['ADR-0010', 'SPEC-010'])
-        ->assertSee('page_ADR=2', false)
-        ->assertSee('page_spec=2', false);
+        ->assertSee(["{$adrPage}=2", "{$specPage}=2"], false);
 
-    $paged = ($this->card)(['page_ADR' => 2]);
+    $paged = ($this->card)([$adrPage => 2]);
     $paged->assertOk()
         ->assertSee(['ADR-0010', 'ADR-0001', 'SPEC-060', 'SPEC-011'])
         ->assertDontSee(['ADR-0011', 'SPEC-010'])
-        // The other pair's links keep this pair's page.
-        ->assertSee('page_ADR=2&amp;page_spec=2', false);
+        // The other pair's links keep this pair's page too (withQueryString()).
+        ->assertSee(["{$adrPage}=2", "{$specPage}=2"], false);
+});
+
+// spec-verify S1: PHP rewrites '.' and space in a query-parameter name to '_', so a pageName built from the
+// code never paged past 1 for a code containing either (research.md R6).
+test('a code with a dot or a space still pages past the first page', function () {
+    $rfc = enabledPair($this->adr->project, ['code' => 'RFC.v2', 'format_template' => 'RFC.v2-{number:03d}']);
+    ($this->issue)($rfc, 60);
+
+    ($this->card)(['page_'.$rfc->key_type_id => 2])
+        ->assertOk()
+        ->assertSee('RFC.v2-010')
+        ->assertDontSee('RFC.v2-011');
 });
 
 test('the numbers of a disabled pair and of a retired type stay on the card', function () {
