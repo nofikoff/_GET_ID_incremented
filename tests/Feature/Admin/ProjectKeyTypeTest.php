@@ -11,8 +11,8 @@ beforeEach(function () {
     Sanctum::actingAs(User::factory()->admin()->create());
 
     $this->project = Project::factory()->create(['repo_url' => 'git@gitlab.cas.ai:team/backend.git']);
-    $this->adr = KeyType::factory()->create(['code' => 'ADR', 'name' => 'Architecture Decision Record', 'format_template' => 'ADR-{number:04d}']);
-    $this->spec = KeyType::factory()->create(['code' => 'spec', 'name' => 'Specification', 'format_template' => '{number:03d}-{name}']);
+    $this->adr = KeyType::factory()->create(['code' => 'ADR', 'name' => 'Architecture Decision Record']);
+    $this->spec = KeyType::factory()->create(['code' => 'spec', 'name' => 'Specification']);
 
     $this->setTypes = fn (array $types) => $this->putJson("api/v1/admin/projects/{$this->project->id}/key-types", ['types' => $types]);
     $this->next = fn (string $name, string $type = 'ADR') => $this->postJson(
@@ -33,8 +33,8 @@ test('an administrator enables types in a project, one of them seeded', function
             ['code' => 'spec', 'name' => 'Specification', 'seed_sequence' => 0, 'last_sequence' => 0, 'next_number' => 1],
         ]]);
 
-    ($this->next)('add-oauth-auth')->assertOk()->assertJsonPath('formatted_id', 'ADR-0043');
-    ($this->next)('add-oauth-auth', 'spec')->assertOk()->assertJsonPath('formatted_id', '001-add-oauth-auth');
+    ($this->next)('add-oauth-auth')->assertOk()->assertJsonPath('sequence_number', 43);
+    ($this->next)('add-oauth-auth', 'spec')->assertOk()->assertJsonPath('sequence_number', 1);
 });
 
 // FR-016: the counter lives on the link row, so dropping a type from the set disables it and never deletes it.

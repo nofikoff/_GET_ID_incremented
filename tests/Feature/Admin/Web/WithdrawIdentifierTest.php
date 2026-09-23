@@ -31,10 +31,10 @@ describe('US1: test numbers come off the tail', function () {
 
         ($this->withdraw)($second)
             ->assertRedirect(route('admin.projects.show', $this->pair->project))
-            ->assertSessionHas('status', 'Номер «ADR-0033» удалён. Следующий номер — 33.');
+            ->assertSessionHas('status', 'Номер ADR 33 удалён. Следующий номер — 33.');
         expect(($this->numbers)())->toBe([32]);
 
-        ($this->withdraw)($first)->assertSessionHas('status', 'Номер «ADR-0032» удалён. Следующий номер — 32.');
+        ($this->withdraw)($first)->assertSessionHas('status', 'Номер ADR 32 удалён. Следующий номер — 32.');
         expect(($this->numbers)())->toBe([])
             ->and($this->pair->refresh()->last_sequence)->toBe(0);
 
@@ -48,13 +48,14 @@ describe('US1: test numbers come off the tail', function () {
 
         expect(($this->issuedBlock)())
             ->toContain(route('admin.projects.identifiers.destroy', [$this->pair->project, $tail]))
-            ->toContain('Удалить ADR-0033? Номер может быть выдан снова другой теме.');
+            ->toContain('Удалить ADR 33? Номер может быть выдан снова другой теме.');
 
         ($this->withdraw)($tail);
 
         expect(($this->issuedBlock)())
-            ->toContain('Удалить ADR-0032?')
-            ->not->toContain('ADR-0033');
+            ->toContain('Удалить ADR 32?')
+            ->not->toContain('Удалить ADR 33?')
+            ->not->toContain('test2');
     });
 
     test('an empty pair and a later page carry no removal', function () {
@@ -69,14 +70,14 @@ describe('US1: test numbers come off the tail', function () {
             '</section>',
         );
 
-        expect($secondPage)->toContain('ADR-0032')->not->toContain('<form');
+        expect($secondPage)->toContain('<td>theme 1</td>')->not->toContain('<form');
     });
 
     test('retirement does not take the removal away', function (Closure $retire) {
         $tail = ($this->issue)('test');
         $retire($this->pair);
 
-        expect(($this->issuedBlock)())->toContain('Удалить ADR-0032?');
+        expect(($this->issuedBlock)())->toContain('Удалить ADR 32?');
         ($this->withdraw)($tail)->assertSessionHasNoErrors();
         expect(($this->numbers)())->toBe([]);
     })->with([
@@ -94,7 +95,7 @@ describe('US2: a number with a later one after it stays', function () {
 
         ($this->withdraw)($middle)
             ->assertRedirect(route('admin.projects.show', $this->pair->project))
-            ->assertSessionHasErrors(["identifiers.{$this->pair->key_type_id}" => 'Удалить можно только последний номер пары: сейчас это ADR-0034.']);
+            ->assertSessionHasErrors(["identifiers.{$this->pair->key_type_id}" => 'Удалить можно только последний номер пары: сейчас это ADR 34.']);
 
         expect(($this->numbers)())->toBe([32, 33, 34])
             ->and($this->pair->refresh()->last_sequence)->toBe(34);
@@ -104,7 +105,7 @@ describe('US2: a number with a later one after it stays', function () {
         $seen = ($this->issue)('seen');
         ($this->issue)('issued meanwhile');
 
-        ($this->withdraw)($seen)->assertSessionHasErrors(["identifiers.{$this->pair->key_type_id}" => 'Удалить можно только последний номер пары: сейчас это ADR-0033.']);
+        ($this->withdraw)($seen)->assertSessionHasErrors(["identifiers.{$this->pair->key_type_id}" => 'Удалить можно только последний номер пары: сейчас это ADR 33.']);
     });
 
     test('the refusal is shown above the pair on the card', function () {
@@ -113,7 +114,7 @@ describe('US2: a number with a later one after it stays', function () {
 
         ($this->withdraw)($middle);
 
-        expect(($this->issuedBlock)())->toContain('сейчас это ADR-0033');
+        expect(($this->issuedBlock)())->toContain('сейчас это ADR 33');
     });
 
     test('a number already withdrawn is not found', function () {

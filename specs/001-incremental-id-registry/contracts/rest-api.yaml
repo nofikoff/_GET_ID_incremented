@@ -76,7 +76,6 @@ paths:
                     type: "ADR"
                     name: "add-oauth-auth"
                     sequence_number: 12
-                    formatted_id: "ADR-0012"
                     is_new: true
                     created_at: "2026-09-20T14:30:00Z"
                 repeat:
@@ -86,7 +85,6 @@ paths:
                     type: "ADR"
                     name: "add-oauth-auth"
                     sequence_number: 12
-                    formatted_id: "ADR-0012"
                     is_new: false
                     created_at: "2026-09-20T14:30:00Z"
         "401": { $ref: "#/components/responses/Unauthenticated" }
@@ -120,7 +118,7 @@ paths:
   /v1/sequence/list:
     get:
       tags: [sequence]
-      summary: Перечень выданных идентификаторов
+      summary: Перечень выданных номеров
       operationId: listSequence
       parameters:
         - name: project_key
@@ -146,11 +144,10 @@ paths:
                     type: array
                     items:
                       type: object
-                      required: [sequence_number, name, formatted_id, created_at]
+                      required: [sequence_number, name, created_at]
                       properties:
                         sequence_number: { type: integer, minimum: 1 }
                         name: { type: string }
-                        formatted_id: { type: string }
                         created_at: { type: string, format: date-time }
               example:
                 project_key: "gitlab.cas.ai/team/backend"
@@ -158,11 +155,9 @@ paths:
                 items:
                   - sequence_number: 2
                     name: "add-docker-support"
-                    formatted_id: "ADR-0002"
                     created_at: "2026-09-19T14:30:00Z"
                   - sequence_number: 1
                     name: "init-project"
-                    formatted_id: "ADR-0001"
                     created_at: "2026-09-18T10:00:00Z"
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "422":
@@ -417,17 +412,12 @@ paths:
           application/json:
             schema:
               type: object
-              required: [code, name, format_template]
+              required: [code, name]
+              # Шаблона нет (spec 004): поле format_template — неизвестное, 422 как любое другое.
               additionalProperties: false
               properties:
                 code: { type: string, maxLength: 32 }
                 name: { type: string, maxLength: 255 }
-                format_template:
-                  type: string
-                  maxLength: 255
-                  description: |
-                    Плейсхолдеры: {number}, {number:0Nd}, {name}. Обязан содержать номер.
-                  examples: ["ADR-{number:04d}", "{number:03d}-{name}"]
                 description: { type: [string, "null"] }
       responses:
         "201":
@@ -437,7 +427,7 @@ paths:
               schema: { $ref: "#/components/schemas/KeyType" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "422":
-          description: Шаблон содержит неизвестный плейсхолдер, не содержит номера, либо код занят
+          description: Код занят, неверное значение или поле вне схемы
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ValidationError" }
@@ -462,7 +452,6 @@ paths:
               additionalProperties: false
               properties:
                 name: { type: string, maxLength: 255 }
-                format_template: { type: string, maxLength: 255 }
                 description: { type: [string, "null"] }
                 is_active: { type: boolean }
       responses:
@@ -514,15 +503,19 @@ components:
   schemas:
     IssuedIdentifier:
       type: object
-      required: [project_key, type, name, sequence_number, formatted_id, is_new, created_at]
+      required: [project_key, type, name, sequence_number, is_new, created_at]
       properties:
         project_key: { type: string }
         type: { type: string }
         name:
           type: string
           description: Исходная формулировка первой выдачи, не нормализованная
-        sequence_number: { type: integer, minimum: 1 }
-        formatted_id: { type: string }
+        sequence_number:
+          type: integer
+          minimum: 1
+          description: |
+            Число без ведущих нулей и префикса типа. Имя документа собирает репозиторий-потребитель
+            (spec 004).
         is_new:
           type: boolean
           description: false, если номер был выдан ранее и возвращён повторно
@@ -542,12 +535,11 @@ components:
 
     KeyType:
       type: object
-      required: [id, code, name, format_template, is_active]
+      required: [id, code, name, is_active]
       properties:
         id: { type: integer }
         code: { type: string }
         name: { type: string }
-        format_template: { type: string }
         description: { type: [string, "null"] }
         is_active: { type: boolean }
 

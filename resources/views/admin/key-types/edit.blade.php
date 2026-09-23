@@ -11,7 +11,6 @@
         @csrf
         @method('PATCH')
         @include('admin.partials.field', ['name' => 'name', 'label' => 'Имя', 'value' => old('name', $keyType->name), 'required' => true])
-        @include('admin.partials.field', ['name' => 'format_template', 'label' => 'Шаблон — действует на номера, выданные после сохранения', 'value' => old('format_template', $keyType->format_template), 'required' => true])
         @include('admin.partials.field', ['name' => 'description', 'label' => 'Описание', 'type' => 'textarea', 'value' => old('description', $keyType->description)])
         <button type="submit">Сохранить</button>
     </form>

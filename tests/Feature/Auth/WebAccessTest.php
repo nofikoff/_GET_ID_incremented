@@ -31,7 +31,7 @@ test('signing out ends the session', function () {
 test('an administrator sees the registry screens', function () {
     $this->actingAs(User::factory()->admin()->create());
     $pair = enabledPair(counter: ['seed_sequence' => 42]);
-    KeyType::factory()->create(['code' => 'spec', 'format_template' => '{number:03d}-{name}']);
+    KeyType::factory()->create(['code' => 'spec']);
 
     $this->get(route('admin.projects.index'))
         ->assertOk()
@@ -41,8 +41,8 @@ test('an administrator sees the registry screens', function () {
 
     $this->get(route('admin.key-types.index'))
         ->assertOk()
-        ->assertSee('ADR-{number:04d}')
-        ->assertSee('{number:03d}-{name}');
+        ->assertSee('ADR')
+        ->assertSee('spec');
 
     $this->get(route('tokens.index'))
         ->assertSee(route('admin.projects.index'))

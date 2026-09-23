@@ -27,13 +27,25 @@ test('the description says the call is safe to repeat and where the key comes fr
         ->and($tool['inputSchema']['properties']['project_key']['description'])->toContain('Не угадывайте');
 });
 
-test('a first call issues number 1 under the type template, authored by the caller', function () {
+// Spec 004, FR-004: the assistant builds the file name itself, so the description carries the convention.
+test('the description says only the number is issued and the repository builds the three-digit name', function () {
+    expect((new NextIdTool)->toArray()['description'])
+        ->toContain('Сервис выдаёт только номер')
+        ->toContain('имя собирает репозиторий')
+        ->toContain('дополняется нулями до трёх цифр')
+        ->toContain('`docs/adr/adr-043-<slug>.md`')
+        ->toContain('`specs/043-<slug>/`')
+        ->toContain('передайте номер явно')
+        ->not->toContain('formatted_id');
+});
+
+// Spec 004, FR-001: the exact shape, so a formatted name coming back fails here.
+test('a first call issues number 1 with no formatted name, authored by the caller', function () {
     ($this->nextId)()->assertOk()->assertStructuredContent([
         'project_key' => 'gitlab.cas.ai/team/backend',
         'type' => 'ADR',
         'name' => 'add-oauth-auth',
         'sequence_number' => 1,
-        'formatted_id' => 'ADR-0001',
         'is_new' => true,
         'created_at' => '2026-09-20T14:30:00Z',
     ]);
@@ -54,18 +66,6 @@ test('a repeat in other wording returns the first number and wording', function 
             ->etc());
 
     expect(Identifier::query()->count())->toBe(1);
-});
-
-// FR-005: the id comes back as it was issued, not rebuilt from the current template.
-test('a repeat after a template edit returns the id as issued, while a new theme takes the new template', function () {
-    ($this->nextId)()->assertOk();
-
-    $this->pair->keyType->update(['format_template' => 'DEC-{number:03d}-{name}']);
-
-    ($this->nextId)(['name' => 'Add OAuth Auth'])
-        ->assertStructuredContent(fn ($json) => $json->where('formatted_id', 'ADR-0001')->where('is_new', false)->etc());
-    ($this->nextId)(['name' => 'drop-oauth'])
-        ->assertStructuredContent(fn ($json) => $json->where('formatted_id', 'DEC-002-drop-oauth')->where('is_new', true)->etc());
 });
 
 // FR-015: retiring stops new numbers; it does not take back one already issued.

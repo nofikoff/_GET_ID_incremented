@@ -5,7 +5,7 @@
 
 | Метод | Путь | Имя | Поля | Успех |
 |-------|------|-----|------|-------|
-| DELETE | `/admin/projects/{project}/identifiers/{identifier}` | `admin.projects.identifiers.destroy` | — (`_method`, `_token`) | → `admin.projects.show`, flash «Номер «{formatted_id}» удалён. Следующий номер — {next}.» |
+| DELETE | `/admin/projects/{project}/identifiers/{identifier}` | `admin.projects.identifiers.destroy` | — (`_method`, `_token`) | → `admin.projects.show`, flash «Номер {code} {number} удалён. Следующий номер — {next}.» («Номер ADR 33 удалён. Следующий номер — 33.») |
 
 ## Отказы
 
@@ -14,7 +14,7 @@
 | сотрудник без роли, существующий или нет `{identifier}` | 403, одинаковый |
 | гость | redirect на `login` |
 | `{identifier}` не из `{project}` или не существует | 404 |
-| `{identifier}` не последний в паре | redirect back, ошибка под ключом `identifiers.<key_type_id>`: «Удалить можно только последний номер пары: сейчас это {formatted_id}.» |
+| `{identifier}` не последний в паре | redirect back, ошибка под ключом `identifiers.<key_type_id>`: «Удалить можно только последний номер пары: сейчас это {code} {number}.» («… сейчас это ADR 34.») |
 | нет CSRF-токена | 419, ничего не удалено |
 
 Статус проекта, типа и пары отказа не дают (spec FR-001).
@@ -23,7 +23,11 @@
 
 | Действие | Текст |
 |----------|-------|
-| крестик у последнего номера пары | «Удалить {formatted_id}? Номер может быть выдан снова другой теме.» |
+| крестик у последнего номера пары | «Удалить {code} {number}? Номер может быть выдан снова другой теме.» («Удалить ADR 33? …») |
+
+Номер называется кодом типа и числом: отформатированного вида у сервиса нет
+([spec 004](../../004-index-only-numbers/contracts/changes.md)). Колонки перечня на карточке —
+«Тип | Номер | Ключ запроса | Автор | Выдан» и ячейка с крестиком.
 
 ## Не меняется
 

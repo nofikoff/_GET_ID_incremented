@@ -18,7 +18,6 @@ class KeyTypeFactory extends Factory
         return [
             'code' => fake()->unique()->lexify('???????'),
             'name' => fake()->words(3, true),
-            'format_template' => fn (array $attributes): string => strtoupper($attributes['code']).'-{number:04d}',
             'description' => null,
             'is_active' => true,
         ];

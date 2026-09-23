@@ -47,7 +47,6 @@ final class IssueIdentifier extends Command
 
         $this->output->writeln(json_encode([
             'sequence_number' => $issued->sequenceNumber,
-            'formatted_id' => $issued->formattedId,
             'is_new' => $issued->isNew,
             'waited_ms' => $waitedMs,
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), OutputInterface::OUTPUT_RAW);

@@ -13,7 +13,7 @@ beforeEach(function () {
 
 test('both address forms of a registered repository resolve to its key and enabled types', function (string $origin) {
     $pair = enabledPair(['name' => 'Backend'], ['name' => 'Architecture Decision Record'], ['last_sequence' => 12]);
-    enabledPair($pair->project, ['code' => 'spec', 'name' => 'Specification', 'format_template' => '{number:03d}-{name}'], ['seed_sequence' => 3]);
+    enabledPair($pair->project, ['code' => 'spec', 'name' => 'Specification'], ['seed_sequence' => 3]);
 
     ($this->resolve)($origin)
         ->assertOk()

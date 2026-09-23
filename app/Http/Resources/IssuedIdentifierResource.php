@@ -25,7 +25,6 @@ class IssuedIdentifierResource extends JsonResource
             'type' => $this->resource->type,
             'name' => $this->resource->name,
             'sequence_number' => $this->resource->sequenceNumber,
-            'formatted_id' => $this->resource->formattedId,
             'is_new' => $this->resource->isNew,
             'created_at' => $this->resource->issuedAt->toIso8601ZuluString(),
         ];

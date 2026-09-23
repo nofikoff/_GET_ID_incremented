@@ -59,8 +59,19 @@ test('a field the contract does not declare is a validation error, and nothing i
     ],
     'create key type' => [
         'POST', fn () => 'api/v1/admin/key-types',
-        ['code' => 'RFC', 'name' => 'RFC', 'format_template' => 'RFC-{number}', 'is_active' => false],
+        ['code' => 'RFC', 'name' => 'RFC', 'is_active' => false],
         'is_active',
+    ],
+    // Spec 004, FR-006: the template left the contract, so it is refused like any other undeclared field.
+    'create key type with a template' => [
+        'POST', fn () => 'api/v1/admin/key-types',
+        ['code' => 'RFC', 'name' => 'RFC', 'format_template' => 'RFC-{number}'],
+        'format_template',
+    ],
+    'update key type with a template' => [
+        'PATCH', fn (ProjectKeyType $pair) => "api/v1/admin/key-types/{$pair->key_type_id}",
+        ['name' => 'Decision', 'format_template' => 'ADR-{number:03d}'],
+        'format_template',
     ],
     'update key type' => [
         'PATCH', fn (ProjectKeyType $pair) => "api/v1/admin/key-types/{$pair->key_type_id}",

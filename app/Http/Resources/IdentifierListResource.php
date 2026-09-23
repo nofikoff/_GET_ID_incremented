@@ -27,7 +27,6 @@ class IdentifierListResource extends JsonResource
             'items' => array_map(fn (IssuedIdentifier $issued): array => [
                 'sequence_number' => $issued->sequenceNumber,
                 'name' => $issued->name,
-                'formatted_id' => $issued->formattedId,
                 'created_at' => $issued->issuedAt->toIso8601ZuluString(),
             ], $this->resource->items),
         ];

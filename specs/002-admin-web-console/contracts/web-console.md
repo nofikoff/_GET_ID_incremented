@@ -17,9 +17,9 @@ R2). Исключение — `/help` (FR-020): только `auth`, досту�
 | PUT | `/admin/projects/{project}/key-types` | `admin.projects.key-types.update` | `types[<code>][enabled]`, `types[<code>][seed_sequence]?` | → `admin.projects.show`, flash «Набор типов проекта сохранён.» или, если ничего не изменилось, «Изменений нет.» |
 | GET | `/admin/key-types` | `admin.key-types.index` | — | список |
 | GET | `/admin/key-types/create` | `admin.key-types.create` | — | форма |
-| POST | `/admin/key-types` | `admin.key-types.store` | `code`, `name`, `format_template`, `description?` | → `admin.key-types.index` |
+| POST | `/admin/key-types` | `admin.key-types.store` | `code`, `name`, `description?` | → `admin.key-types.index` |
 | GET | `/admin/key-types/{keyType}/edit` | `admin.key-types.edit` | — | форма |
-| PATCH | `/admin/key-types/{keyType}` | `admin.key-types.update` | `name`, `format_template`, `description?`, `is_active` | → `admin.key-types.index` |
+| PATCH | `/admin/key-types/{keyType}` | `admin.key-types.update` | `name`, `description?`, `is_active` | → `admin.key-types.index` |
 | GET | `/admin/logs` | `admin.logs.index` | query `user_id?`, `from?`, `to?`, `surface?` (`rest`\|`mcp`), `page` | журнал |
 | GET | `/help` | `help` | — | команда подключения MCP, ссылка на `tokens.index`, перечень инструментов (FR-020) |
 
@@ -49,7 +49,8 @@ R2). Исключение — `/help` (FR-020): только `auth`, досту�
 
 ## Отличие формы от REST
 
-Поле, которого форма не объявляет (`repo_url` или `key` в изменении проекта, `code` в изменении типа),
+Поле, которого форма не объявляет (`repo_url` или `key` в изменении проекта, `code` в изменении типа,
+`format_template` из устаревшей формы типа — [spec 004](../../004-index-only-numbers/data-model.md)),
 отбрасывается, а не отвергается: закрытое тело REST на форму не переносится (research.md R1 — оно
 отвергло бы `_token` и `_method`). Значение такого поля не меняется, FR-004 и FR-011 соблюдены.
 Изменение отвечает и на `PUT`, и на `PATCH` — так регистрирует `Route::resource`; маршрутов удаления нет.

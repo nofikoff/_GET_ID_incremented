@@ -10,13 +10,16 @@ use DomainException;
  */
 final class NotTheLastIdentifier extends DomainException
 {
-    private function __construct(string $message, public readonly string $lastFormattedId)
+    private function __construct(string $message, public readonly string $type, public readonly int $lastSequenceNumber)
     {
         parent::__construct($message);
     }
 
-    public static function tail(string $lastFormattedId): self
+    /**
+     * Names the number as "code number" (ADR 34): the document name is the consumer's (specs/004-index-only-numbers, R4).
+     */
+    public static function tail(string $code, int $number): self
     {
-        return new self("Удалить можно только последний номер пары: сейчас это {$lastFormattedId}.", $lastFormattedId);
+        return new self("Удалить можно только последний номер пары: сейчас это {$code} {$number}.", $code, $number);
     }
 }

@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Identifier;
 use App\Models\KeyType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +15,7 @@ beforeEach(function () {
 });
 
 test('an administrator registers a key type', function () {
-    ($this->store)(['code' => 'RFC', 'name' => 'Request for Comments', 'format_template' => 'RFC-{number:03d}-{name}', 'description' => 'Proposals'])
+    ($this->store)(['code' => 'RFC', 'name' => 'Request for Comments', 'description' => 'Proposals'])
         ->assertRedirect(route('admin.key-types.index'))
         ->assertSessionHasNoErrors()
         ->assertSessionHas('status');
@@ -24,28 +23,23 @@ test('an administrator registers a key type', function () {
     expect(KeyType::query()->sole())
         ->code->toBe('RFC')
         ->name->toBe('Request for Comments')
-        ->format_template->toBe('RFC-{number:03d}-{name}')
         ->description->toBe('Proposals')
         ->is_active->toBeTrue();
 });
 
-// FR-013a of spec 001: a broken template is refused when saved, with IdentifierFormat's own reason under the field.
-test('a template without a number or with an unknown placeholder returns the form with the reason under the template', function (string $template, string $reason) {
-    ($this->store)(['code' => 'RFC', 'name' => 'RFC', 'format_template' => $template])
-        ->assertRedirect(route('admin.key-types.create'))
-        ->assertSessionHasErrors(['format_template' => $reason])
-        ->assertSessionHasInput(['code' => 'RFC', 'format_template' => $template]);
+// Spec 004: a web form is not a closed body, so a stale template field is dropped rather than refused (data-model.md).
+test('a template sent from a stale form is dropped, not stored', function () {
+    ($this->store)(['code' => 'RFC', 'name' => 'RFC', 'format_template' => 'RFC-{number}'])
+        ->assertRedirect(route('admin.key-types.index'))
+        ->assertSessionHasNoErrors();
 
-    expect(KeyType::query()->count())->toBe(0);
-})->with([
-    'no number' => ['RFC-{name}', 'Шаблон «RFC-{name}» не содержит номера: нужен {number} или {number:0Nd}.'],
-    'unknown placeholder' => ['RFC-{number}-{date}', 'Шаблон «RFC-{number}-{date}» содержит неизвестный плейсхолдер {date}: допустимы {number}, {number:0Nd} и {name}.'],
-]);
+    expect(KeyType::query()->sole()->getAttributes())->not->toHaveKey('format_template');
+});
 
 test('a code already registered in another case returns the form with the error under the code', function () {
     KeyType::factory()->create(['code' => 'ADR']);
 
-    ($this->store)(['code' => 'adr', 'name' => 'Again', 'format_template' => 'ADR-{number}'])
+    ($this->store)(['code' => 'adr', 'name' => 'Again'])
         ->assertRedirect(route('admin.key-types.create'))
         ->assertSessionHasErrors(['code']);
 
@@ -58,28 +52,27 @@ test('a duplicate code from a concurrent insert returns the form with the error 
         DB::table('key_types')->insert([
             'code' => $keyType->code,
             'name' => 'Racer',
-            'format_template' => 'RFC-{number}',
             'is_active' => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
     });
 
-    ($this->store)(['code' => 'RFC', 'name' => 'Request for Comments', 'format_template' => 'RFC-{number:03d}'])
+    ($this->store)(['code' => 'RFC', 'name' => 'Request for Comments'])
         ->assertRedirect(route('admin.key-types.create'))
         ->assertSessionHasErrors(['code']);
 
     expect(KeyType::query()->sole()->name)->toBe('Racer');
 });
 
-test('code, name and template are required', function () {
-    ($this->store)([])->assertSessionHasErrors(['code', 'name', 'format_template']);
+test('code and name are required', function () {
+    ($this->store)([])->assertSessionHasErrors(['code', 'name']);
 });
 
 test('an administrator changes a key type, and its code stays', function () {
-    $keyType = KeyType::factory()->create(['code' => 'ADR', 'name' => 'ADR', 'format_template' => 'ADR-{number:04d}']);
+    $keyType = KeyType::factory()->create(['code' => 'ADR', 'name' => 'ADR']);
 
-    ($this->update)($keyType, ['name' => 'Decision', 'format_template' => 'ADR-{number:05d}', 'description' => 'Why', 'code' => 'DEC'])
+    ($this->update)($keyType, ['name' => 'Decision', 'description' => 'Why', 'code' => 'DEC'])
         ->assertRedirect(route('admin.key-types.index'))
         ->assertSessionHasNoErrors()
         ->assertSessionHas('status');
@@ -87,29 +80,17 @@ test('an administrator changes a key type, and its code stays', function () {
     expect($keyType->refresh())
         ->code->toBe('ADR')
         ->name->toBe('Decision')
-        ->format_template->toBe('ADR-{number:05d}')
         ->description->toBe('Why');
 });
 
 test('a refused change returns the form with the error and changes nothing', function () {
-    $keyType = KeyType::factory()->create(['code' => 'ADR', 'name' => 'ADR', 'format_template' => 'ADR-{number:04d}']);
+    $keyType = KeyType::factory()->create(['code' => 'ADR', 'name' => 'ADR', 'description' => 'Why']);
 
-    ($this->update)($keyType, ['name' => '', 'format_template' => 'ADR'])
+    ($this->update)($keyType, ['name' => '', 'description' => 'Changed'])
         ->assertRedirect(route('admin.key-types.edit', $keyType))
-        ->assertSessionHasErrors(['name', 'format_template']);
+        ->assertSessionHasErrors(['name']);
 
-    expect($keyType->refresh())->name->toBe('ADR')->format_template->toBe('ADR-{number:04d}');
-});
-
-// FR-012: formatted_id is fixed at issuance, so a new template reaches only the numbers issued after it.
-test('a new template leaves the issued numbers as they were issued', function () {
-    $pair = enabledPair();
-    $issued = Identifier::factory()->for($pair->project)->for($pair->keyType)->create(['sequence_number' => 7]);
-
-    ($this->update)($pair->keyType, ['name' => 'ADR', 'format_template' => 'ADR-{number:03d}'])->assertSessionHasNoErrors();
-
-    expect($issued->refresh()->formatted_id)->toBe('ADR-0007')
-        ->and($pair->keyType->refresh()->format_template)->toBe('ADR-{number:03d}');
+    expect($keyType->refresh())->name->toBe('ADR')->description->toBe('Why');
 });
 
 test('retiring a key type and returning it', function () {
@@ -124,39 +105,45 @@ test('retiring a key type and returning it', function () {
 });
 
 test('the list holds every key type, retired ones included, and offers a new one', function () {
-    $adr = KeyType::factory()->create(['code' => 'ADR', 'format_template' => 'ADR-{number:04d}']);
-    KeyType::factory()->inactive()->create(['code' => 'RFC', 'format_template' => 'RFC-{number}']);
+    $adr = KeyType::factory()->create(['code' => 'ADR', 'name' => 'Architecture Decision Record']);
+    KeyType::factory()->inactive()->create(['code' => 'RFC', 'name' => 'Request for Comments']);
 
     $this->get(route('admin.key-types.index'))
         ->assertOk()
-        ->assertSeeInOrder(['ADR', 'ADR-{number:04d}', 'действует', 'RFC', 'RFC-{number}', 'выведен из обращения'])
+        ->assertSeeInOrder(['ADR', 'Architecture Decision Record', 'действует', 'RFC', 'Request for Comments', 'выведен из обращения'])
         ->assertSee(route('admin.key-types.create'))
         ->assertSee(route('admin.key-types.edit', $adr))
+        ->assertDontSee('Шаблон')
         ->assertDontSee('через административный API');
 });
 
-test('the new key type form carries its fields and its CSRF token', function () {
+// Spec 004, FR-005 / SC-003: nothing in the console suggests the service formats a name.
+test('the new key type form carries its fields and its CSRF token, and no template', function () {
     $this->get(route('admin.key-types.create'))
         ->assertOk()
         ->assertSee(route('admin.key-types.store'))
         ->assertSee('name="code"', false)
         ->assertSee('name="name"', false)
-        ->assertSee('name="format_template"', false)
         ->assertSee('name="description"', false)
-        ->assertSee('name="_token"', false);
+        ->assertSee('name="_token"', false)
+        ->assertDontSee('name="format_template"', false)
+        ->assertDontSee('Шаблон')
+        ->assertDontSee('{number');
 });
 
-test('the edit form shows the type and does not offer its code for change', function () {
-    $keyType = KeyType::factory()->create(['code' => 'ADR', 'name' => 'Decision', 'format_template' => 'ADR-{number:04d}', 'description' => 'Why']);
+test('the edit form shows the type, offers neither its code nor a template for change', function () {
+    $keyType = KeyType::factory()->create(['code' => 'ADR', 'name' => 'Decision', 'description' => 'Why']);
 
     $this->get(route('admin.key-types.edit', $keyType))
         ->assertOk()
         ->assertSee('ADR')
         ->assertSee('value="Decision"', false)
-        ->assertSee('value="ADR-{number:04d}"', false)
         ->assertSee('Why')
         ->assertSee(route('admin.key-types.update', $keyType))
-        ->assertDontSee('name="code"', false);
+        ->assertDontSee('name="code"', false)
+        ->assertDontSee('name="format_template"', false)
+        ->assertDontSee('Шаблон')
+        ->assertDontSee('действует на номера, выданные после сохранения');
 });
 
 // FR-011: retiring stops issuance of the type in every project, so it asks first; returning does not.

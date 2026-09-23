@@ -21,7 +21,7 @@ test('withdrawing the tail rolls the counter back to the new tail', function () 
 
     $withdrawn = ($this->withdraw)($tail);
 
-    expect($withdrawn->formattedId)->toBe('ADR-0033')
+    expect($withdrawn->type)->toBe('ADR')
         ->and($withdrawn->name)->toBe('test2')
         ->and($withdrawn->sequenceNumber)->toBe(33)
         ->and($withdrawn->lastSequence)->toBe(32)
@@ -61,7 +61,7 @@ test('a number with a later one after it is refused and nothing changes', functi
     $middle = ($this->issue)('six');
     ($this->issue)('seven');
 
-    expect(fn () => ($this->withdraw)($middle))->toThrow(NotTheLastIdentifier::class, 'сейчас это ADR-0003');
+    expect(fn () => ($this->withdraw)($middle))->toThrow(NotTheLastIdentifier::class, 'Удалить можно только последний номер пары: сейчас это ADR 3.');
 
     expect(($this->numbers)())->toBe([1, 2, 3])
         ->and($pair->refresh()->last_sequence)->toBe(3);

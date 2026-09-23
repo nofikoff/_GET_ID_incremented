@@ -6,7 +6,7 @@ use App\Mcp\Tools\ListIdentifiersTool;
 use App\Models\User;
 
 beforeEach(function () {
-    $this->pair = enabledPair(keyType: ['code' => 'spec', 'format_template' => '{number:03d}-{name}']);
+    $this->pair = enabledPair(keyType: ['code' => 'spec']);
     $this->list = fn (array $arguments = []) => GetIdServer::actingAs(User::factory()->create())
         ->tool(ListIdentifiersTool::class, ['project_key' => 'gitlab.cas.ai/team/backend', 'type' => 'spec', ...$arguments]);
 });
@@ -19,7 +19,8 @@ test('the tool is list_identifiers and takes the key and the type', function () 
         ->and($tool['inputSchema']['required'])->toBe(['project_key', 'type']);
 });
 
-test('issued numbers come newest first, each with its first wording, formatted id and date', function () {
+// Spec 004, FR-001: the exact shape, so a formatted name coming back fails here.
+test('issued numbers come newest first, each with its first wording and date and no formatted name', function () {
     $issuer = app(SequenceIssuer::class);
     $this->travelTo('2026-09-18 10:00:00');
     $issuer->issue('gitlab.cas.ai/team/backend', 'spec', 'Init Project');
@@ -31,23 +32,10 @@ test('issued numbers come newest first, each with its first wording, formatted i
         'project_key' => 'gitlab.cas.ai/team/backend',
         'type' => 'spec',
         'items' => [
-            ['sequence_number' => 2, 'name' => 'add-docker-support', 'formatted_id' => '002-add-docker-support', 'created_at' => '2026-09-19T14:30:00Z'],
-            ['sequence_number' => 1, 'name' => 'Init Project', 'formatted_id' => '001-init-project', 'created_at' => '2026-09-18T10:00:00Z'],
+            ['sequence_number' => 2, 'name' => 'add-docker-support', 'created_at' => '2026-09-19T14:30:00Z'],
+            ['sequence_number' => 1, 'name' => 'Init Project', 'created_at' => '2026-09-18T10:00:00Z'],
         ],
     ]);
-});
-
-// FR-005: listed ids are the ones issued, not rebuilt from the current template.
-test('a template edit leaves listed ids as they were issued', function () {
-    $issuer = app(SequenceIssuer::class);
-    $issuer->issue('gitlab.cas.ai/team/backend', 'spec', 'init-project');
-    $this->pair->keyType->update(['format_template' => 'SPEC-{number}']);
-    $issuer->issue('gitlab.cas.ai/team/backend', 'spec', 'add-docker-support');
-
-    ($this->list)()->assertOk()->assertStructuredContent(fn ($json) => $json
-        ->where('items.0.formatted_id', 'SPEC-2')
-        ->where('items.1.formatted_id', '001-init-project')
-        ->etc());
 });
 
 test('a pair with nothing issued yet lists nothing', function () {

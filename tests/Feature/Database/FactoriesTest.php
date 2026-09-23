@@ -1,6 +1,5 @@
 <?php
 
-use App\Domain\KeyType\IdentifierFormat;
 use App\Models\Identifier;
 use App\Models\KeyType;
 use App\Models\Project;
@@ -15,10 +14,12 @@ test('a project key is derived from the repository url it is given', function ()
         ->and(Project::factory()->inactive()->create()->is_active)->toBeFalse();
 });
 
-test('a key type comes with a valid format template', function () {
+test('a key type comes with a code and a name, active unless retired', function () {
     $type = KeyType::factory()->create();
 
-    expect(IdentifierFormat::parse($type->format_template)->template)->toBe($type->format_template)
+    expect($type->code)->not->toBeEmpty()
+        ->and($type->name)->not->toBeEmpty()
+        ->and($type->is_active)->toBeTrue()
         ->and(KeyType::factory()->inactive()->create()->is_active)->toBeFalse();
 });
 

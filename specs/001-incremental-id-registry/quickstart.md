@@ -27,7 +27,7 @@ make migrate              # artisan migrate --seed
 От него строятся `APP_URL` и redirect URI, поэтому свой порт подставляется и в шагах ниже, и в
 Google Cloud Console.
 
-Seeder заводит два типа ключей: `ADR` с шаблоном `ADR-{number:04d}` и `spec` с `{number:03d}-{name}`.
+Seeder заводит два типа ключей: `ADR` и `spec`.
 
 Ожидаемо: `http://localhost:8080` отвечает страницей входа.
 
@@ -75,7 +75,7 @@ SCP-форма сняты.
 
 ## 5. Включить типы в проекте
 
-В репозитории уже лежат `ADR-0001..0042`, поэтому нумерация продолжается с 43 (FR-014a). `1` в
+В репозитории уже лежат ADR с номерами 1–42, поэтому нумерация продолжается с 43 (FR-014a). `1` в
 адресе — `id` проекта из ответа шага 4.
 
 Из браузера — форма типов на карточке проекта, там же, §1.3 квикстарта консоли. Ниже — альтернатива
@@ -97,7 +97,8 @@ curl -s -X POST "$GETID_URL/api/v1/sequence/next" \
   -d '{"project_key":"gitlab.cas.ai/team/backend","type":"ADR","name":"add-oauth-auth"}'
 ```
 
-Ожидаемо: `sequence_number: 43`, `formatted_id: "ADR-0043"`, `is_new: true`.
+Ожидаемо: `sequence_number: 43`, `is_new: true`, отформатированного имени в ответе нет — файл
+`docs/adr/adr-043-add-oauth-auth.md` называет сам репозиторий ([spec 004](../004-index-only-numbers/spec.md)).
 
 **Проверка идемпотентности** — повторить ту же команду, изменив тему на `Add OAuth Auth`:
 

@@ -26,7 +26,7 @@ test('the description tells the model the client reads origin itself', function 
 
 test('a registered origin resolves to its key and the types enabled in it', function (string $origin) {
     $pair = enabledPair(['name' => 'Backend'], ['name' => 'Architecture Decision Record'], ['seed_sequence' => 12]);
-    enabledPair($pair->project, ['code' => 'spec', 'name' => 'Specification', 'format_template' => '{number:03d}-{name}'], ['last_sequence' => 3]);
+    enabledPair($pair->project, ['code' => 'spec', 'name' => 'Specification'], ['last_sequence' => 3]);
     enabledPair($pair->project, ['code' => 'RFC'], ['is_enabled' => false]);
 
     ($this->resolve)($origin)->assertOk()->assertStructuredContent([

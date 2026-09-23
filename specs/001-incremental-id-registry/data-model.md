@@ -73,14 +73,13 @@ UNIQUE), `abilities`, `last_used_at`, `expires_at`. Хранится хеш — 
 | `id` | `bigint unsigned` | PK, AI |
 | `code` | `varchar(32)` | UNIQUE, например `ADR`, `spec` |
 | `name` | `varchar(255)` | NOT NULL |
-| `format_template` | `varchar(255)` | NOT NULL, валидируется при сохранении |
 | `description` | `text` | nullable |
 | `is_active` | `boolean` | NOT NULL, default `true` |
 | `created_at`, `updated_at` | `timestamp` | |
 
-`format_template` принимает только плейсхолдеры `{number}`, `{number:0Nd}` и `{name}`, и обязан
-содержать номер (FR-013a). Значения по умолчанию из seeder: `ADR-{number:04d}` и
-`{number:03d}-{name}`.
+Колонка `format_template` удалена миграцией `drop_format_columns`
+([spec 004](../004-index-only-numbers/data-model.md)): вид имени документа — конвенция потребителя.
+Seeder заводит `ADR` и `spec`.
 
 ## project_key_type
 
@@ -118,7 +117,6 @@ UNIQUE), `abilities`, `last_used_at`, `expires_at`. Хранится хеш — 
 | `name` | `varchar(255)` | NOT NULL, исходная формулировка первой выдачи |
 | `name_slug` | `varchar(255)` | NOT NULL, нормализованный вид |
 | `sequence_number` | `int unsigned` | NOT NULL |
-| `formatted_id` | `varchar(255)` | NOT NULL, идентификатор по шаблону типа на момент выдачи (FR-005) |
 | `created_by` | `bigint unsigned` | FK → `users.id`, `ON DELETE RESTRICT`, nullable |
 | `created_at`, `updated_at` | `timestamp` | |
 
@@ -128,9 +126,8 @@ UNIQUE), `abilities`, `last_used_at`, `expires_at`. Хранится хеш — 
   `Backward index scan` без filesort, поэтому отдельный индекс `sequence_number DESC` не заводится —
   он дублировал бы этот.
 
-Таблица неизменяема после вставки: в домене нет ни `update`, ни `delete`. `formatted_id` хранится,
-а не вычисляется при чтении: иначе правка `key_types.format_template` задним числом меняла бы вид
-уже выданных номеров, а файлы в репозиториях потребителей остались бы со старыми именами.
+Таблица неизменяема после вставки: в домене нет ни `update`, ни `delete`. Отформатированного имени
+реестр не хранит: колонка `formatted_id` удалена ([spec 004](../004-index-only-numbers/data-model.md)).
 
 `down()` миграции сносит таблицу, только если она пуста, а на непустой бросает исключение. Откат
 схемы на свежем окружении работает как обычно, а `migrate:rollback` на production остановится,
@@ -185,7 +182,6 @@ projects   1──∞ identifiers      ∞──1 key_types
 | Почта оканчивается на `@cas.ai` | FR-018 | колбэк Socialite, до создания пользователя |
 | `repo_url` разбирается в ключ | FR-008 | `ProjectKey`, FormRequest создания проекта |
 | Тема непуста после нормализации | FR-007a | `DocumentName`, FormRequest выдачи |
-| Шаблон содержит `{number}` и только известные плейсхолдеры | FR-013a | `IdentifierFormat`, FormRequest типа |
 | `seed_sequence >= last_sequence` | FR-014b | `EnabledKeyTypes`, под блокировкой строки-счётчика |
 | Проект активен и тип включён и активен | FR-015 | `SequenceIssuer`, до открытия транзакции |
 | Тип, выведенный из обращения глобально, нельзя включить в проекте | Edge Cases | FormRequest включения типа |

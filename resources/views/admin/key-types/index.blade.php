@@ -11,14 +11,13 @@
     @else
         <table>
             <thead>
-            <tr><th>Код</th><th>Имя</th><th>Шаблон</th><th>Статус</th></tr>
+            <tr><th>Код</th><th>Имя</th><th>Статус</th></tr>
             </thead>
             <tbody>
             @foreach ($keyTypes as $keyType)
                 <tr>
                     <td><a href="{{ route('admin.key-types.edit', $keyType) }}"><code>{{ $keyType->code }}</code></a></td>
                     <td>{{ $keyType->name }}</td>
-                    <td><code>{{ $keyType->format_template }}</code></td>
                     <td>{{ $keyType->is_active ? 'действует' : 'выведен из обращения' }}</td>
                 </tr>
             @endforeach

@@ -20,7 +20,7 @@ use Laravel\Mcp\Server\Tools\Annotations\IsIdempotent;
  * POST /api/v1/sequence/next. Issuance is SequenceIssuer's alone (principle VI); this class only transports it.
  */
 #[Name('next_id')]
-#[Description('Получить следующий свободный номер для документа в проекте get-id. Идемпотентно: повторный вызов с той же темой вернёт тот же номер и `is_new: false`, поэтому безопасно повторять после сбоя. `project_key` берите из ответа `resolve_project`, не составляйте сами.')]
+#[Description('Получить следующий свободный номер для документа в проекте get-id. Идемпотентно: повторный вызов с той же темой вернёт тот же номер и `is_new: false`, поэтому безопасно повторять после сбоя. `project_key` берите из ответа `resolve_project`, не составляйте сами. Сервис выдаёт только номер, имени документа в ответе нет: имя собирает репозиторий. Номер дополняется нулями до трёх цифр: 43 → `docs/adr/adr-043-<slug>.md`, `specs/043-<slug>/`; номер от 1000 пишется целиком. Для Spec Kit передайте номер явно (`create-new-feature.sh --number 43`) и остановитесь, если созданный каталог начинается не с этого трёхзначного номера.')]
 #[IsIdempotent]
 final class NextIdTool extends RegistryTool
 {

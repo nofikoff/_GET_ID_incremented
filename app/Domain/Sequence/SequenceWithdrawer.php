@@ -35,10 +35,11 @@ final class SequenceWithdrawer
                 ->firstOrFail();
 
             $current = Identifier::query()->findOrFail($identifier->getKey());
+            $type = $current->keyType->code;
 
             $tail = $this->tailOf($pair);
             if ($tail !== null && $tail->sequence_number > $current->sequence_number) {
-                throw NotTheLastIdentifier::tail($tail->formatted_id);
+                throw NotTheLastIdentifier::tail($type, $tail->sequence_number);
             }
 
             $removal = Identifier::query()->whereKey($current->getKey())->toBase();
@@ -50,7 +51,7 @@ final class SequenceWithdrawer
             $pair->save();
 
             return new WithdrawnIdentifier(
-                formattedId: $current->formatted_id,
+                type: $type,
                 name: $current->name,
                 sequenceNumber: $current->sequence_number,
                 previousLastSequence: $previousLastSequence,

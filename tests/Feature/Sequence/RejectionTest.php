@@ -11,7 +11,7 @@ beforeEach(function () {
     Sanctum::actingAs(User::factory()->create());
 
     $this->adr = enabledPair();
-    KeyType::factory()->create(['code' => 'spec', 'format_template' => '{number:03d}-{name}']);
+    KeyType::factory()->create(['code' => 'spec']);
 
     $this->next = fn (array $input) => $this->postJson('api/v1/sequence/next', [
         'project_key' => 'gitlab.cas.ai/team/backend', 'type' => 'ADR', 'name' => 'add-oauth-auth', ...$input,

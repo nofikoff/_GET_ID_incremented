@@ -14,9 +14,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * pair's tail (principle II, specs/003-delete-last-identifier).
  *
  * @property int $sequence_number
- * @property string $formatted_id
  */
-#[Fillable(['name', 'name_slug', 'sequence_number', 'formatted_id'])]
+#[Fillable(['name', 'name_slug', 'sequence_number'])]
 class Identifier extends Model
 {
     /** @use HasFactory<IdentifierFactory> */

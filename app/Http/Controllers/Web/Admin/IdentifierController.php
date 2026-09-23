@@ -24,6 +24,6 @@ class IdentifierController extends Controller
         }
 
         return to_route('admin.projects.show', $project)
-            ->with('status', "Номер «{$withdrawn->formattedId}» удалён. Следующий номер — {$withdrawn->nextSequence}.");
+            ->with('status', "Номер {$withdrawn->type} {$withdrawn->sequenceNumber} удалён. Следующий номер — {$withdrawn->nextSequence}.");
     }
 }

@@ -11,9 +11,9 @@ beforeEach(function () {
     $user = User::factory()->create();
     $this->project = new Project(['key' => 'gitlab.cas.ai/team/backend', 'name' => 'Backend', 'repo_url' => 'git@gitlab.cas.ai:team/backend.git']);
     $this->project->creator()->associate($user)->save();
-    $keyType = KeyType::create(['code' => 'ADR', 'name' => 'Architecture Decision Record', 'format_template' => 'ADR-{number:04d}']);
+    $keyType = KeyType::create(['code' => 'ADR', 'name' => 'Architecture Decision Record']);
 
-    $this->identifier = new Identifier(['name' => 'Add OAuth', 'name_slug' => 'add-oauth', 'sequence_number' => 7, 'formatted_id' => 'ADR-0007']);
+    $this->identifier = new Identifier(['name' => 'Add OAuth', 'name_slug' => 'add-oauth', 'sequence_number' => 7]);
     $this->identifier->project()->associate($this->project);
     $this->identifier->keyType()->associate($keyType);
     $this->identifier->save();
@@ -45,7 +45,7 @@ test('an issued identifier cannot be changed or removed', function (Closure $wri
 ]);
 
 test('withdraw on the base builder is the one open removal', function () {
-    $sibling = $this->identifier->replicate()->fill(['name_slug' => 'drop-oauth', 'sequence_number' => 8, 'formatted_id' => 'ADR-0008']);
+    $sibling = $this->identifier->replicate()->fill(['name_slug' => 'drop-oauth', 'sequence_number' => 8]);
     $sibling->save();
 
     expect(Identifier::query()->whereKey($sibling->getKey())->toBase()->withdraw())->toBe(1)
@@ -55,7 +55,7 @@ test('withdraw on the base builder is the one open removal', function () {
 test('reading and inserting stay open', function () {
     expect(Identifier::query()->where('sequence_number', 7)->exists())->toBeTrue();
 
-    $next = $this->identifier->replicate()->fill(['name_slug' => 'drop-oauth', 'sequence_number' => 8, 'formatted_id' => 'ADR-0008']);
+    $next = $this->identifier->replicate()->fill(['name_slug' => 'drop-oauth', 'sequence_number' => 8]);
     $next->save();
 
     expect(Identifier::query()->count())->toBe(2);

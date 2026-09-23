@@ -79,7 +79,7 @@ final class RegistryChangeLog
     {
         $this->write($admin, 'withdraw_identifier', $project, [
             $keyType->code => [
-                'identifier' => [$withdrawn->formattedId, null],
+                'sequence_number' => [$withdrawn->sequenceNumber, null],
                 'name' => [$withdrawn->name, null],
                 'last_sequence' => [$withdrawn->previousLastSequence, $withdrawn->lastSequence],
             ],

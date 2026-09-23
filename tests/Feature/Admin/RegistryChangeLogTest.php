@@ -69,18 +69,17 @@ test('a project update is traced with the changed fields only, before and after'
 test('a key type registered and changed over REST is traced', function () {
     $traces = registryTraces();
 
-    $this->postJson('api/v1/admin/key-types', ['code' => 'RFC', 'name' => 'RFC', 'format_template' => 'RFC-{number}'])->assertCreated();
+    $this->postJson('api/v1/admin/key-types', ['code' => 'RFC', 'name' => 'RFC'])->assertCreated();
     $keyType = KeyType::query()->sole();
-    $this->patchJson("api/v1/admin/key-types/{$keyType->id}", ['format_template' => 'RFC-{number:03d}'])->assertOk();
+    $this->patchJson("api/v1/admin/key-types/{$keyType->id}", ['name' => 'Request for Comments'])->assertOk();
 
     expect($traces->getArrayCopy())->toBe([
         ($this->trace)('create', 'key_type', $keyType->id, [
             'code' => [null, 'RFC'],
             'name' => [null, 'RFC'],
-            'format_template' => [null, 'RFC-{number}'],
             'is_active' => [null, true],
         ]),
-        ($this->trace)('update', 'key_type', $keyType->id, ['format_template' => ['RFC-{number}', 'RFC-{number:03d}']]),
+        ($this->trace)('update', 'key_type', $keyType->id, ['name' => ['RFC', 'Request for Comments']]),
     ]);
 });
 
@@ -104,10 +103,10 @@ test('a set of key types is traced by the types it changed', function () {
 });
 
 test('a request that changes nothing leaves no trace', function () {
-    $pair = enabledPair(project: ['name' => 'Backend'], counter: ['seed_sequence' => 7]);
+    $pair = enabledPair(project: ['name' => 'Backend'], keyType: ['name' => 'Decision'], counter: ['seed_sequence' => 7]);
 
     $this->patchJson("api/v1/admin/projects/{$pair->project_id}", ['name' => 'Backend'])->assertOk();
-    $this->patchJson("api/v1/admin/key-types/{$pair->key_type_id}", ['format_template' => 'ADR-{number:04d}'])->assertOk();
+    $this->patchJson("api/v1/admin/key-types/{$pair->key_type_id}", ['name' => 'Decision'])->assertOk();
     $this->putJson("api/v1/admin/projects/{$pair->project_id}/key-types", ['types' => [['code' => 'ADR', 'seed_sequence' => 7]]])->assertOk();
 
     Log::shouldNotHaveReceived('info');
@@ -148,7 +147,7 @@ test('a withdrawn number is traced with its theme and the counter it rolled back
 
     expect($traces->getArrayCopy())->toBe([($this->trace)('withdraw_identifier', 'project', $pair->project_id, [
         'ADR' => [
-            'identifier' => ['ADR-0033', null],
+            'sequence_number' => [33, null],
             'name' => ['test2', null],
             'last_sequence' => [33, 32],
         ],

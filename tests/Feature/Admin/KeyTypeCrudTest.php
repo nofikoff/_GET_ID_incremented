@@ -13,33 +13,18 @@ test('an administrator registers a key type', function () {
     $response = $this->postJson('api/v1/admin/key-types', [
         'code' => 'RFC',
         'name' => 'Request for Comments',
-        'format_template' => 'RFC-{number:03d}-{name}',
         'description' => 'Proposals',
     ]);
 
+    // Spec 004, FR-006: exact shape, so the template coming back fails here.
     $response->assertCreated()->assertExactJson([
         'id' => KeyType::query()->sole()->id,
         'code' => 'RFC',
         'name' => 'Request for Comments',
-        'format_template' => 'RFC-{number:03d}-{name}',
         'description' => 'Proposals',
         'is_active' => true,
     ]);
 });
-
-// FR-013a: a broken template is refused when saved, not when the first number would be formatted.
-test('a template without a number or with an unknown placeholder is refused on save', function (string $template, string $reason) {
-    $this->postJson('api/v1/admin/key-types', ['code' => 'RFC', 'name' => 'RFC', 'format_template' => $template])
-        ->assertStatus(422)
-        ->assertJsonValidationErrors(['format_template' => $reason]);
-
-    expect(KeyType::query()->count())->toBe(0);
-})->with([
-    'no number' => ['RFC-{name}', 'не содержит номера'],
-    'unknown placeholder' => ['RFC-{number}-{date}', 'неизвестный плейсхолдер {date}'],
-    'printf-style width' => ['RFC-{number:4d}', 'неизвестный плейсхолдер'],
-    'stray brace' => ['RFC-{number}}', 'непарную'],
-]);
 
 // Same shape as the project race: the loser's INSERT hits the index after its own validation passed.
 test('a duplicate code from a concurrent insert is a validation error, not a crash', function () {
@@ -47,14 +32,13 @@ test('a duplicate code from a concurrent insert is a validation error, not a cra
         DB::table('key_types')->insert([
             'code' => $keyType->code,
             'name' => 'Racer',
-            'format_template' => 'RFC-{number}',
             'is_active' => true,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
     });
 
-    $this->postJson('api/v1/admin/key-types', ['code' => 'RFC', 'name' => 'Request for Comments', 'format_template' => 'RFC-{number:03d}-{name}'])
+    $this->postJson('api/v1/admin/key-types', ['code' => 'RFC', 'name' => 'Request for Comments'])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['code']);
 
@@ -64,37 +48,49 @@ test('a duplicate code from a concurrent insert is a validation error, not a cra
 test('a code is registered once, whatever its case', function (string $code) {
     KeyType::factory()->create(['code' => 'ADR']);
 
-    $this->postJson('api/v1/admin/key-types', ['code' => $code, 'name' => 'Again', 'format_template' => 'ADR-{number}'])
+    $this->postJson('api/v1/admin/key-types', ['code' => $code, 'name' => 'Again'])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['code']);
 })->with(['same' => 'ADR', 'other case' => 'adr']);
 
-test('code, name and template are required and bounded', function (array $input, array $fields) {
+test('code and name are required and bounded', function (array $input, array $fields) {
     $this->postJson('api/v1/admin/key-types', $input)
         ->assertStatus(422)
         ->assertJsonValidationErrors($fields);
 })->with([
-    'nothing sent' => [[], ['code', 'name', 'format_template']],
+    'nothing sent' => [[], ['code', 'name']],
     'too long' => [
-        ['code' => str_repeat('C', 33), 'name' => str_repeat('n', 256), 'format_template' => str_repeat('x', 250).'{number}'],
-        ['code', 'name', 'format_template'],
+        ['code' => str_repeat('C', 33), 'name' => str_repeat('n', 256)],
+        ['code', 'name'],
     ],
 ]);
 
-test('an administrator changes a key type and its template is validated again', function () {
-    $type = KeyType::factory()->create(['code' => 'ADR', 'format_template' => 'ADR-{number:04d}']);
+test('an administrator changes a key type and its name is validated again', function () {
+    $type = KeyType::factory()->create(['code' => 'ADR', 'name' => 'ADR']);
 
-    $this->patchJson("api/v1/admin/key-types/{$type->id}", ['name' => 'Decision', 'format_template' => 'ADR-{number:05d}'])
+    $this->patchJson("api/v1/admin/key-types/{$type->id}", ['name' => 'Decision', 'description' => 'Why'])
         ->assertOk()
         ->assertJsonPath('name', 'Decision')
-        ->assertJsonPath('format_template', 'ADR-{number:05d}')
+        ->assertJsonPath('description', 'Why')
         ->assertJsonPath('code', 'ADR');
 
-    $this->patchJson("api/v1/admin/key-types/{$type->id}", ['format_template' => 'ADR'])
+    $this->patchJson("api/v1/admin/key-types/{$type->id}", ['name' => ''])
         ->assertStatus(422)
-        ->assertJsonValidationErrors(['format_template']);
+        ->assertJsonValidationErrors(['name']);
 
-    expect($type->refresh()->format_template)->toBe('ADR-{number:05d}');
+    expect($type->refresh()->name)->toBe('Decision');
+});
+
+// Spec 004, FR-005: a type registered without a template issues numbers.
+test('a key type registered without a template issues numbers once enabled', function () {
+    $this->postJson('api/v1/admin/key-types', ['code' => 'RFC', 'name' => 'Request for Comments'])->assertCreated();
+    $pair = enabledPair(keyType: KeyType::query()->where('code', 'RFC')->sole());
+
+    $this->postJson('api/v1/sequence/next', ['project_key' => 'gitlab.cas.ai/team/backend', 'type' => 'RFC', 'name' => 'first'])
+        ->assertOk()
+        ->assertJsonPath('sequence_number', 1);
+
+    expect($pair->refresh()->last_sequence)->toBe(1);
 });
 
 test('retiring a key type stops issuance in every project', function () {
@@ -116,7 +112,7 @@ test('the list holds every key type, retired ones included', function () {
     $this->getJson('api/v1/admin/key-types')
         ->assertOk()
         ->assertJsonCount(2, 'data')
-        ->assertJsonStructure(['data' => [['id', 'code', 'name', 'format_template', 'description', 'is_active']]])
+        ->assertJsonStructure(['data' => [['id', 'code', 'name', 'description', 'is_active']]])
         ->assertJsonPath('data.*.code', ['ADR', 'RFC'])
         ->assertJsonPath('data.*.is_active', [true, false]);
 });

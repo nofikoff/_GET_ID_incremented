@@ -22,7 +22,7 @@
 final readonly class WithdrawnIdentifier
 {
     public function __construct(
-        public string $formattedId,
+        public string $type,  // код типа: номер называется «ADR 33» (spec 004, R4)
         public string $name,
         public int $sequenceNumber,
         public int $previousLastSequence,  // счётчик до снятия; расходится с $sequenceNumber, если счётчик уплыл
@@ -43,7 +43,7 @@ final readonly class WithdrawnIdentifier
     'entity' => 'project', 'entity_id' => 2,
     'changes' => [
         'spec' => [
-            'identifier' => ['033-test2', null],
+            'sequence_number' => [33, null],  // было 'identifier' => ['033-test2', null] до spec 004
             'name' => ['test2', null],
             'last_sequence' => [33, 32],
         ],

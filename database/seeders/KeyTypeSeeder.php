@@ -15,12 +15,12 @@ class KeyTypeSeeder extends Seeder
     {
         KeyType::query()->firstOrCreate(
             ['code' => 'ADR'],
-            ['name' => 'Architecture Decision Record', 'format_template' => 'ADR-{number:04d}'],
+            ['name' => 'Architecture Decision Record'],
         );
 
         KeyType::query()->firstOrCreate(
             ['code' => 'spec'],
-            ['name' => 'Specification', 'format_template' => '{number:03d}-{name}'],
+            ['name' => 'Specification'],
         );
     }
 }

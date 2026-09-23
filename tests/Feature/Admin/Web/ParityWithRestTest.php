@@ -15,7 +15,7 @@ beforeEach(function () {
     $this->travelTo('2026-09-23 10:00:00');
     $this->admin = User::factory()->admin()->create();
     $this->pair = enabledPair(counter: ['seed_sequence' => 7]);
-    KeyType::factory()->create(['code' => 'spec', 'format_template' => '{number:03d}-{name}']);
+    KeyType::factory()->create(['code' => 'spec']);
 
     $this->rest = function (string $method, string $uri, array $body): TestResponse {
         Sanctum::actingAs($this->admin);
@@ -84,12 +84,12 @@ test('an accepted operation leaves the registry as REST leaves it', function (Cl
         ]]],
     ],
     'register a key type' => [
-        fn () => ['POST', 'api/v1/admin/key-types', ['code' => 'RFC', 'name' => 'Request for Comments', 'format_template' => 'RFC-{number:03d}', 'description' => 'Proposals']],
-        fn () => ['POST', 'admin.key-types.store', [], ['code' => 'RFC', 'name' => 'Request for Comments', 'format_template' => 'RFC-{number:03d}', 'description' => 'Proposals']],
+        fn () => ['POST', 'api/v1/admin/key-types', ['code' => 'RFC', 'name' => 'Request for Comments', 'description' => 'Proposals']],
+        fn () => ['POST', 'admin.key-types.store', [], ['code' => 'RFC', 'name' => 'Request for Comments', 'description' => 'Proposals']],
     ],
     'change a key type' => [
-        fn (ProjectKeyType $pair) => ['PATCH', "api/v1/admin/key-types/{$pair->key_type_id}", ['name' => 'Decision', 'format_template' => 'ADR-{number:05d}']],
-        fn (ProjectKeyType $pair) => ['PATCH', 'admin.key-types.update', ['keyType' => $pair->key_type_id], ['name' => 'Decision', 'format_template' => 'ADR-{number:05d}']],
+        fn (ProjectKeyType $pair) => ['PATCH', "api/v1/admin/key-types/{$pair->key_type_id}", ['name' => 'Decision', 'description' => 'Why']],
+        fn (ProjectKeyType $pair) => ['PATCH', 'admin.key-types.update', ['keyType' => $pair->key_type_id], ['name' => 'Decision', 'description' => 'Why']],
     ],
     'retire a key type' => [
         fn (ProjectKeyType $pair) => ['PATCH', "api/v1/admin/key-types/{$pair->key_type_id}", ['is_active' => false]],
@@ -156,19 +156,19 @@ test('a refused operation gets the text REST gives, under the form field, and ch
             'RFC' => ['enabled' => '1'],
         ]]], 'types.RFC.enabled',
     ],
-    'template without a number' => [
+    'key type without a name' => [
         fn () => null,
-        fn () => ['POST', 'api/v1/admin/key-types', ['code' => 'RFC', 'name' => 'RFC', 'format_template' => 'RFC-{name}']], 'format_template',
-        fn () => ['POST', 'admin.key-types.store', [], ['code' => 'RFC', 'name' => 'RFC', 'format_template' => 'RFC-{name}']], 'format_template',
+        fn () => ['POST', 'api/v1/admin/key-types', ['code' => 'RFC']], 'name',
+        fn () => ['POST', 'admin.key-types.store', [], ['code' => 'RFC']], 'name',
     ],
     'code registered in another case' => [
         fn () => null,
-        fn () => ['POST', 'api/v1/admin/key-types', ['code' => 'adr', 'name' => 'Again', 'format_template' => 'ADR-{number}']], 'code',
-        fn () => ['POST', 'admin.key-types.store', [], ['code' => 'adr', 'name' => 'Again', 'format_template' => 'ADR-{number}']], 'code',
+        fn () => ['POST', 'api/v1/admin/key-types', ['code' => 'adr', 'name' => 'Again']], 'code',
+        fn () => ['POST', 'admin.key-types.store', [], ['code' => 'adr', 'name' => 'Again']], 'code',
     ],
-    'broken template on update' => [
+    'empty key type name on update' => [
         fn () => null,
-        fn (ProjectKeyType $pair) => ['PATCH', "api/v1/admin/key-types/{$pair->key_type_id}", ['format_template' => 'ADR']], 'format_template',
-        fn (ProjectKeyType $pair) => ['PATCH', 'admin.key-types.update', ['keyType' => $pair->key_type_id], ['format_template' => 'ADR']], 'format_template',
+        fn (ProjectKeyType $pair) => ['PATCH', "api/v1/admin/key-types/{$pair->key_type_id}", ['name' => '']], 'name',
+        fn (ProjectKeyType $pair) => ['PATCH', 'admin.key-types.update', ['keyType' => $pair->key_type_id], ['name' => '']], 'name',
     ],
 ]);

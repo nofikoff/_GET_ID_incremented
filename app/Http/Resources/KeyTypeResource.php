@@ -24,7 +24,6 @@ class KeyTypeResource extends JsonResource
             'id' => $this->resource->id,
             'code' => $this->resource->code,
             'name' => $this->resource->name,
-            'format_template' => $this->resource->format_template,
             'description' => $this->resource->description,
             'is_active' => $this->resource->is_active,
         ];

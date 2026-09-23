@@ -3,7 +3,6 @@
 namespace App\Http\Validation;
 
 use App\Models\KeyType;
-use App\Rules\FormatTemplate;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Validation\Rule;
 
@@ -21,7 +20,6 @@ final class KeyTypeRules
             // The column's case-insensitive collation makes the check refuse `adr` next to `ADR`, as lookups would conflate them.
             'code' => ['required', 'string', 'max:32', Rule::unique(KeyType::class, 'code')],
             'name' => ['required', 'string', 'max:255'],
-            'format_template' => ['bail', 'required', 'string', 'max:255', new FormatTemplate],
             'description' => ['nullable', 'string'],
         ];
     }
@@ -35,7 +33,6 @@ final class KeyTypeRules
     {
         return [
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'format_template' => ['sometimes', 'bail', 'required', 'string', 'max:255', new FormatTemplate],
             'description' => ['sometimes', 'nullable', 'string'],
             'is_active' => ['sometimes', 'boolean'],
         ];

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-#[Fillable(['code', 'name', 'format_template', 'description', 'is_active'])]
+#[Fillable(['code', 'name', 'description', 'is_active'])]
 class KeyType extends Model
 {
     /** @use HasFactory<KeyTypeFactory> */

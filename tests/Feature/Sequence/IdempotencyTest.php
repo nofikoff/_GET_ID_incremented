@@ -47,17 +47,28 @@ test('a theme spelled differently is the same theme', function (string $spelling
     'doubled separators and padding' => '  ADD--OAUTH   auth ',
 ]);
 
-test('the first wording and its formatted id stay with the number', function () {
-    enabledPair($this->adr->project, ['code' => 'spec', 'format_template' => '{number:03d}-{name}']);
+test('the first wording stays with the number', function () {
+    enabledPair($this->adr->project, ['code' => 'spec']);
     ($this->next)('Add OAuth Auth', 'spec')->assertOk();
 
     ($this->next)('add_oauth_auth', 'spec')
         ->assertJsonPath('name', 'Add OAuth Auth')
-        ->assertJsonPath('formatted_id', '001-add-oauth-auth');
+        ->assertJsonPath('sequence_number', 1);
+});
+
+// Spec 004, FR-001: a repeat answers in the same shape as a first issuance.
+test('a repeat carries the same fields as the first issuance, with no formatted name', function () {
+    $first = ($this->next)('add-oauth-auth')->assertOk()->json();
+
+    $repeat = ($this->next)('Add OAuth Auth')->assertOk()->json();
+
+    expect(array_keys($repeat))->toBe(array_keys($first))
+        ->and($repeat)->not->toHaveKey('formatted_id')
+        ->and($repeat['is_new'])->toBeFalse();
 });
 
 test('the same theme in another key type is a separate document', function () {
-    enabledPair($this->adr->project, ['code' => 'spec', 'format_template' => '{number:03d}-{name}']);
+    enabledPair($this->adr->project, ['code' => 'spec']);
     ($this->next)('add-oauth-auth')->assertOk();
 
     ($this->next)('add-oauth-auth', 'spec')

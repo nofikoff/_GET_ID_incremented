@@ -14,7 +14,7 @@ beforeEach(function () {
     $this->project = new Project(['key' => 'gitlab.cas.ai/team/backend', 'name' => 'Backend', 'repo_url' => 'git@gitlab.cas.ai:team/backend.git']);
     $this->project->creator()->associate($this->user)->save();
 
-    $this->adr = KeyType::create(['code' => 'ADR', 'name' => 'Architecture Decision Record', 'format_template' => 'ADR-{number:04d}']);
+    $this->adr = KeyType::create(['code' => 'ADR', 'name' => 'Architecture Decision Record']);
 });
 
 test('active users exclude the deactivated', function () {
@@ -35,7 +35,7 @@ test('a user holds several named api tokens', function () {
 test('active scopes skip retired projects and key types', function () {
     $retired = new Project(['key' => 'gitlab.cas.ai/team/old', 'name' => 'Old', 'repo_url' => 'https://gitlab.cas.ai/team/old', 'is_active' => false]);
     $retired->creator()->associate($this->user)->save();
-    KeyType::create(['code' => 'RFC', 'name' => 'Request for comments', 'format_template' => 'RFC-{number}', 'is_active' => false]);
+    KeyType::create(['code' => 'RFC', 'name' => 'Request for comments', 'is_active' => false]);
 
     expect(Project::active()->pluck('key')->all())->toBe(['gitlab.cas.ai/team/backend'])
         ->and(KeyType::active()->pluck('code')->all())->toBe(['ADR'])
@@ -78,7 +78,7 @@ test('an api log keeps a creation time only', function () {
 });
 
 test('an identifier belongs to its project, key type and author', function () {
-    $identifier = new Identifier(['name' => 'Add OAuth', 'name_slug' => 'add-oauth', 'sequence_number' => 1, 'formatted_id' => 'ADR-0001']);
+    $identifier = new Identifier(['name' => 'Add OAuth', 'name_slug' => 'add-oauth', 'sequence_number' => 1]);
     $identifier->project()->associate($this->project);
     $identifier->keyType()->associate($this->adr);
     $identifier->creator()->associate($this->user);

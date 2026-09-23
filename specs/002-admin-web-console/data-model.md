@@ -8,7 +8,7 @@
 | Сущность | Поля, которые меняет консоль | Кем |
 |----------|------------------------------|-----|
 | `projects` | `repo_url`, `name`, `description` при заведении; `key` выводится; затем `name`, `description`, `is_active` | `CreateProject`, `UpdateProject` |
-| `key_types` | `code`, `name`, `format_template`, `description` при заведении; затем всё, кроме `code`, и `is_active` | `CreateKeyType`, `UpdateKeyType` |
+| `key_types` | `code`, `name`, `description` при заведении (шаблона нет — [spec 004](../004-index-only-numbers/data-model.md)); затем всё, кроме `code`, и `is_active` | `CreateKeyType`, `UpdateKeyType` |
 | `project_key_type` | `is_enabled`, `seed_sequence`; строка создаётся при первом включении и не удаляется | `EnabledKeyTypes::replace()` |
 
 `identifiers` и `api_logs` консоль только читает.

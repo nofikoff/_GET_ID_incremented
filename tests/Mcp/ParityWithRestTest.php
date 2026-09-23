@@ -61,7 +61,7 @@ test('list_identifiers returns what GET /sequence/list returns', function () {
 
     expect(($this->toolResult)('list_identifiers', $input))
         ->toBe($this->getJson('api/v1/sequence/list?'.http_build_query($input))->assertOk()->json())
-        ->toHaveKey('items.1.formatted_id', 'ADR-0012');
+        ->toHaveKey('items.1.sequence_number', 12);
 });
 
 test('resolve_project returns what GET /projects/resolve returns', function (string $origin) {

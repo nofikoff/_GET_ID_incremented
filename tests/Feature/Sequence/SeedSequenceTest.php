@@ -17,8 +17,7 @@ test('issuance continues after the last number taken outside the service', funct
     $pair = enabledPair(counter: ['seed_sequence' => 42]);
 
     ($this->next)('add-oauth-auth')
-        ->assertJsonPath('sequence_number', 43)
-        ->assertJsonPath('formatted_id', 'ADR-0043');
+        ->assertJsonPath('sequence_number', 43);
     ($this->next)('drop-oauth-auth')->assertJsonPath('sequence_number', 44);
 
     expect(Identifier::query()->orderBy('sequence_number')->pluck('sequence_number')->all())->toBe([43, 44])

@@ -33,7 +33,7 @@ test('a withdrawal racing five issuances leaves the pair consecutive and the cou
 test('a withdrawal in one pair and first issuances in an empty neighbour both go through', function () {
     $adr = enabledPair();
     $spec = ProjectKeyType::factory()->for($adr->project)
-        ->for(KeyType::factory()->state(['code' => 'spec', 'format_template' => '{number:03d}-{name}']))
+        ->for(KeyType::factory()->state(['code' => 'spec']))
         ->create();
     foreach (range(1, 3) as $i) {
         app(SequenceIssuer::class)->issue('gitlab.cas.ai/team/backend', 'ADR', "adr {$i}");

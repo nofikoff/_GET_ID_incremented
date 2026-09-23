@@ -17,7 +17,7 @@ pest()->extend(TestCase::class)
     ->in('Concurrency');
 
 /**
- * A registered project with one key type enabled in it: gitlab.cas.ai/team/backend and ADR-{number:04d} unless overridden.
+ * A registered project with one key type enabled in it: gitlab.cas.ai/team/backend and ADR unless overridden.
  *
  * @param  Project|array<string, mixed>  $project
  * @param  KeyType|array<string, mixed>  $keyType
@@ -27,6 +27,6 @@ function enabledPair(Project|array $project = [], KeyType|array $keyType = [], a
 {
     return ProjectKeyType::factory()
         ->for($project instanceof Project ? $project : Project::factory()->state(['repo_url' => 'git@gitlab.cas.ai:team/backend.git', ...$project]))
-        ->for($keyType instanceof KeyType ? $keyType : KeyType::factory()->state(['code' => 'ADR', 'format_template' => 'ADR-{number:04d}', ...$keyType]))
+        ->for($keyType instanceof KeyType ? $keyType : KeyType::factory()->state(['code' => 'ADR', ...$keyType]))
         ->create($counter);
 }

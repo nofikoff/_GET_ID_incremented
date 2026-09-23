@@ -16,7 +16,8 @@ beforeEach(function () {
     );
 });
 
-test('the first request for a theme gets number 1, formatted by the type template', function () {
+// Spec 004, FR-001/FR-002: the bare number, no formatted name — the consumer builds the document name.
+test('the first request for a theme gets number 1 and no formatted name', function () {
     $this->travelTo('2026-09-20 14:30:00');
 
     ($this->next)('add-oauth-auth')
@@ -26,7 +27,6 @@ test('the first request for a theme gets number 1, formatted by the type templat
             'type' => 'ADR',
             'name' => 'add-oauth-auth',
             'sequence_number' => 1,
-            'formatted_id' => 'ADR-0001',
             'is_new' => true,
             'created_at' => '2026-09-20T14:30:00Z',
         ]);
@@ -35,22 +35,22 @@ test('the first request for a theme gets number 1, formatted by the type templat
 test('each new theme takes the next number', function () {
     expect(($this->next)('init-project')->json('sequence_number'))->toBe(1)
         ->and(($this->next)('add-docker-support')->json('sequence_number'))->toBe(2)
-        ->and(($this->next)('add-oauth-auth')->json('formatted_id'))->toBe('ADR-0003');
+        ->and(($this->next)('add-oauth-auth')->json('sequence_number'))->toBe(3);
 });
 
-test('the name placeholder takes the normalized theme, while the response keeps the wording', function () {
-    enabledPair($this->adr->project, ['code' => 'spec', 'format_template' => '{number:03d}-{name}']);
+test('the response keeps the wording of the theme', function () {
+    enabledPair($this->adr->project, ['code' => 'spec']);
 
     ($this->next)('Add OAuth Auth', 'spec')
         ->assertOk()
-        ->assertJsonPath('formatted_id', '001-add-oauth-auth')
+        ->assertJsonPath('sequence_number', 1)
         ->assertJsonPath('name', 'Add OAuth Auth');
 });
 
 test('numbering is kept per project and key type pair', function () {
     $other = Project::factory()->create(['repo_url' => 'git@gitlab.cas.ai:team/frontend.git']);
     enabledPair($other, $this->adr->keyType);
-    enabledPair($this->adr->project, ['code' => 'spec', 'format_template' => '{number:03d}-{name}']);
+    enabledPair($this->adr->project, ['code' => 'spec']);
 
     ($this->next)('first-adr');
     ($this->next)('second-adr');

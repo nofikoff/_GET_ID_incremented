@@ -17,14 +17,14 @@ beforeEach(function () {
         'created_at' => $now, 'updated_at' => $now,
     ]);
     $this->keyTypeId = DB::table('key_types')->insertGetId([
-        'code' => 'ADR', 'name' => 'Architecture Decision Record', 'format_template' => 'ADR-{number:04d}',
+        'code' => 'ADR', 'name' => 'Architecture Decision Record',
         'created_at' => $now, 'updated_at' => $now,
     ]);
 
     $this->issue = function (string $slug, int $number, ?int $keyTypeId = null): void {
         DB::table('identifiers')->insert([
             'project_id' => $this->projectId, 'key_type_id' => $keyTypeId ?? $this->keyTypeId,
-            'name' => $slug, 'name_slug' => $slug, 'sequence_number' => $number, 'formatted_id' => "ADR-{$number}",
+            'name' => $slug, 'name_slug' => $slug, 'sequence_number' => $number,
             'created_by' => $this->userId, 'created_at' => now(), 'updated_at' => now(),
         ]);
     };
@@ -69,17 +69,15 @@ test('a number is issued once per project and key type', function () {
     ($this->issue)('drop-oauth', 1);
 })->throws(UniqueConstraintViolationException::class);
 
-// FR-005: the id is fixed at issuance, so a row cannot exist without it.
-test('an issued number cannot be recorded without its formatted id', function () {
-    DB::table('identifiers')->insert([
-        'project_id' => $this->projectId, 'key_type_id' => $this->keyTypeId,
-        'name' => 'add-oauth', 'name_slug' => 'add-oauth', 'sequence_number' => 1,
-    ]);
-})->throws(QueryException::class, 'formatted_id');
+// Spec 004 FR-009: the document name is the consumer's convention, so the registry keeps no trace of it.
+test('neither a key type template nor a formatted id is stored', function () {
+    expect(Schema::hasColumn('key_types', 'format_template'))->toBeFalse()
+        ->and(Schema::hasColumn('identifiers', 'formatted_id'))->toBeFalse();
+});
 
 test('the same name and number are free in another key type', function () {
     $specTypeId = DB::table('key_types')->insertGetId([
-        'code' => 'spec', 'name' => 'Specification', 'format_template' => '{number:03d}-{name}',
+        'code' => 'spec', 'name' => 'Specification',
     ]);
 
     ($this->issue)('add-oauth', 1);

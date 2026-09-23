@@ -29,7 +29,6 @@ test('a REST client gets its issued number, unchanged, when the entry cannot be 
             'type' => 'ADR',
             'name' => 'add-oauth-auth',
             'sequence_number' => 1,
-            'formatted_id' => 'ADR-0001',
             'is_new' => true,
             'created_at' => '2026-09-20T14:30:00Z',
         ]);

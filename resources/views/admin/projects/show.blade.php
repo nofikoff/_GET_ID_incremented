@@ -120,13 +120,14 @@
             @else
                 <table>
                     <thead>
-                    <tr><th>Номер</th><th>Идентификатор</th><th>Тема</th><th>Автор</th><th>Выдан</th><th></th></tr>
+                    <tr><th>Тип</th><th>Номер</th><th>Ключ запроса</th><th>Автор</th><th>Выдан</th><th></th></tr>
                     </thead>
                     <tbody>
                     @foreach ($identifiers as $identifier)
                         <tr>
+                            <td><code>{{ $pair->keyType->code }}</code></td>
                             <td>{{ $identifier->sequence_number }}</td>
-                            <td><code>{{ $identifier->formatted_id }}</code></td>
+                            {{-- The theme as the developer passed it to next_id; the document name is the consumer's (spec 004, FR-007). --}}
                             <td>{{ $identifier->name }}</td>
                             <td>{{ $identifier->creator?->email ?? '—' }}</td>
                             <td>{{ $identifier->created_at?->format('Y-m-d H:i') }}</td>
@@ -134,7 +135,7 @@
                                 {{-- Newest first, so only the first row of the first page is the pair's tail (spec 003, FR-001). --}}
                                 @if ($loop->first && $identifiers->onFirstPage())
                                     <form class="inline" method="POST" action="{{ route('admin.projects.identifiers.destroy', [$project, $identifier]) }}"
-                                          onsubmit="return confirm(@js("Удалить {$identifier->formatted_id}? Номер может быть выдан снова другой теме."))">
+                                          onsubmit="return confirm(@js("Удалить {$pair->keyType->code} {$identifier->sequence_number}? Номер может быть выдан снова другой теме."))">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" title="Удалить последний номер">×</button>

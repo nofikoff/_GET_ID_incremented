@@ -17,7 +17,7 @@ beforeEach(function () {
         ['PATCH', "api/v1/admin/projects/{$projectId}", ['name' => 'Renamed']],
         ['PUT', "api/v1/admin/projects/{$projectId}/key-types", ['types' => [['code' => 'ADR']]]],
         ['GET', 'api/v1/admin/key-types', []],
-        ['POST', 'api/v1/admin/key-types', ['code' => 'RFC', 'name' => 'RFC', 'format_template' => 'RFC-{number}']],
+        ['POST', 'api/v1/admin/key-types', ['code' => 'RFC', 'name' => 'RFC']],
         ['PATCH', "api/v1/admin/key-types/{$keyTypeId}", ['name' => 'Renamed']],
     ];
 });

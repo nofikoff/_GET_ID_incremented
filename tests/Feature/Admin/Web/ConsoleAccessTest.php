@@ -31,7 +31,7 @@ beforeEach(function () {
         ['DELETE', 'admin.projects.identifiers.destroy', ['project' => $projectId, 'identifier' => $identifierId], []],
         ['GET', 'admin.key-types.index', [], []],
         ['GET', 'admin.key-types.create', [], []],
-        ['POST', 'admin.key-types.store', [], ['code' => 'RFC', 'name' => 'RFC', 'format_template' => 'RFC-{number}']],
+        ['POST', 'admin.key-types.store', [], ['code' => 'RFC', 'name' => 'RFC']],
         ['GET', 'admin.key-types.edit', ['keyType' => $keyTypeId], []],
         ['PATCH', 'admin.key-types.update', ['keyType' => $keyTypeId], ['name' => 'Renamed']],
         ['GET', 'admin.logs.index', [], []],

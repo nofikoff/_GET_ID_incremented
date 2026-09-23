@@ -18,7 +18,8 @@ beforeEach(function () {
     ]));
 });
 
-test('the issued identifiers of a pair are listed newest first, with the first wording', function () {
+// Spec 004, FR-001: exact items, so a formatted name coming back fails here.
+test('the issued identifiers of a pair are listed newest first, with the first wording and no formatted name', function () {
     $this->travelTo('2026-09-18 10:00:00');
     ($this->next)('init-project');
     $this->travelTo('2026-09-19 14:30:00');
@@ -31,14 +32,14 @@ test('the issued identifiers of a pair are listed newest first, with the first w
             'project_key' => 'gitlab.cas.ai/team/backend',
             'type' => 'ADR',
             'items' => [
-                ['sequence_number' => 2, 'name' => 'Add Docker Support', 'formatted_id' => 'ADR-0002', 'created_at' => '2026-09-19T14:30:00Z'],
-                ['sequence_number' => 1, 'name' => 'init-project', 'formatted_id' => 'ADR-0001', 'created_at' => '2026-09-18T10:00:00Z'],
+                ['sequence_number' => 2, 'name' => 'Add Docker Support', 'created_at' => '2026-09-19T14:30:00Z'],
+                ['sequence_number' => 1, 'name' => 'init-project', 'created_at' => '2026-09-18T10:00:00Z'],
             ],
         ]);
 });
 
 test('the list holds only its own pair', function () {
-    enabledPair($this->adr->project, ['code' => 'spec', 'format_template' => '{number:03d}-{name}']);
+    enabledPair($this->adr->project, ['code' => 'spec']);
     enabledPair(Project::factory()->create(['repo_url' => 'git@gitlab.cas.ai:team/frontend.git']), $this->adr->keyType);
 
     ($this->next)('backend-adr');
@@ -46,7 +47,7 @@ test('the list holds only its own pair', function () {
     ($this->next)('frontend-adr', 'ADR', 'gitlab.cas.ai/team/frontend');
 
     expect(($this->list)()->json('items.*.name'))->toBe(['backend-adr'])
-        ->and(($this->list)(['type' => 'spec'])->json('items.*.formatted_id'))->toBe(['001-backend-spec']);
+        ->and(($this->list)(['type' => 'spec'])->json('items.*.name'))->toBe(['backend-spec']);
 });
 
 test('a pair with nothing issued lists nothing', function () {

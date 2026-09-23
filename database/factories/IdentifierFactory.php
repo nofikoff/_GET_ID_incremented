@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Domain\KeyType\DocumentName;
-use App\Domain\KeyType\IdentifierFormat;
 use App\Models\Identifier;
 use App\Models\KeyType;
 use App\Models\Project;
@@ -28,8 +27,6 @@ class IdentifierFactory extends Factory
             'name' => fake()->unique()->sentence(3),
             'name_slug' => fn (array $attributes): string => DocumentName::fromString($attributes['name'])->slug,
             'sequence_number' => fake()->unique()->numberBetween(1, 1_000_000),
-            'formatted_id' => fn (array $attributes): string => IdentifierFormat::parse(KeyType::query()->findOrFail($attributes['key_type_id'])->format_template)
-                ->format($attributes['sequence_number'], DocumentName::fromString($attributes['name'])),
             'created_by' => User::factory(),
         ];
     }

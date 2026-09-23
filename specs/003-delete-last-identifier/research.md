@@ -27,7 +27,7 @@
 2. запрошенная запись перечитывается по ключу; её нет → `ModelNotFoundException` («не найдено»), даже
    если в паре остались другие номера — так её уже снял другой администратор (analyze F2);
 3. наибольший `sequence_number` пары обычным чтением; он больше номера запрошенной записи →
-   `NotTheLastIdentifier` с `formatted_id` хвоста;
+   `NotTheLastIdentifier` с кодом типа и номером хвоста ([spec 004](../004-index-only-numbers/research.md), R4);
 4. `toBase()->withdraw()` по ключу записи;
 5. `last_sequence` пары = наибольший `sequence_number` оставшихся записей или 0.
 
@@ -55,7 +55,7 @@ Deadlock с `EnabledKeyTypes` (блокирует все пары проекта
 
 **Decision**:
 - `App\Domain\Sequence\SequenceWithdrawer` — только правило хвоста и счётчик; возвращает
-  `WithdrawnIdentifier` (формат, тема, номер, новый `last_sequence`, следующий номер).
+  `WithdrawnIdentifier` (код типа, тема, номер, новый `last_sequence`, следующий номер).
 - `App\Actions\Registry\WithdrawIdentifier` — вызывает домен и пишет след через
   `RegistryChangeLog::withdrawn()`, операция `withdraw_identifier`, сущность `project`.
 - Выдачу `SequenceIssuer` не трогаем: она по-прежнему единственное место выделения номера.
@@ -78,7 +78,7 @@ Deadlock с `EnabledKeyTypes` (блокирует все пары проекта
 
 **Decision**: `NotTheLastIdentifier` контроллер превращает в `ValidationException` под ключом
 `identifiers.<key_type_id>`, redirect back; ошибка выводится над таблицей пары. Текст: «Удалить можно
-только последний номер пары: сейчас это {formatted_id}.» Номер, исчезнувший до запроса, — 404 (scoped
+только последний номер пары: сейчас это {code} {number}.» («ADR 34», [spec 004](../004-index-only-numbers/research.md), R4). Номер, исчезнувший до запроса, — 404 (scoped
 binding) или, если исчез между binding и блокировкой, тот же 404 из домена.
 
 **Rationale**: так консоль отдаёт все свои отказы (`ProjectKeyTypeController`); отдельный 409 в
