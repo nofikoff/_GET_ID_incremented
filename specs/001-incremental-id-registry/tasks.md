@@ -386,14 +386,14 @@ gate_commands:
 tier: strong
 -->
 
-- [ ] T064 [US3] `config/services.php` — секция `google`; `config/getid.php` — `allowed_email_domain`, `admin_emails`, `api_log_retention_days`
-- [ ] T065 [US3] `app/Http/Controllers/Web/GoogleAuthController.php` — редирект и колбэк, проверка домена до создания пользователя, повышение по `ADMIN_EMAILS`
-- [ ] T066 [P] [US3] `app/Http/Controllers/Web/TokenController.php` — перечень, создание, отзыв; значение токена кладётся в flash один раз
-- [ ] T067 [P] [US3] `app/Actions/DeactivateUser.php` — гашение сотрудника со сносом токенов и проверкой «последний администратор»
-- [ ] T101 [P] [US3] Консольные команды управления пользователями — единственный путь для этих операций (FR-021): `app/Console/Commands/SetUserRoleCommand.php` (`user:role {email} {admin|member}`, отказ при снятии роли у последнего администратора — FR-021a) и `app/Console/Commands/DeactivateUserCommand.php` (`user:deactivate {email}`, тонкая обёртка над `App\Actions\DeactivateUser` — FR-021b). Тесты — в `tests/Feature/Auth/AdminLifecycleTest.php` (T062)
-- [ ] T068 [P] [US3] Blade: `resources/views/layouts/app.blade.php`, `auth/login.blade.php`, `tokens/index.blade.php`
-- [ ] T069 [P] [US3] Blade административных экранов: `admin/projects/index.blade.php`, `admin/key-types/index.blade.php`
-- [ ] T070 [US3] Маршруты в `routes/web.php`: вход, кабинет токенов, административные экраны под Gate. Страница входа называется `login`: web-гостей `Authenticate` отправляет на `route('login')` (`bootstrap/app.php`), и другое имя даст 500 на любом закрытом экране. Все маршруты именованные (`login`, `auth.google.redirect`, `auth.google.callback`, `tokens.index`, `admin.projects.index`, `admin.key-types.index`) — на `tokens.index` опирается проверка схемы ссылок после выкладки в quickstart.md
+- [x] T064 [US3] `config/services.php` — секция `google`; `config/getid.php` — `allowed_email_domain`, `admin_emails`, `api_log_retention_days`
+- [x] T065 [US3] `app/Http/Controllers/Web/GoogleAuthController.php` — редирект и колбэк, проверка домена до создания пользователя, повышение по `ADMIN_EMAILS`
+- [x] T066 [P] [US3] `app/Http/Controllers/Web/TokenController.php` — перечень, создание, отзыв; значение токена кладётся в flash один раз
+- [x] T067 [P] [US3] `app/Actions/DeactivateUser.php` — гашение сотрудника со сносом токенов и проверкой «последний администратор»
+- [x] T101 [P] [US3] Консольные команды управления пользователями — единственный путь для этих операций (FR-021): `app/Console/Commands/SetUserRoleCommand.php` (`user:role {email} {admin|member}`, отказ при снятии роли у последнего администратора — FR-021a) и `app/Console/Commands/DeactivateUserCommand.php` (`user:deactivate {email}`, тонкая обёртка над `App\Actions\DeactivateUser` — FR-021b). Тесты — в `tests/Feature/Auth/AdminLifecycleTest.php` (T062)
+- [x] T068 [P] [US3] Blade: `resources/views/layouts/app.blade.php`, `auth/login.blade.php`, `tokens/index.blade.php`
+- [x] T069 [P] [US3] Blade административных экранов: `admin/projects/index.blade.php`, `admin/key-types/index.blade.php`
+- [x] T070 [US3] Маршруты в `routes/web.php`: вход, кабинет токенов, административные экраны под Gate. Страница входа называется `login`: web-гостей `Authenticate` отправляет на `route('login')` (`bootstrap/app.php`), и другое имя даст 500 на любом закрытом экране. Все маршруты именованные (`login`, `auth.google.redirect`, `auth.google.callback`, `tokens.index`, `admin.projects.index`, `admin.key-types.index`) — на `tokens.index` опирается проверка схемы ссылок после выкладки в quickstart.md
 
 **Checkpoint**: сервисом можно пользоваться без ручной правки базы
 
@@ -425,11 +425,11 @@ gate_commands:
 tier: standard
 -->
 
-- [ ] T071 [P] [US4] `tests/Mcp/ResolveProjectToolTest.php`: схема инструмента, зарегистрированный и незарегистрированный проект, неразбираемый адрес как `Response::error`
-- [ ] T072 [P] [US4] `tests/Mcp/NextIdToolTest.php`: выдача, идемпотентность, отказ с текстом, который начинается с кода причины из REST-контракта (`project_not_registered: …`) и называет ключ и следующий шаг (FR-024)
-- [ ] T073 [P] [US4] `tests/Mcp/ListIdentifiersToolTest.php`: порядок и состав перечня
-- [ ] T074 [US4] `tests/Mcp/ParityWithRestTest.php`: для каждой пары «tool ↔ endpoint» результат на одних и тех же входных данных совпадает, включая отказы — код причины в MCP совпадает с `error.code` REST для всех четырёх причин из FR-015 (FR-024)
-- [ ] T075 [P] [US4] `tests/Mcp/AuthorizationTest.php`: обращение без заголовка авторизации отвергается на маршруте, до инструмента
+- [x] T071 [P] [US4] `tests/Mcp/ResolveProjectToolTest.php`: схема инструмента, зарегистрированный и незарегистрированный проект, неразбираемый адрес как `Response::error`
+- [x] T072 [P] [US4] `tests/Mcp/NextIdToolTest.php`: выдача, идемпотентность, отказ с текстом, который начинается с кода причины из REST-контракта (`project_not_registered: …`) и называет ключ и следующий шаг (FR-024)
+- [x] T073 [P] [US4] `tests/Mcp/ListIdentifiersToolTest.php`: порядок и состав перечня
+- [x] T074 [US4] `tests/Mcp/ParityWithRestTest.php`: для каждой пары «tool ↔ endpoint» результат на одних и тех же входных данных совпадает, включая отказы — код причины в MCP совпадает с `error.code` REST для всех четырёх причин из FR-015 (FR-024)
+- [x] T075 [P] [US4] `tests/Mcp/AuthorizationTest.php`: обращение без заголовка авторизации отвергается на маршруте, до инструмента
 
 ### Step 6.2: MCP-сервер и инструменты
 
@@ -450,11 +450,11 @@ gate_commands:
 tier: strong
 -->
 
-- [ ] T076 [US4] `app/Mcp/Servers/GetIdServer.php` — имя, инструкция сервера, регистрация трёх инструментов
-- [ ] T077 [P] [US4] `app/Mcp/Tools/ResolveProjectTool.php` — схема и текст описания из [contracts/mcp-tools.md](./contracts/mcp-tools.md), включая фразу о том, что origin читает клиент (FR-023)
-- [ ] T078 [P] [US4] `app/Mcp/Tools/NextIdTool.php` — вызывает `SequenceIssuer`, своей логики выдачи не содержит (принцип VI)
-- [ ] T079 [P] [US4] `app/Mcp/Tools/ListIdentifiersTool.php`
-- [ ] T080 [US4] Зарегистрировать сервер в `routes/api.php`: `Mcp::web('/mcp', GetIdServer::class)->middleware(['auth:sanctum', 'throttle:getid'])` — тот же именованный limiter, что у REST (T028), отдельного файла маршрутов пакет не заводит (FR-020a, FR-022)
+- [x] T076 [US4] `app/Mcp/Servers/GetIdServer.php` — имя, инструкция сервера, регистрация трёх инструментов
+- [x] T077 [P] [US4] `app/Mcp/Tools/ResolveProjectTool.php` — схема и текст описания из [contracts/mcp-tools.md](./contracts/mcp-tools.md), включая фразу о том, что origin читает клиент (FR-023)
+- [x] T078 [P] [US4] `app/Mcp/Tools/NextIdTool.php` — вызывает `SequenceIssuer`, своей логики выдачи не содержит (принцип VI)
+- [x] T079 [P] [US4] `app/Mcp/Tools/ListIdentifiersTool.php`
+- [x] T080 [US4] Зарегистрировать сервер в `routes/api.php`: `Mcp::web('/mcp', GetIdServer::class)->middleware(['auth:sanctum', 'throttle:getid'])` — тот же именованный limiter, что у REST (T028), отдельного файла маршрутов пакет не заводит (FR-020a, FR-022)
 
 **Checkpoint**: `claude mcp add --transport http` подключает сервер, номер выдаётся из сессии ассистента
 
@@ -486,9 +486,9 @@ gate_commands:
 tier: standard
 -->
 
-- [ ] T081 [P] [US5] `tests/Feature/ApiLoggingTest.php`: состав записи для REST и для MCP — пользователь, токен, endpoint, параметры, код, длительность; сетевой адрес не пишется (FR-025, FR-024a)
-- [ ] T082 [P] [US5] `tests/Feature/ApiLoggingFailureTest.php`: при падении записи клиент получает выданный номер, а не ошибку (FR-026)
-- [ ] T083 [P] [US5] `tests/Feature/PruneApiLogsTest.php`: чистка сносит записи старше горизонта и не трогает реестр
+- [x] T081 [P] [US5] `tests/Feature/ApiLoggingTest.php`: состав записи для REST и для MCP — пользователь, токен, endpoint, параметры, код, длительность; сетевой адрес не пишется (FR-025, FR-024a)
+- [x] T082 [P] [US5] `tests/Feature/ApiLoggingFailureTest.php`: при падении записи клиент получает выданный номер, а не ошибку (FR-026)
+- [x] T083 [P] [US5] `tests/Feature/PruneApiLogsTest.php`: чистка сносит записи старше горизонта и не трогает реестр
 
 ### Step 7.2: Middleware журнала и чистка
 
@@ -509,9 +509,9 @@ gate_commands:
 tier: standard
 -->
 
-- [ ] T084 [US5] `app/Http/Middleware/LogApiRequest.php` — пользователь и снимок имени токена (`$request->user()->currentAccessToken()->name`, см. data-model.md §api_logs), замер длительности, запись после ответа, перехват исключения записи в лог приложения; сохраняемый `payload` обрезается сверху (4 КБ), чтобы одна крупная посылка не раздувала журнал
-- [ ] T085 [US5] Проверить, что `LogApiRequest` уже зарегистрирован на группах `api` и `/mcp` в T028a, и что записи появляются для обеих поверхностей; сам `bootstrap/app.php` здесь не правится
-- [ ] T086 [P] [US5] `app/Console/Commands/PruneApiLogs.php` и регистрация в планировщике `routes/console.php` с горизонтом из `config/getid.php`
+- [x] T084 [US5] `app/Http/Middleware/LogApiRequest.php` — пользователь и снимок имени токена (`$request->user()->currentAccessToken()->name`, см. data-model.md §api_logs), замер длительности, запись после ответа, перехват исключения записи в лог приложения; сохраняемый `payload` обрезается сверху (4 КБ), чтобы одна крупная посылка не раздувала журнал
+- [x] T085 [US5] Проверить, что `LogApiRequest` уже зарегистрирован на группах `api` и `/mcp` в T028a, и что записи появляются для обеих поверхностей; сам `bootstrap/app.php` здесь не правится
+- [x] T086 [P] [US5] `app/Console/Commands/PruneApiLogs.php` и регистрация в планировщике `routes/console.php` с горизонтом из `config/getid.php`
 
 **Checkpoint**: обращения журналируются, журнал не растёт бесконечно
 
@@ -768,3 +768,47 @@ decided: the 31 red 5.1 tests (route not defined, command not found) are committ
 `kind=spec-verify agent=verifier model=claude-sonnet-5 effort=high turns=43 minutes=4.3 input=86 cache_write=86711 cache_read=2443963 output=19487`
 
 S2 verify: все пять шагов IMPLEMENTS; 264 passed, 31 failed — только `tests/Feature/Auth` (ждут 5.2). Подтверждены незаписанные в spec отступления, вынесены автору: повтор существующей темы после гашения (FR-015), `additionalProperties`/`minProperties` контракта не применяются, `seed_sequence` без значения сохраняет текущий вместо `default: 0`, `formatted_id` вычисляется по текущему шаблону.
+
+### S3.step-5.2 — 2026-09-23
+**Completed steps:** 5.2
+**Commits:** cef448c
+
+### S3.step-6.1 — 2026-09-23
+**Completed steps:** 6.1
+**Commits:** 1dfc0e9
+
+### S3.step-6.2 — 2026-09-23
+**Completed steps:** 6.2
+**Commits:** e695ec4
+
+### S3.step-7.1 — 2026-09-23
+**Completed steps:** 7.1
+**Commits:** 98472c2
+
+### S3.step-7.2 — 2026-09-23
+**Completed steps:** 7.2
+**Commits:** 70f70eb
+
+### S3 — observations (2026-09-23, dispatch 5)
+plan-wrong: T086 names app/Console/Commands/PruneApiLogs.php, but principle IV requires the framework mechanism. ApiLog uses MassPrunable, and routes/console.php schedules model:prune --model=App\Models\ApiLog daily; no custom command exists, and PruneApiLogsTest drives model:prune.
+plan-wrong: FR-024/T074: the HTTP kernel trims every string input (TrimStrings -> Str::trim), while laravel/mcp reads the raw JSON-RPC body past it. ' ADR' then answered type_not_enabled over MCP only, and a padded theme was stored as the first wording. RegistryTool trims tool arguments with the same Str::trim; a padded parity case pins it (verified red without the trim).
+plan-wrong: contracts/mcp-tools.md prescribes Response::json, which is @internal in laravel/mcp 1.0.0. Tools return Response::structured: the same JSON as text content plus structuredContent, built by the endpoint's own JsonResource.
+plan-wrong: FR-021b gap that no task covered: a deactivated employee's open browser session could keep minting tokens. The users auth provider is now 'active-users' (EloquentUserProvider withQuery whereNull deactivated_at; config/auth.php plus AppServiceProvider).
+plan-wrong: T070 names only index routes for the admin screens, and quickstart administers through REST, so the web admin screens are read-only listings. Management stays on /api/v1/admin/*.
+plan-wrong: T070: '/' now redirects to /tokens and the sign-in page is /login (route login). The skeleton welcome view and tests/Feature/ExampleTest.php (GET / == 200) were removed; quickstart's root still leads to the sign-in page via the redirect.
+plan-wrong: TokenManagementTest 'revoking one token...' (5.1) authenticated its web DELETE through sanctum. The preceding API call leaves sanctum as the default guard in the test app, and withToken keeps the bearer header. Fixed with actingAs(user, 'web') before the DELETE; production is unaffected (default guard web per request).
+plan-wrong: data-model api_logs says the payload is cut to 4 KB, but cut JSON text is invalid for a json column. An oversized payload is stored as {truncated, bytes, head}, with head cut on a UTF-8 boundary so the whole entry fits in 4096 unescaped bytes.
+plan-wrong: T085 had nothing to do: LogApiRequest already sits in the api group, which /mcp inherits; ApiLoggingTest has an MCP case.
+redone: ApiLoggingTest payload assertions went from toBe to toEqual at 7.2. MySQL's json column reorders object keys, so the exact-order comparison from 7.1 failed on correct content.
+redone: PruneApiLogsTest helper misused tap() (the proxy returned save()'s bool). The scheduler test first read Schedule without bootstrapping the console kernel, which is when routes/console.php loads, and expected doubled backslashes. Both fixed before the 7.1 commit.
+redone: pint rejected fully qualified class names in the tool schema docblocks, so Type is now imported. phpstan rejected ApiLog::prunable() returning Builder<self>, so it returns Builder<static>.
+decided: the journal entry is written in terminate(); handle() only stashes the duration on the request. Because terminate() runs for every route middleware, that stash doubles as the 'handle ran' flag that keeps 401 and 429 out of the journal. Breaks nothing on FPM; elsewhere the write happens just before the connection closes, still without touching the body.
+decided: api_logs.endpoint is the actual path ('/api/v1/admin/projects/5', '/mcp'), not the route pattern. For MCP, the tool and its arguments sit in payload (the JSON-RPC body), and status_code is the HTTP 200 even when the tool refused. Breaks journal queries that expect MCP refusals to be non-200.
+decided: emails are stored lower-cased at sign-in; the user commands lower-case their argument; ADMIN_EMAILS compares case-insensitively. An account is matched by google_id, then by email (the corporate address is the identity). Sign-in refreshes google_id, name and avatar, never email or role. Breaks if the domain reissues an address to a different person.
+decided: sign-in refuses an explicit email_verified=false; a missing claim passes, since Socialite fakes carry none. InvalidStateException and any GuzzleException (outage, denied consent) redirect to login with an error and a warning log.
+decided: the last-administrator guard locks every active admin row, the user's own included, inside the role or deactivation transaction, so two concurrent demotions cannot each count the other as the one who stays.
+decided: MCP tools apply the REST FormRequest rules and JsonResources unchanged, and refusal text is '{code}: {message}' from one place (RegistryTool::refused). resolve_project and list_identifiers carry IsReadOnly and IsIdempotent; next_id carries IsIdempotent only.
+decided: the token cabinet shows the new token once, together with a ready 'claude mcp add' command. user:role and user:deactivate print English, like getid:issue; sign-in refusals on the web page are Russian.
+
+### S3 — dispatch 5 (2026-09-23)
+`kind=bundle agent=implementer tier=strong model=claude-opus-5-5 effort=xhigh turns=101 minutes=26.1 input=202 cache_write=365192 cache_read=25004167 output=149340`
