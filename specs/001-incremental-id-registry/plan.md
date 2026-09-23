@@ -51,7 +51,7 @@ Compose (php-fpm 8.3 + nginx + mysql 8)
 | I. Идемпотентность выдачи | Поиск по `(project_id, key_type_id, name_slug)` до открытия транзакции; уникальный индекс на эту тройку делает вторую запись невозможной физически | PASS |
 | II. Номер не переиспользуется | В домене нет операции удаления; `down()` миграции реестра не дропает данные; проекты и типы гасятся `is_active` | PASS |
 | III. Реестр закрытый | `ProjectKey` value object нормализует origin; сервис отвергает незарегистрированный ключ и невключённый тип до входа в транзакцию | PASS |
-| IV. Framework-native | Sanctum, Socialite, `laravel/mcp`, FormRequest, Gate, middleware — вместо ad-hoc; самописного нет ничего, кроме двух value object | PASS |
+| IV. Framework-native | Sanctum, Socialite, `laravel/mcp`, FormRequest, Gate, middleware — вместо ad-hoc; самописного нет ничего, кроме трёх value object | PASS |
 | V. Параллельный тест | `tests/Concurrency/` запускает N процессов через `Process::pool`, каждый со своим соединением; проверка — N различных номеров | PASS |
 | VI. Один слой домена | `SequenceIssuer` вызывается из `SequenceController` и из `NextIdTool`; транспорт содержит только валидацию входа и сериализацию | PASS |
 | VII. Тесты в Docker | `make test` поднимает контейнеры и гоняет набор внутри php-контейнера | PASS |
@@ -96,14 +96,17 @@ app/
 │   │   ├── IssuedIdentifier.php      # результат выдачи (номер, формат, признак новизны)
 │   │   └── Exceptions/               # UnknownProject, TypeNotEnabled, InactiveProject
 │   ├── Project/
-│   │   └── ProjectKey.php            # value object: нормализация origin
+│   │   ├── ProjectKey.php            # value object: нормализация origin
+│   │   ├── ProjectResolver.php       # resolve по origin: ProjectResolution, AvailableKeyType
+│   │   └── EnabledKeyTypes.php       # замена набора типов, проверка seed под блокировкой (SeedBelowIssued)
 │   ├── KeyType/
 │   │   ├── DocumentName.php          # value object: нормализация темы в slug
 │   │   └── IdentifierFormat.php      # разбор и применение шаблона форматирования
 ├── Actions/                           # DeactivateUser — гашение с проверкой «последний админ»
 ├── Enums/                             # UserRole
 ├── Models/                            # User, PersonalAccessToken, Project, KeyType,
-│                                      # ProjectKeyType, Identifier, ApiLog
+│                                      # ProjectKeyType, Identifier, ApiLog;
+│                                      # Builders/AppendOnlyQueryBuilder — запрет update/delete реестра
 ├── Providers/                         # AppServiceProvider: Policy, RateLimiter «getid»
 ├── Http/
 │   ├── Controllers/
@@ -113,7 +116,9 @@ app/
 │   │   └── Web/                       # GoogleAuthController, TokenController, админские экраны
 │   ├── Middleware/
 │   │   └── LogApiRequest.php
-│   ├── Requests/                      # FormRequest на каждый пишущий endpoint
+│   ├── ApiSurface.php                 # какой путь относится к API: рендер ошибок, redirect гостей
+│   ├── Requests/                      # FormRequest на каждый пишущий endpoint; ClosedBodyRequest —
+│   │                                  # закрытое тело по контракту
 │   └── Resources/                     # JsonResource на каждый ответ
 ├── Mcp/
 │   ├── Servers/GetIdServer.php

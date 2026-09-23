@@ -13,7 +13,7 @@ info:
     (`GET /v1/projects/resolve`). Незарегистрированный проект не заводится автоматически.
 
 servers:
-  - url: https://get-id.cas.ai/api
+  - url: https://id.x3mal.com/api
     description: production
 
 security:

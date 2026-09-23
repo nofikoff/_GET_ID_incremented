@@ -7,3 +7,4 @@
 |---|---|---|---|---|
 | analyze | f3eff42 | 2026-09-23 | 8 findings applied | 2 critical (sqlite test DB, missing suites), 1 high (T042 burned number); final pass mechanical: 40 FR covered, 0 dangling refs, 17/17 plan-meta valid |
 | converge | 4888cec | 2026-09-23 | converged |  |
+| analyze | 59a64c0 | 2026-09-23 | 4 findings applied |  |

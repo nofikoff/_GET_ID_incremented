@@ -18,7 +18,7 @@ Mcp::web('/mcp', GetIdServer::class)->middleware(['auth:sanctum', 'throttle:geti
 Подключение на стороне клиента:
 
 ```bash
-claude mcp add --transport http get-id https://get-id.cas.ai/mcp \
+claude mcp add --transport http get-id https://id.x3mal.com/mcp \
   --header "Authorization: Bearer <token>"
 ```
 

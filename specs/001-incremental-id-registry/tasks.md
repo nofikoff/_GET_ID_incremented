@@ -511,7 +511,7 @@ tier: standard
 
 - [x] T084 [US5] `app/Http/Middleware/LogApiRequest.php` — пользователь и снимок имени токена (`$request->user()->currentAccessToken()->name`, см. data-model.md §api_logs), замер длительности, запись после ответа, перехват исключения записи в лог приложения; сохраняемый `payload` обрезается сверху (4 КБ), чтобы одна крупная посылка не раздувала журнал
 - [x] T085 [US5] Проверить, что `LogApiRequest` уже зарегистрирован на группах `api` и `/mcp` в T028a, и что записи появляются для обеих поверхностей; сам `bootstrap/app.php` здесь не правится
-- [x] T086 [P] [US5] `app/Console/Commands/PruneApiLogs.php` и регистрация в планировщике `routes/console.php` с горизонтом из `config/getid.php`
+- [x] T086 [P] [US5] Чистка журнала и регистрация в планировщике `routes/console.php` с горизонтом из `config/getid.php`. Реализована встроенным `MassPrunable` на `ApiLog` и `model:prune` — своей команды `PruneApiLogs` нет (принцип IV; Progress Log, S3)
 
 **Checkpoint**: обращения журналируются, журнал не растёт бесконечно
 
@@ -899,3 +899,8 @@ S4 verify: все три шага IMPLEMENTS; `make test` 379 passed, pint и ph
 `kind=converge agent=verifier model=claude-sonnet-5 effort=high turns=8 minutes=0.8 input=16 cache_write=73453 cache_read=353984 output=4215`
 
 `/speckit-converge`: converged, задач не дописано; записано в gates.md.
+
+### analyze — dispatch 10 (2026-09-23)
+`kind=analyze agent=verifier model=claude-sonnet-5 effort=high turns=27 minutes=4.5 input=54 cache_write=120701 cache_read=2079359 output=25226`
+
+`/speckit-analyze` на HEAD: 4 находки (0 critical, 1 high), все в документах и все применены — домен в контрактах `get-id.cas.ai` → `id.x3mal.com` (F1), plan.md §Project Structure дополнен классами, на которые ссылаются data-model.md и CLAUDE.md (F2), счётчик value object в Constitution Check (F3), текст T086 под `model:prune` (F4).
