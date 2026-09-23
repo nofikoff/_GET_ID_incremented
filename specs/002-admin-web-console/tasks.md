@@ -389,3 +389,8 @@ decided: Dropped assertSessionHasErrors('surface') from the follow-up-render tes
 `kind=review-fix agent=implementer tier=standard model=claude-sonnet-5 effort=xhigh turns=45 minutes=6.8 input=90 cache_write=99586 cache_read=2944229 output=31954`
 
 `/review2 since 1e60b9d` попытка 1: Critical 0, High 0, Medium 1 (фильтр журнала после отказа показывал прошлые значения), Low 1 (ошибка `surface` не выводилась). Исправлено в ac7104f.
+
+`/review2 since f065b81` попытка 2 (только исправление): находок нет — цикл сошёлся.
+
+### Итог прогона (2026-09-23)
+2 bundle, 8 шагов, ни одного повторного dispatch implementer, ни одной остановки. Spec-verify S1 нашёл дефект `page_<code>` для кода с точкой — T040 добавлен в Step 6.1 и закрыт. Analyze — 3 находки в документах, применены до реализации; converge — чисто; review хвоста ветки (`since 1e60b9d`, пакет 001 уже сошёлся раньше) — Medium 1 и Low 1 в фильтре журнала, исправлены за одну попытку. Требует ручной проверки: консоль под настоящим входом Google на production после выкладки. Проход quickstart делался на dev-стеке и удалил свою тестовую запись реестра сырым запросом — закоммиченного пути удаления реестра нет.
