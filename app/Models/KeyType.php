@@ -17,6 +17,15 @@ class KeyType extends Model
     use HasFactory;
 
     /**
+     * Mirrors the column default, so a key type answers is_active right after it is created.
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'is_active' => true,
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array

@@ -2,10 +2,12 @@
 
 use App\Exceptions\RenderApiErrors;
 use App\Http\ApiSurface;
+use App\Http\Middleware\EnsureAdministrator;
 use App\Http\Middleware\LogApiRequest;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -22,6 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // REST and MCP share this group, and with it one per-token budget of the getid limiter (FR-020a).
         $middleware->api(append: ['auth:sanctum', 'throttle:getid', LogApiRequest::class]);
+
+        // FR-017: the administrator check runs before route model binding looks the id up.
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: EnsureAdministrator::class);
 
         // Token clients get a 401, never a redirect to the sign-in page, even without an Accept header.
         $middleware->redirectGuestsTo(fn (Request $request): ?string => ApiSurface::includes($request) ? null : route('login'));
