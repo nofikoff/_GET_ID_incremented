@@ -889,3 +889,8 @@ decided: a ruby:3-alpine image was pulled to parse the OpenAPI YAML (no YAML par
 
 ### S4 — dispatch 7 (2026-09-23)
 `kind=bundle agent=implementer tier=strong model=claude-opus-5-5 effort=xhigh turns=105 minutes=28.7 input=210 cache_write=403102 cache_read=27938372 output=161752`
+
+### S4 — dispatch 8 (2026-09-23)
+`kind=spec-verify agent=verifier model=claude-sonnet-5 effort=high turns=43 minutes=4.0 input=86 cache_write=86782 cache_read=2538300 output=19011`
+
+S4 verify: все три шага IMPLEMENTS; `make test` 379 passed, pint и phpstan чистые.
