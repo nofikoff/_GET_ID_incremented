@@ -1,8 +1,12 @@
 <?php
 
+use App\Actions\DeactivateUser;
+use App\Actions\LastAdministrator;
 use App\Enums\UserRole;
 use App\Models\Identifier;
 use App\Models\User;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Support\Facades\DB;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as GoogleUser;
 
@@ -76,6 +80,31 @@ test('the last active administrator cannot be deactivated', function () {
 
     expect($boss->refresh()->deactivated_at)->toBeNull()
         ->and($boss->tokens()->count())->toBe(1);
+});
+
+test('deactivating a member leaves the administrator rows unlocked', function () {
+    User::factory()->admin()->create();
+    $ada = User::factory()->create();
+    $locking = [];
+    DB::listen(function (QueryExecuted $query) use (&$locking): void {
+        if (str_contains($query->sql, 'for update')) {
+            $locking[] = $query->sql;
+        }
+    });
+
+    app(DeactivateUser::class)($ada);
+
+    expect($ada->refresh()->deactivated_at)->not->toBeNull()
+        ->and($locking)->toHaveCount(1)
+        ->and($locking[0])->not->toContain('`role`');
+});
+
+test('an employee promoted after being looked up is guarded as the administrator they now are', function () {
+    $ada = User::factory()->create();
+    User::query()->whereKey($ada->id)->update(['role' => UserRole::Admin]);
+
+    expect(fn () => app(DeactivateUser::class)($ada))->toThrow(LastAdministrator::class)
+        ->and($ada->refresh()->deactivated_at)->toBeNull();
 });
 
 test('deactivating an unknown address fails', function () {

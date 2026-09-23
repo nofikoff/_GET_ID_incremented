@@ -23,6 +23,7 @@ final class EnabledKeyTypes
      * @return Collection<int, ProjectKeyType> the pairs now issuing, by type code
      *
      * @throws SeedBelowIssued
+     * @throws RetiredKeyType
      */
     public function replace(Project $project, array $types): Collection
     {
@@ -32,7 +33,12 @@ final class EnabledKeyTypes
 
             // Every check runs before the first write, so a refused set changes nothing.
             foreach ($types as $position => ['code' => $code, 'seed_sequence' => $seed]) {
-                $keyType = KeyType::query()->where('code', $code)->firstOrFail();
+                // Shared lock: a retirement committing after validation is either seen here or waits for this set.
+                $keyType = KeyType::query()->where('code', $code)->sharedLock()->firstOrFail();
+                if (! $keyType->is_active) {
+                    throw RetiredKeyType::at($position, $keyType->code);
+                }
+
                 $counter = $counters->get($keyType->id) ?? new ProjectKeyType([
                     'project_id' => $project->id,
                     'key_type_id' => $keyType->id,

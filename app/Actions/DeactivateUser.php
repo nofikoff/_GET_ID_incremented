@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Actions\Concerns\KeepsAnAdministrator;
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -20,7 +21,11 @@ final class DeactivateUser
     public function __invoke(User $user): void
     {
         DB::transaction(function () use ($user): void {
-            $this->ensureAnotherAdministrator($user);
+            // The role is re-read under the row lock, so a concurrent promotion cannot slip past the check.
+            $locked = User::query()->lockForUpdate()->findOrFail($user->getKey());
+            if ($locked->role === UserRole::Admin) {
+                $this->ensureAnotherAdministrator($user);
+            }
 
             $user->deactivated_at ??= now();
             $user->save();

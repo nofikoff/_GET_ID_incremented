@@ -2,6 +2,7 @@
 
 namespace App\Rules;
 
+use App\Domain\Project\RetiredKeyType;
 use App\Models\KeyType;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -23,7 +24,7 @@ class EnableableKeyType implements ValidationRule
         if ($keyType === null) {
             $fail("Тип «{$code}» не заведён.");
         } elseif (! $keyType->is_active) {
-            $fail("Тип «{$keyType->code}» выведен из обращения и не может быть включён.");
+            $fail(RetiredKeyType::message($keyType->code));
         }
     }
 }

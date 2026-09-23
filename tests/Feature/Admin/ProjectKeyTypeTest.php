@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Requests\Api\Admin\SetProjectKeyTypesRequest;
 use App\Models\KeyType;
 use App\Models\Project;
 use App\Models\ProjectKeyType;
@@ -118,6 +119,17 @@ test('a retired type cannot be enabled', function () {
     ($this->setTypes)([['code' => 'spec'], ['code' => 'ADR']])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['types.1.code']);
+
+    expect(ProjectKeyType::query()->count())->toBe(0);
+});
+
+test('a type retired after the set passed validation is refused the same way, and nothing changes', function () {
+    // The container validates a FormRequest in its own afterResolving hook, registered before this one.
+    $this->app->afterResolving(SetProjectKeyTypesRequest::class, fn () => $this->adr->update(['is_active' => false]));
+
+    ($this->setTypes)([['code' => 'spec'], ['code' => 'ADR']])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['types.1.code' => 'Тип «ADR» выведен из обращения и не может быть включён.']);
 
     expect(ProjectKeyType::query()->count())->toBe(0);
 });
