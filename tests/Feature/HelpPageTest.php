@@ -21,6 +21,17 @@ test('a member sees the connect command with the app\'s MCP URL and --scope user
         ->assertSee('list_identifiers');
 });
 
+test('the page gives a CLAUDE.md block that routes ADR and spec numbering through get-id', function () {
+    $this->actingAs(User::factory()->create());
+
+    $this->get(route('help'))
+        ->assertOk()
+        ->assertSee('## Document numbers (ADR, specs)', false)
+        ->assertSee('never derived from listing `docs/adr/` or `specs/`', false)
+        ->assertSee('create-new-feature.sh --number', false)
+        ->assertSee('register the project at '.url('/admin'), false);
+});
+
 test('the help link is offered to every signed-in employee, not only administrators', function () {
     $this->actingAs(User::factory()->create());
 
