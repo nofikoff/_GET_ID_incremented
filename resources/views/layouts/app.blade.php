@@ -20,7 +20,10 @@
         code, pre { font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
         pre { white-space: pre-wrap; word-break: break-all; padding: .75rem; border: 1px solid var(--line); border-radius: 6px; }
         button, .button { font: inherit; padding: .35rem .9rem; border: 1px solid var(--line); border-radius: 6px; background: none; color: inherit; cursor: pointer; text-decoration: none; display: inline-block; }
-        input[type=text] { font: inherit; padding: .35rem .5rem; border: 1px solid var(--line); border-radius: 6px; min-width: 16rem; }
+        input[type=text], textarea { font: inherit; padding: .35rem .5rem; border: 1px solid var(--line); border-radius: 6px; min-width: 16rem; }
+        input[type=number] { font: inherit; padding: .2rem .4rem; border: 1px solid var(--line); border-radius: 6px; width: 8rem; }
+        textarea { width: 100%; max-width: 40rem; }
+        form.inline { display: inline; }
         .notice { padding: .75rem 1rem; border: 1px solid var(--accent); border-radius: 6px; }
         .error { color: var(--bad); }
         .muted { color: var(--muted); }

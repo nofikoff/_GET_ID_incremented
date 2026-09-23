@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\KeyType;
 use App\Models\Project;
 use App\Models\User;
 
@@ -52,7 +53,7 @@ test('another address form of a registered repository returns the form with the 
 test('an address that does not parse returns the form with the reason under the address', function () {
     ($this->store)(['repo_url' => 'not a repository', 'name' => 'Broken'])
         ->assertRedirect(route('admin.projects.create'))
-        ->assertSessionHasErrors(['repo_url' => 'не разобран'])
+        ->assertSessionHasErrors(['repo_url' => 'Адрес репозитория «not a repository» не разобран: недопустимый хост «not a repository».'])
         ->assertSessionHasInput('name', 'Broken');
 
     expect(Project::query()->count())->toBe(0);
@@ -147,6 +148,7 @@ test('the card shows the project and the forms that change it', function () {
         'name' => 'Backend',
         'description' => 'Main API',
     ]);
+    KeyType::factory()->create(['code' => 'ADR']);
 
     $this->get(route('admin.projects.show', $project))
         ->assertOk()

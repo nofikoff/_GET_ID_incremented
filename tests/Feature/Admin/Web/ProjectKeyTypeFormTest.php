@@ -131,6 +131,15 @@ test('the form lists every active type and checks the enabled ones', function ()
         ->assertDontSee('types[RFC]', false);
 });
 
+test('a card with no active type to offer points to the key type registry instead of an empty form', function () {
+    KeyType::query()->update(['is_active' => false]);
+
+    ($this->card)()
+        ->assertOk()
+        ->assertSee('Действующих типов нет')
+        ->assertDontSee(route('admin.projects.key-types.update', $this->project));
+});
+
 test('a refused set shows the form as it was sent', function () {
     enabledPair($this->project, $this->adr, ['last_sequence' => 3]);
 

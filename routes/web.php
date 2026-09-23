@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Web\Admin\KeyTypeController;
 use App\Http\Controllers\Web\Admin\ProjectController;
+use App\Http\Controllers\Web\Admin\ProjectKeyTypeController;
 use App\Http\Controllers\Web\GoogleAuthController;
 use App\Http\Controllers\Web\TokenController;
 use App\Http\Middleware\EnsureAdministrator;
@@ -26,7 +27,9 @@ Route::middleware('auth')->group(function (): void {
 
     // Not can:administer — that runs after route model binding and would tell a member which ids exist (FR-016).
     Route::prefix('admin')->name('admin.')->middleware(EnsureAdministrator::class)->group(function (): void {
-        Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');
+        Route::resource('projects', ProjectController::class)->only(['index', 'create', 'store', 'show', 'update']);
+        Route::put('projects/{project}/key-types', ProjectKeyTypeController::class)->name('projects.key-types.update');
+
         Route::get('key-types', [KeyTypeController::class, 'index'])->name('key-types.index');
     });
 });

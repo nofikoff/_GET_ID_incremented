@@ -4,7 +4,7 @@
 
 @section('content')
     <h1>Проекты</h1>
-    <p class="muted">Проекты заводятся и меняются через административный API: <code>/api/v1/admin/projects</code>.</p>
+    <p><a class="button" href="{{ route('admin.projects.create') }}">Новый проект</a></p>
 
     @if ($projects->isEmpty())
         <p class="muted">Проектов пока нет.</p>
@@ -16,7 +16,7 @@
             <tbody>
             @foreach ($projects as $project)
                 <tr>
-                    <td><code>{{ $project->key }}</code></td>
+                    <td><a href="{{ route('admin.projects.show', $project) }}"><code>{{ $project->key }}</code></a></td>
                     <td>{{ $project->name }}</td>
                     <td><code>{{ $project->repo_url }}</code></td>
                     <td>{{ $project->is_active ? 'действует' : 'выведен из обращения' }}</td>
