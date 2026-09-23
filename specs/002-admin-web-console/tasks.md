@@ -303,7 +303,7 @@ Phase 6 после всех историй
 <!-- packed-for: bundle 600K -->
 
 - [x] S1 (~600K) Steps 1.1, 2.1, 2.2, 3.1, 4.1 — done 2026-09-23
-- [ ] S2 (~310K) Steps 5.1, 6.1, 6.2 — **current**
+- [x] S2 (~310K) Steps 5.1, 6.1, 6.2 — done 2026-09-23
 
 ## Progress Log
 
