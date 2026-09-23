@@ -16,6 +16,6 @@ final class SeedBelowIssued extends DomainException
 
     public static function at(int $position, string $type, int $seed, int $lastIssued): self
     {
-        return new self("Начальный номер {$seed} ниже уже выданного номера {$lastIssued} по типу «{$type}» в этом проекте.", $position);
+        return new self("Существующий номер {$seed} ниже уже выданного номера {$lastIssued} по типу «{$type}» в этом проекте.", $position);
     }
 }

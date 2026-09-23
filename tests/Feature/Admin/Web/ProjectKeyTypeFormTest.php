@@ -56,7 +56,7 @@ test('a seed below the last issued number is refused under that type\'s seed, an
 
     ($this->submit)(['ADR' => ['enabled' => '1', 'seed_sequence' => '2'], 'spec' => ['enabled' => '1', 'seed_sequence' => '5']])
         ->assertRedirect(route('admin.projects.show', $this->project))
-        ->assertSessionHasErrors(['types.ADR.seed_sequence' => 'Начальный номер 2 ниже уже выданного номера 3 по типу «ADR» в этом проекте.'])
+        ->assertSessionHasErrors(['types.ADR.seed_sequence' => 'Существующий номер 2 ниже уже выданного номера 3 по типу «ADR» в этом проекте.'])
         ->assertSessionHasInput('types.ADR.seed_sequence', '2');
 
     expect(($this->pair)($this->adr))->seed_sequence->toBe(0)->is_enabled->toBeTrue()
@@ -185,7 +185,7 @@ test('the set is validated under the field of each type', function (array $types
 test('a seed on an unchecked type is refused instead of silently dropped', function () {
     ($this->submit)(['ADR' => ['seed_sequence' => '175']])
         ->assertRedirect(route('admin.projects.show', $this->project))
-        ->assertSessionHasErrors(['types.ADR.seed_sequence' => 'Отметьте тип, чтобы задать начальный номер.'])
+        ->assertSessionHasErrors(['types.ADR.seed_sequence' => 'Отметьте тип, чтобы задать существующий номер.'])
         ->assertSessionHasInput('types.ADR.seed_sequence', '175');
 
     expect(ProjectKeyType::query()->count())->toBe(0);
@@ -195,7 +195,7 @@ test('a seed on an unchecked type of a project that already has other pairs is r
     enabledPair($this->project, $this->spec, ['seed_sequence' => 5]);
 
     ($this->submit)(['spec' => ['enabled' => '1', 'seed_sequence' => ''], 'ADR' => ['seed_sequence' => '9']])
-        ->assertSessionHasErrors(['types.ADR.seed_sequence' => 'Отметьте тип, чтобы задать начальный номер.']);
+        ->assertSessionHasErrors(['types.ADR.seed_sequence' => 'Отметьте тип, чтобы задать существующий номер.']);
 
     expect(($this->pair)($this->adr))->toBeNull()
         ->and(($this->pair)($this->spec))->seed_sequence->toBe(5)->is_enabled->toBeTrue();

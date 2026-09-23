@@ -54,14 +54,14 @@
     @if ($keyTypes->isEmpty() && $retiredPairs->isEmpty())
         <p class="muted">Действующих типов нет: их заводят в <a href="{{ route('admin.key-types.index') }}">справочнике типов</a>.</p>
     @else
-        <p class="muted">Отмеченные типы выдают номера в проекте, снятые — выключаются с сохранением счётчика. Пустое поле нового начального номера оставляет текущий.</p>
+        <p class="muted">Отмеченные типы выдают номера в проекте, снятые — выключаются с сохранением счётчика. Пустое поле нового существующего номера оставляет текущий.</p>
 
         <form id="project-key-types" method="POST" action="{{ route('admin.projects.key-types.update', $project) }}">
             @csrf
             @method('PUT')
             <table>
                 <thead>
-                <tr><th>Тип</th><th>Имя</th><th>Начальный номер</th><th>Новый начальный номер</th><th>Последний выданный</th><th>Следующий</th></tr>
+                <tr><th>Тип</th><th>Имя</th><th>Существующий номер</th><th>Новый существующий номер</th><th>Последний выданный</th><th>Следующий</th></tr>
                 </thead>
                 <tbody>
                 @foreach ($keyTypes as $keyType)

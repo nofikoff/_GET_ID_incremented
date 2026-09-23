@@ -89,7 +89,7 @@ class SetProjectKeyTypesRequest extends FormRequest
 
                 $seed = $type['seed_sequence'] ?? null;
                 if ($seed !== null && $seed !== '') {
-                    $validator->errors()->add("types.{$code}.seed_sequence", 'Отметьте тип, чтобы задать начальный номер.');
+                    $validator->errors()->add("types.{$code}.seed_sequence", 'Отметьте тип, чтобы задать существующий номер.');
                 }
             }
         });
