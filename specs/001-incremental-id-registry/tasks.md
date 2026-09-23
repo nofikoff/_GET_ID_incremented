@@ -914,3 +914,10 @@ decided: the shared trait takes the request's rules() as a pre-bound Closure arg
 `kind=review-fix agent=implementer tier=standard model=claude-sonnet-5 effort=xhigh turns=88 minutes=11.3 input=176 cache_write=167628 cache_read=9555990 output=58690`
 
 `/review2 branch` попытка 1: Critical 0, High 0, Medium 1 (одновременное создание с одним ключом → 500); C1 (гонка гашения и выдачи) снят скептиком. Исправлено в 52c9a2c.
+
+`/review2 branch` попытка 2 (после 52c9a2c): Critical 0, High 0, Low 2 — цикл сошёлся. Не чинились осознанно (после первой попытки цикл гоняет только Critical/High):
+- `app/Domain/Project/EnabledKeyTypes.php:35` — тип, погашенный между валидацией и транзакцией, включается в пару (`is_enabled = true`); выдачу не открывает, фильтры `is_active` на путях чтения. Исправление: `KeyType::active()` внутри `replace()`.
+- `app/Actions/DeactivateUser.php:22` — проверка «последний администратор» с блокировкой всех админов выполняется и для деактивации обычного сотрудника.
+
+### Итог прогона (2026-09-23)
+4 bundle, 18 шагов, ни одного повторного dispatch implementer; одна остановка `SPEC_MISMATCH` после S1 (разрешена правкой документов), решения автора по четырём отступлениям S2 оформлены Step 7.3. Converge — чисто; analyze на HEAD — 4 находки в документах, применены; review сошёлся за 2 попытки. Требует ручной проверки: quickstart §2 (Google OAuth), §3 (кабинет токенов), §7 (`claude mcp add` и сессия ассистента), развёртывание на LAMP за Cloudflare. Dev-база стека 8090 отстаёт от миграций `identifiers.formatted_id` и `personal_access_tokens` — нужен `make fresh` (сотрёт её данные).
