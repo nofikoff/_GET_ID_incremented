@@ -904,3 +904,13 @@ S4 verify: все три шага IMPLEMENTS; `make test` 379 passed, pint и ph
 `kind=analyze agent=verifier model=claude-sonnet-5 effort=high turns=27 minutes=4.5 input=54 cache_write=120701 cache_read=2079359 output=25226`
 
 `/speckit-analyze` на HEAD: 4 находки (0 critical, 1 high), все в документах и все применены — домен в контрактах `get-id.cas.ai` → `id.x3mal.com` (F1), plan.md §Project Structure дополнен классами, на которые ссылаются data-model.md и CLAUDE.md (F2), счётчик value object в Constitution Check (F3), текст T086 под `model:prune` (F4).
+
+### review — observations (2026-09-23, dispatch 11)
+plan-wrong: the finding named token names in TokenController as a same-pattern example, but personal_access_tokens carried no DB-level unique constraint at all (Sanctum's stock migration ships name as unbounded text, no index) — the race there was not an unhandled 500, it was two live tokens silently sharing one name.
+decided: backed that invariant with an actual DB constraint rather than leaving it app-validation-only — changed personal_access_tokens.name from text to string(255) (matches StoreTokenRequest's existing max:255) and added a compound unique index on (tokenable_type, tokenable_id, name); breaks if some future caller needs names longer than 255 chars, none do today.
+decided: the shared trait takes the request's rules() as a pre-bound Closure argument instead of calling ->rules() on the FormRequest parameter inside the trait, because rules() is not declared on the FormRequest base class and Larastan (level 6) rejected the direct call; each call site passes $request->rules(...) off its own concrete type, which also keeps StoreTokenRequest's #[CurrentUser] container injection working through app()->call().
+
+### review — dispatch 11 (2026-09-23)
+`kind=review-fix agent=implementer tier=standard model=claude-sonnet-5 effort=xhigh turns=88 minutes=11.3 input=176 cache_write=167628 cache_read=9555990 output=58690`
+
+`/review2 branch` попытка 1: Critical 0, High 0, Medium 1 (одновременное создание с одним ключом → 500); C1 (гонка гашения и выдачи) снят скептиком. Исправлено в 52c9a2c.
