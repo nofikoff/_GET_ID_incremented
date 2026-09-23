@@ -25,6 +25,7 @@ test('the instructions say only the number is issued and the repository builds t
         ->toContain('Сервис выдаёт только номер, имя документа собирает репозиторий')
         ->toContain('дополняется нулями до трёх цифр')
         ->toContain('`docs/adr/adr-043-<slug>.md`, `specs/043-<slug>/`')
+        ->toContain('номер от 1000 пишется целиком')
         ->toContain('Для Spec Kit передайте номер явно')
         ->toContain('Повтор с той же темой безопасен');
 });
