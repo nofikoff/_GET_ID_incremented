@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\ProjectKeyType;
 use App\Models\User;
 use Closure;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -43,19 +44,17 @@ final class RegistryChangeLog
 
     /**
      * Runs the EnabledKeyTypes::replace() call and traces the pairs it changed. A refused set throws out of
-     * $replace before anything is traced.
+     * $replace before anything is traced. `changed` on the result is that same comparison, so a caller after
+     * only a flash message (FR-009: "saved" vs "nothing changed") does not repeat it.
      *
-     * @template TResult
-     *
-     * @param  Closure(): TResult  $replace
-     * @return TResult
+     * @param  Closure(): Collection<int, ProjectKeyType>  $replace
      */
-    public function keyTypesSet(User $admin, Project $project, Closure $replace): mixed
+    public function keyTypesSet(User $admin, Project $project, Closure $replace): KeyTypesSetResult
     {
         // Read outside replace()'s row lock: a set racing in from another administrator can make it stale, which a trace tolerates.
         $before = $this->pairsOf($project);
 
-        $result = $replace();
+        $pairs = $replace();
 
         // A pair that did not exist reads null on both fields: its row, counter included, was created by this set.
         $changes = collect($this->pairsOf($project))
@@ -69,7 +68,7 @@ final class RegistryChangeLog
             $this->write($admin, 'set_key_types', $project, $changes->all());
         }
 
-        return $result;
+        return new KeyTypesSetResult($pairs, $changes->isNotEmpty());
     }
 
     /**

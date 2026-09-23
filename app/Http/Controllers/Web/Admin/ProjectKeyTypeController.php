@@ -25,13 +25,15 @@ class ProjectKeyTypeController extends Controller
         #[CurrentUser] User $admin,
     ): RedirectResponse {
         try {
-            $changeLog->keyTypesSet($admin, $project, fn (): Collection => $enabledKeyTypes->replace($project, $request->types()));
+            $outcome = $changeLog->keyTypesSet($admin, $project, fn (): Collection => $enabledKeyTypes->replace($project, $request->types()));
         } catch (SeedBelowIssued $refused) {
             throw ValidationException::withMessages([$request->formField("types.{$refused->position}.seed_sequence") => $refused->getMessage()]);
         } catch (RetiredKeyType $refused) {
             throw ValidationException::withMessages([$request->formField("types.{$refused->position}.code") => $refused->getMessage()]);
         }
 
-        return to_route('admin.projects.show', $project)->with('status', 'Набор типов проекта сохранён.');
+        $status = $outcome->changed ? 'Набор типов проекта сохранён.' : 'Изменений нет.';
+
+        return to_route('admin.projects.show', $project)->with('status', $status);
     }
 }

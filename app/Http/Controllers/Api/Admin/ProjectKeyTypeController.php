@@ -26,7 +26,7 @@ class ProjectKeyTypeController extends Controller
         #[CurrentUser] User $admin,
     ): AnonymousResourceCollection {
         try {
-            $pairs = $changeLog->keyTypesSet(
+            $outcome = $changeLog->keyTypesSet(
                 $admin,
                 $project,
                 fn (): Collection => $enabledKeyTypes->replace($project, $request->types()),
@@ -37,6 +37,6 @@ class ProjectKeyTypeController extends Controller
             throw ValidationException::withMessages(["types.{$refused->position}.code" => $refused->getMessage()]);
         }
 
-        return EnabledKeyTypeResource::collection($pairs);
+        return EnabledKeyTypeResource::collection($outcome->pairs);
     }
 }

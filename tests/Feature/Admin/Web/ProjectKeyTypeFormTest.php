@@ -28,7 +28,7 @@ test('an administrator enables ADR seeded at 12 and spec without a seed, and the
     ($this->submit)(['ADR' => ['enabled' => '1', 'seed_sequence' => '12'], 'spec' => ['enabled' => '1', 'seed_sequence' => '']])
         ->assertRedirect(route('admin.projects.show', $this->project))
         ->assertSessionHasNoErrors()
-        ->assertSessionHas('status');
+        ->assertSessionHas('status', 'Набор типов проекта сохранён.');
 
     expect(($this->pair)($this->adr))->is_enabled->toBeTrue()->seed_sequence->toBe(12)
         ->and(($this->pair)($this->adr)->nextSequence())->toBe(13)
@@ -180,6 +180,24 @@ test('a seed on an unchecked type of a project that already has other pairs is r
 
     expect(($this->pair)($this->adr))->toBeNull()
         ->and(($this->pair)($this->spec))->seed_sequence->toBe(5)->is_enabled->toBeTrue();
+});
+
+// The set derives "changed" from the same before/after comparison the trace already runs (RegistryChangeLog::keyTypesSet).
+test('resubmitting the exact same set flashes that nothing changed', function () {
+    enabledPair($this->project, $this->adr, ['seed_sequence' => 12]);
+
+    ($this->submit)(['ADR' => ['enabled' => '1', 'seed_sequence' => '12']])
+        ->assertRedirect(route('admin.projects.show', $this->project))
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('status', 'Изменений нет.');
+});
+
+test('a submission with nothing to enable and no pairs yet flashes that nothing changed', function () {
+    ($this->submit)([])
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('status', 'Изменений нет.');
+
+    expect(ProjectKeyType::query()->count())->toBe(0);
 });
 
 // FR-009: dropping an enabled type stops its issuance, so the form lists what it drops and asks first.
