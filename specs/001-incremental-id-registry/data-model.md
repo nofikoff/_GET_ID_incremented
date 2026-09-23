@@ -3,7 +3,10 @@
 **Date**: 2026-09-20 | **Plan**: [plan.md](./plan.md)
 
 Семь таблиц: шесть предметных плюс стандартная таблица токенов Sanctum. Все — InnoDB,
-`utf8mb4_unicode_ci`.
+`utf8mb4_unicode_ci`, кроме двух колонок-ключей сравнения: `projects.key` и
+`identifiers.name_slug` объявлены с `utf8mb4_bin`. `unicode_ci` считает равными `cafe`/`café`,
+`елка`/`ёлка`, `strasse`/`straße` (проверено на MySQL 8.0.44) и слил бы разные темы в один номер
+вопреки FR-007; нормализацию делают `ProjectKey` и `DocumentName`, база сравнивает побайтно.
 
 ## Легенда
 
@@ -59,9 +62,9 @@ UNIQUE), `abilities`, `last_used_at`, `expires_at`. Хранится хеш — 
 | `created_at`, `updated_at` | `timestamp` | |
 
 `key` вычисляется из `repo_url` через `ProjectKey` и не редактируется вручную: иначе ключ разойдётся
-с origin, по которому его ищет клиент. Строка длиной 255 под UNIQUE помещается в лимит индекса
-InnoDB при `utf8mb4` (767 байт при `DYNAMIC` row format — 1024 байта на 255 символов не влезают,
-поэтому индекс объявляется с префиксом 191 либо колонка сужается; решается в миграции).
+с origin, по которому его ищет клиент. UNIQUE на `varchar(255)` в `utf8mb4` (1020 байт) не требует
+ни префикса, ни сужения: лимит 767 байт относится к `COMPACT`/`REDUNDANT`, а MySQL 8.0 по умолчанию
+создаёт `DYNAMIC` с лимитом 3072 байта.
 
 ## key_types
 
@@ -119,9 +122,9 @@ InnoDB при `utf8mb4` (767 байт при `DYNAMIC` row format — 1024 ба�
 
 - UNIQUE `(project_id, key_type_id, name_slug)` — физическая гарантия идемпотентности (FR-002).
 - UNIQUE `(project_id, key_type_id, sequence_number)` — физическая гарантия неповторяемости номера
-  (FR-001, FR-004).
-- INDEX `(project_id, key_type_id, sequence_number DESC)` — выдача перечня в порядке убывания
-  (FR-006).
+  (FR-001, FR-004). Он же обслуживает перечень по убыванию (FR-006): EXPLAIN на MySQL 8.0.44 даёт
+  `Backward index scan` без filesort, поэтому отдельный индекс `sequence_number DESC` не заводится —
+  он дублировал бы этот.
 
 Таблица неизменяема после вставки: в домене нет ни `update`, ни `delete`.
 

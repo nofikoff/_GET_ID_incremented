@@ -189,7 +189,7 @@ tier: strong
 
 - [x] T028 Определить в `app/Providers/AppServiceProvider.php` именованный `RateLimiter::for('getid')`, ключующийся по `$request->user()?->currentAccessToken()?->id` с порогом 60 в минуту. Стандартный `throttle:60,1` ключуется по идентификатору пользователя, а FR-020a требует счёта **по токену** — у пользователя их несколько; вдобавок два независимых лимита на группах `api` и `/mcp` дали бы суммарно 120 запросов в минуту вместо 60
 - [x] T103 Настроить доверенные прокси в `bootstrap/app.php`: `$middleware->trustProxies(at: '*', headers: Request::HEADER_X_FORWARDED_PROTO)`. Доверяется только схема — ровно то, что нужно, чтобы за Cloudflare `url()` отдавал `https://` и redirect URI совпадал с зарегистрированным в Google; без этого вход ломается с ошибкой, не упоминающей прокси. `X-Forwarded-For` и `X-Forwarded-Host` в доверенные не входят: адрес клиента нигде не используется, а подмена host через запрос в обход Cloudflare исключается на корню
-- [x] T028a Настроить `bootstrap/app.php` целиком за один заход: группа `api` с `auth:sanctum` и `throttle:getid`, отдельная группа для маршрутов MCP, и регистрация `LogApiRequest` (класс появится в T084 — регистрируется по имени). Вместе с T103 это единственное место, где правится `bootstrap/app.php`, и обе задачи лежат в одном шаге: две разные фазы, пишущие этот файл, при исполнении бандлами конфликтуют
+- [x] T028a Настроить `bootstrap/app.php` целиком за один заход: группа `api` с `auth:sanctum` и `throttle:getid` (маршрут MCP живёт в `routes/api.php` и наследует её — отдельная группа для MCP не заводится, она не применялась бы ни к одному маршруту; `apiPrefix: ''`, поэтому REST объявляет префикс `api/v1` сам), и регистрация `LogApiRequest` (здесь создаётся сквозная заглушка — незарезолвленный класс в активной группе ронял бы каждый запрос API; T084 её наполняет). Вместе с T103 это единственное место, где правится `bootstrap/app.php`, и обе задачи лежат в одном шаге: две разные фазы, пишущие этот файл, при исполнении бандлами конфликтуют
 - [x] T029 [P] Создать иерархию доменных исключений в `app/Domain/Sequence/Exceptions/`: `UnknownProject`, `InactiveProject`, `TypeNotEnabled`, `InactiveKeyType`, `UnparsableOrigin`, `EmptyDocumentName` — каждое несёт код из `DomainError.error.code` контракта
 - [x] T030 Отрисовать доменные исключения в JSON формы `DomainError` (contracts/rest-api.yaml) через `withExceptions()->render()` со статусом 422. Отдельно привести к той же форме исключения фреймворка, которые контракт тоже описывает как `DomainError`: `AuthenticationException` → 401 `unauthenticated`, `AccessDeniedHttpException` → 403 `forbidden`, `NotFoundHttpException` → 404 `not_found`, `ThrottleRequestsException` → 429 `rate_limited`
 - [x] T031 [P] Фабрики `database/factories/` для `Project`, `KeyType`, `ProjectKeyType`, `Identifier`
@@ -265,7 +265,7 @@ tier: strong
 - [ ] T043 [P] [US1] `app/Http/Requests/Api/NextSequenceRequest.php` и `ListSequenceRequest.php` по схемам contracts/rest-api.yaml
 - [ ] T044 [P] [US1] `app/Http/Resources/IssuedIdentifierResource.php` и `IdentifierListResource.php` — форма ответа из контракта, `name` отдаётся исходный, не нормализованный
 - [ ] T045 [US1] `app/Http/Controllers/Api/SequenceController.php` — два действия, вся работа делегируется `SequenceIssuer`
-- [ ] T046 [US1] Зарегистрировать `POST /api/v1/sequence/next` и `GET /api/v1/sequence/list` в `routes/api.php`
+- [ ] T046 [US1] Зарегистрировать `POST /api/v1/sequence/next` и `GET /api/v1/sequence/list` в `routes/api.php` под `Route::prefix('api/v1')`: `apiPrefix` в `bootstrap/app.php` пуст (T028a), автоматического префикса нет
 
 **Checkpoint**: MVP работает — номера выдаются, гонки нет, повтор идемпотентен
 
@@ -393,7 +393,7 @@ tier: strong
 - [ ] T101 [P] [US3] Консольные команды управления пользователями — единственный путь для этих операций (FR-021): `app/Console/Commands/SetUserRoleCommand.php` (`user:role {email} {admin|member}`, отказ при снятии роли у последнего администратора — FR-021a) и `app/Console/Commands/DeactivateUserCommand.php` (`user:deactivate {email}`, тонкая обёртка над `App\Actions\DeactivateUser` — FR-021b). Тесты — в `tests/Feature/Auth/AdminLifecycleTest.php` (T062)
 - [ ] T068 [P] [US3] Blade: `resources/views/layouts/app.blade.php`, `auth/login.blade.php`, `tokens/index.blade.php`
 - [ ] T069 [P] [US3] Blade административных экранов: `admin/projects/index.blade.php`, `admin/key-types/index.blade.php`
-- [ ] T070 [US3] Маршруты в `routes/web.php`: вход, кабинет токенов, административные экраны под Gate. Все маршруты именованные (`auth.google.redirect`, `auth.google.callback`, `tokens.index`, `admin.projects.index`, `admin.key-types.index`) — на `tokens.index` опирается проверка схемы ссылок после выкладки в quickstart.md
+- [ ] T070 [US3] Маршруты в `routes/web.php`: вход, кабинет токенов, административные экраны под Gate. Страница входа называется `login`: web-гостей `Authenticate` отправляет на `route('login')` (`bootstrap/app.php`), и другое имя даст 500 на любом закрытом экране. Все маршруты именованные (`login`, `auth.google.redirect`, `auth.google.callback`, `tokens.index`, `admin.projects.index`, `admin.key-types.index`) — на `tokens.index` опирается проверка схемы ссылок после выкладки в quickstart.md
 
 **Checkpoint**: сервисом можно пользоваться без ручной правки базы
 
