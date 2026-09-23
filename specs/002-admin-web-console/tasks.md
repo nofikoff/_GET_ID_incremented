@@ -50,14 +50,14 @@ gate_commands:
 tier: strong
 -->
 
-- [ ] T001 Наборы правил в `app/Http/Validation/`: `ProjectRules::store()`, `::update()`, `KeyTypeRules::store()`, `::update()`, `ProjectKeyTypeRules::set()` — содержимое переносится из текущих `rules()` запросов `app/Http/Requests/Api/Admin/*` дословно, включая комментарии о collation и `bail` (research.md R1)
-- [ ] T002 API-запросы `app/Http/Requests/Api/Admin/*` возвращают наборы из T001; `ClosedBodyRequest`, `#[MinProperties]`, `authorize()` и `types()` не меняются
-- [ ] T003 [P] Actions в `app/Actions/Registry/`: `CreateProject` (ключ через `ProjectKey::fromOrigin`, автор, `save()`), `UpdateProject`, `CreateKeyType`, `UpdateKeyType`. Actions принимают уже провалидированные данные и администратора; гонку на UNIQUE обрабатывает вызывающая сторона через `RethrowsUniqueConflictAsValidation`, потому что повторная валидация идёт правилами запроса (research.md R8)
-- [ ] T004 След изменений (FR-019, research.md R5): actions и `EnabledKeyTypes`-вызов пишут `Log::info('registry change', [...])` с `admin_id`, `admin_email`, `operation`, `entity`, `entity_id`, `changes` «было → стало»; только при фактическом изменении; сбой записи ловится и уходит в `report()`, изменение не откатывается. Для `set_key_types` — по изменившимся типам (data-model.md §След изменения). Общий код — один класс `app/Actions/Registry/RegistryChangeLog.php`
-- [ ] T005 API-контроллеры `app/Http/Controllers/Api/Admin/ProjectController.php`, `KeyTypeController.php`, `ProjectKeyTypeController.php` вызывают actions из T003 и запись следа T004; ответы, коды и тексты не меняются
-- [ ] T006 Группа `/admin` в `routes/web.php` закрывается `EnsureAdministrator` вместо `can:administer` (research.md R2); существующие маршруты `admin.projects.index` и `admin.key-types.index` сохраняют имена
-- [ ] T007 [P] Тест `tests/Feature/Admin/RegistryChangeLogTest.php`: изменение через REST пишет запись следа с «было → стало»; неизменившее обновление не пишет; сбой канала логов не откатывает изменение (FR-019)
-- [ ] T008 Весь набор `make test` зелёный без правки ожиданий существующих REST- и MCP-тестов (SC-003)
+- [x] T001 Наборы правил в `app/Http/Validation/`: `ProjectRules::store()`, `::update()`, `KeyTypeRules::store()`, `::update()`, `ProjectKeyTypeRules::set()` — содержимое переносится из текущих `rules()` запросов `app/Http/Requests/Api/Admin/*` дословно, включая комментарии о collation и `bail` (research.md R1)
+- [x] T002 API-запросы `app/Http/Requests/Api/Admin/*` возвращают наборы из T001; `ClosedBodyRequest`, `#[MinProperties]`, `authorize()` и `types()` не меняются
+- [x] T003 [P] Actions в `app/Actions/Registry/`: `CreateProject` (ключ через `ProjectKey::fromOrigin`, автор, `save()`), `UpdateProject`, `CreateKeyType`, `UpdateKeyType`. Actions принимают уже провалидированные данные и администратора; гонку на UNIQUE обрабатывает вызывающая сторона через `RethrowsUniqueConflictAsValidation`, потому что повторная валидация идёт правилами запроса (research.md R8)
+- [x] T004 След изменений (FR-019, research.md R5): actions и `EnabledKeyTypes`-вызов пишут `Log::info('registry change', [...])` с `admin_id`, `admin_email`, `operation`, `entity`, `entity_id`, `changes` «было → стало»; только при фактическом изменении; сбой записи ловится и уходит в `report()`, изменение не откатывается. Для `set_key_types` — по изменившимся типам (data-model.md §След изменения). Общий код — один класс `app/Actions/Registry/RegistryChangeLog.php`
+- [x] T005 API-контроллеры `app/Http/Controllers/Api/Admin/ProjectController.php`, `KeyTypeController.php`, `ProjectKeyTypeController.php` вызывают actions из T003 и запись следа T004; ответы, коды и тексты не меняются
+- [x] T006 Группа `/admin` в `routes/web.php` закрывается `EnsureAdministrator` вместо `can:administer` (research.md R2); существующие маршруты `admin.projects.index` и `admin.key-types.index` сохраняют имена
+- [x] T007 [P] Тест `tests/Feature/Admin/RegistryChangeLogTest.php`: изменение через REST пишет запись следа с «было → стало»; неизменившее обновление не пишет; сбой канала логов не откатывает изменение (FR-019)
+- [x] T008 Весь набор `make test` зелёный без правки ожиданий существующих REST- и MCP-тестов (SC-003)
 
 **Checkpoint**: REST работает через actions, след пишется, веб-группа закрыта `EnsureAdministrator`
 
@@ -90,11 +90,11 @@ tier: standard
 
 Тесты пишутся первыми и падают до Step 2.2.
 
-- [ ] T009 [P] [US1] `tests/Feature/Admin/Web/ProjectFormTest.php`: заведение с выводом ключа, повтор репозитория в другой форме и неразбираемый адрес — redirect back с ошибкой под `repo_url` и `old()`, тот же текст, что в REST; изменение имени и описания; `repo_url` в форме изменения не принимается; погашение и возврат (FR-001–FR-005)
-- [ ] T010 [P] [US1] `tests/Feature/Admin/Web/ProjectKeyTypeFormTest.php`: включение `ADR` с seed 12 и `spec` без seed; пустое поле seed не меняет текущий; seed ниже выданного — ошибка под `types.ADR.seed_sequence`, набор прежний; снятая отметка выключает пару без удаления строки; погашенный тип — ошибка под `types.<code>.enabled`, в том числе при гашении между открытием формы и отправкой; включённая пара погашенного типа выключается сохранением (FR-006–FR-010, Edge Cases)
-- [ ] T011 [P] [US1] `tests/Feature/Admin/Web/ProjectCreateRaceTest.php`: конкурирующая вставка того же ключа после валидации (событие `Project::creating`) даёт redirect back с ошибкой под `repo_url`, а не 500 (Edge Cases, research.md R8)
-- [ ] T012 [P] [US5] `tests/Feature/Admin/Web/ConsoleAccessTest.php`: для каждого маршрута `contracts/web-console.md` сотрудник без роли получает 403, для маршрутов с id — одинаково для существующего и несуществующего; гость — redirect на `login`; администратор, у которого сняли роль, получает 403 со следующего запроса той же сессии; ни одна форма без CSRF-токена не меняет данные (FR-016, FR-017)
-- [ ] T013 [P] [US1] `tests/Feature/Admin/Web/ParityWithRestTest.php`: для каждой операции административного REST тот же вход через консоль даёт тот же результат в базе и тот же текст отказа (SC-002)
+- [x] T009 [P] [US1] `tests/Feature/Admin/Web/ProjectFormTest.php`: заведение с выводом ключа, повтор репозитория в другой форме и неразбираемый адрес — redirect back с ошибкой под `repo_url` и `old()`, тот же текст, что в REST; изменение имени и описания; `repo_url` в форме изменения не принимается; погашение и возврат (FR-001–FR-005)
+- [x] T010 [P] [US1] `tests/Feature/Admin/Web/ProjectKeyTypeFormTest.php`: включение `ADR` с seed 12 и `spec` без seed; пустое поле seed не меняет текущий; seed ниже выданного — ошибка под `types.ADR.seed_sequence`, набор прежний; снятая отметка выключает пару без удаления строки; погашенный тип — ошибка под `types.<code>.enabled`, в том числе при гашении между открытием формы и отправкой; включённая пара погашенного типа выключается сохранением (FR-006–FR-010, Edge Cases)
+- [x] T011 [P] [US1] `tests/Feature/Admin/Web/ProjectCreateRaceTest.php`: конкурирующая вставка того же ключа после валидации (событие `Project::creating`) даёт redirect back с ошибкой под `repo_url`, а не 500 (Edge Cases, research.md R8)
+- [x] T012 [P] [US5] `tests/Feature/Admin/Web/ConsoleAccessTest.php`: для каждого маршрута `contracts/web-console.md` сотрудник без роли получает 403, для маршрутов с id — одинаково для существующего и несуществующего; гость — redirect на `login`; администратор, у которого сняли роль, получает 403 со следующего запроса той же сессии; ни одна форма без CSRF-токена не меняет данные (FR-016, FR-017)
+- [x] T013 [P] [US1] `tests/Feature/Admin/Web/ParityWithRestTest.php`: для каждой операции административного REST тот же вход через консоль даёт тот же результат в базе и тот же текст отказа (SC-002)
 
 ### Step 2.2: Формы проектов и типов проекта
 
@@ -115,13 +115,13 @@ gate_commands:
 tier: strong
 -->
 
-- [ ] T014 [US1] Веб-запросы `app/Http/Requests/Web/Admin/StoreProjectRequest.php`, `UpdateProjectRequest.php` на наборах T001; `authorize()` — те же Policy, что у API
-- [ ] T015 [US1] `app/Http/Requests/Web/Admin/SetProjectKeyTypesRequest.php`: форма `types[<code>][enabled|seed_sequence]` приводится к тому же `list<array{code, seed_sequence|null}>`, что у API; правила — `ProjectKeyTypeRules::set()`, применённые к приведённому набору; ошибки адресуются полям формы по коду типа (research.md R3). Механизм один на весь веб-слой: запрос держит карту `index → code` приведённого списка, `failedValidation()` переписывает ключи `types.<index>.code` → `types.<code>.enabled` и `types.<index>.seed_sequence` → `types.<code>.seed_sequence`; тексты сообщений не меняются
-- [ ] T016 [US1] `app/Http/Controllers/Web/Admin/ProjectController.php`: `index`, `create`, `store`, `show`, `update` на actions T003; гонка на UNIQUE — `RethrowsUniqueConflictAsValidation`; redirect с flash-сообщением
-- [ ] T017 [US1] `app/Http/Controllers/Web/Admin/ProjectKeyTypeController.php`: вызывает `EnabledKeyTypes::replace()`, `SeedBelowIssued` и `RetiredKeyType` переводит в ошибки полей `types.<code>.seed_sequence` / `types.<code>.enabled`; код берётся по `$refused->position` из того же списка, что передан в `replace()`, через ту же карту `index → code`, что в T015
-- [ ] T018 [P] [US1] Шаблоны `resources/views/admin/projects/{index,create,show}.blade.php` и partials `resources/views/admin/partials/` (поле с ошибкой, flash): список со ссылкой «Новый проект»; карточка — реквизиты и форма изменения, форма типов со всеми активными типами, `last_sequence` и следующим номером, строки включённых пар погашенных типов с пометкой (FR-005, FR-006, Edge Cases); текст «заводятся через API» убирается
-- [ ] T019 [US1] Подтверждения (research.md R4): `onsubmit="return confirm(...)"` на погашении проекта; инлайн-скрипт формы типов перечисляет снимаемые включённые пары, включая пары погашенных типов, и спрашивает подтверждение, если их больше нуля (FR-004, FR-009)
-- [ ] T020 [US1] Маршруты в `routes/web.php` по `contracts/web-console.md` внутри группы T006; ссылки меню в `resources/views/layouts/app.blade.php` не меняются
+- [x] T014 [US1] Веб-запросы `app/Http/Requests/Web/Admin/StoreProjectRequest.php`, `UpdateProjectRequest.php` на наборах T001; `authorize()` — те же Policy, что у API
+- [x] T015 [US1] `app/Http/Requests/Web/Admin/SetProjectKeyTypesRequest.php`: форма `types[<code>][enabled|seed_sequence]` приводится к тому же `list<array{code, seed_sequence|null}>`, что у API; правила — `ProjectKeyTypeRules::set()`, применённые к приведённому набору; ошибки адресуются полям формы по коду типа (research.md R3). Механизм один на весь веб-слой: запрос держит карту `index → code` приведённого списка, `failedValidation()` переписывает ключи `types.<index>.code` → `types.<code>.enabled` и `types.<index>.seed_sequence` → `types.<code>.seed_sequence`; тексты сообщений не меняются
+- [x] T016 [US1] `app/Http/Controllers/Web/Admin/ProjectController.php`: `index`, `create`, `store`, `show`, `update` на actions T003; гонка на UNIQUE — `RethrowsUniqueConflictAsValidation`; redirect с flash-сообщением
+- [x] T017 [US1] `app/Http/Controllers/Web/Admin/ProjectKeyTypeController.php`: вызывает `EnabledKeyTypes::replace()`, `SeedBelowIssued` и `RetiredKeyType` переводит в ошибки полей `types.<code>.seed_sequence` / `types.<code>.enabled`; код берётся по `$refused->position` из того же списка, что передан в `replace()`, через ту же карту `index → code`, что в T015
+- [x] T018 [P] [US1] Шаблоны `resources/views/admin/projects/{index,create,show}.blade.php` и partials `resources/views/admin/partials/` (поле с ошибкой, flash): список со ссылкой «Новый проект»; карточка — реквизиты и форма изменения, форма типов со всеми активными типами, `last_sequence` и следующим номером, строки включённых пар погашенных типов с пометкой (FR-005, FR-006, Edge Cases); текст «заводятся через API» убирается
+- [x] T019 [US1] Подтверждения (research.md R4): `onsubmit="return confirm(...)"` на погашении проекта; инлайн-скрипт формы типов перечисляет снимаемые включённые пары, включая пары погашенных типов, и спрашивает подтверждение, если их больше нуля (FR-004, FR-009)
+- [x] T020 [US1] Маршруты в `routes/web.php` по `contracts/web-console.md` внутри группы T006; ссылки меню в `resources/views/layouts/app.blade.php` не меняются
 
 **Checkpoint**: MVP — проект и его типы ведутся в браузере, сотрудник закрыт
 
@@ -152,11 +152,11 @@ gate_commands:
 tier: standard
 -->
 
-- [ ] T021 [P] [US2] `tests/Feature/Admin/Web/KeyTypeFormTest.php`: заведение; шаблон без номера и с неизвестным плейсхолдером — ошибка под `format_template`; код, отличающийся только регистром, — ошибка под `code`; код в форме изменения не принимается; правка шаблона не меняет `formatted_id` выданных номеров; погашение и возврат; гонка на UNIQUE кода — ошибка под `code` (FR-011, FR-012)
-- [ ] T022 [US2] Веб-запросы `app/Http/Requests/Web/Admin/StoreKeyTypeRequest.php`, `UpdateKeyTypeRequest.php` на наборах T001
-- [ ] T023 [US2] `app/Http/Controllers/Web/Admin/KeyTypeController.php`: `index`, `create`, `store`, `edit`, `update` на actions T003
-- [ ] T024 [P] [US2] Шаблоны `resources/views/admin/key-types/{index,create,edit}.blade.php`; подтверждение погашения типа (FR-011); текст «заводятся через API» в `index` убирается, как в T018
-- [ ] T025 [US2] Маршруты типов в `routes/web.php` по `contracts/web-console.md`
+- [x] T021 [P] [US2] `tests/Feature/Admin/Web/KeyTypeFormTest.php`: заведение; шаблон без номера и с неизвестным плейсхолдером — ошибка под `format_template`; код, отличающийся только регистром, — ошибка под `code`; код в форме изменения не принимается; правка шаблона не меняет `formatted_id` выданных номеров; погашение и возврат; гонка на UNIQUE кода — ошибка под `code` (FR-011, FR-012)
+- [x] T022 [US2] Веб-запросы `app/Http/Requests/Web/Admin/StoreKeyTypeRequest.php`, `UpdateKeyTypeRequest.php` на наборах T001
+- [x] T023 [US2] `app/Http/Controllers/Web/Admin/KeyTypeController.php`: `index`, `create`, `store`, `edit`, `update` на actions T003
+- [x] T024 [P] [US2] Шаблоны `resources/views/admin/key-types/{index,create,edit}.blade.php`; подтверждение погашения типа (FR-011); текст «заводятся через API» в `index` убирается, как в T018
+- [x] T025 [US2] Маршруты типов в `routes/web.php` по `contracts/web-console.md`
 
 **Checkpoint**: справочник типов ведётся в браузере
 
@@ -187,9 +187,9 @@ gate_commands:
 tier: standard
 -->
 
-- [ ] T026 [P] [US3] `tests/Feature/Admin/Web/IssuedIdentifiersTest.php`: номера пары от новых к старым с `formatted_id`, первой формулировкой, автором и датой; 60 номеров — две страницы по 50 с параметром `page_<code>`, листание одной пары не сдвигает другую; номера выключенной пары видны; на карточке нет форм изменения реестра; число запросов к базе не растёт с числом строк (FR-013, research.md R6)
-- [ ] T027 [US3] `app/Queries/IssuedIdentifiers.php`: `forPair(ProjectKeyType, int $perPage = 50)`, `LengthAwarePaginator` с `pageName` `page_<code>`, `with('creator')`
-- [ ] T028 [US3] Блок выданных номеров в `resources/views/admin/projects/show.blade.php` по каждой паре проекта, включая выключенные; данные — из `ProjectController::show`
+- [x] T026 [P] [US3] `tests/Feature/Admin/Web/IssuedIdentifiersTest.php`: номера пары от новых к старым с `formatted_id`, первой формулировкой, автором и датой; 60 номеров — две страницы по 50 с параметром `page_<code>`, листание одной пары не сдвигает другую; номера выключенной пары видны; на карточке нет форм изменения реестра; число запросов к базе не растёт с числом строк (FR-013, research.md R6)
+- [x] T027 [US3] `app/Queries/IssuedIdentifiers.php`: `forPair(ProjectKeyType, int $perPage = 50)`, `LengthAwarePaginator` с `pageName` `page_<code>`, `with('creator')`
+- [x] T028 [US3] Блок выданных номеров в `resources/views/admin/projects/show.blade.php` по каждой паре проекта, включая выключенные; данные — из `ProjectController::show`
 
 **Checkpoint**: выданное видно без REST
 
@@ -303,3 +303,44 @@ Phase 6 после всех историй
 
 - [ ] S1 (~600K) Steps 1.1, 2.1, 2.2, 3.1, 4.1 — **current**
 - [ ] S2 (~310K) Steps 5.1, 6.1, 6.2
+
+## Progress Log
+
+### S1.step-1.1 — 2026-09-23
+**Completed steps:** 1.1
+**Commits:** 8a67253
+
+### S1.step-2.1 — 2026-09-23
+**Completed steps:** 2.1
+**Commits:** e14f591
+
+### S1.step-2.2 — 2026-09-23
+**Completed steps:** 2.2
+**Commits:** 60290a5
+
+### S1.step-3.1 — 2026-09-23
+**Completed steps:** 3.1
+**Commits:** 4f8de87
+
+### S1.step-4.1 — 2026-09-23
+**Completed steps:** 4.1
+**Commits:** b7e587f
+
+### S1 — observations (2026-09-23, dispatch 1)
+plan-wrong: TaskCreate is not exposed in this harness; the bundle was tracked without it.
+plan-wrong: T012 and T013 as written cover every route of contracts/web-console.md and every REST operation, but key-type routes land in 3.1 and admin.logs.index in 5.1, so literal versions would stay red past 2.2. Built as explicit lists plus a completeness check against registered admin.* routes; 3.1 extended both. Step 5.1 (S2) must add admin.logs.index to ConsoleAccessTest's operations list or its completeness test fails.
+plan-wrong: research.md R8 says CreateProject/CreateKeyType catch UniqueConstraintViolationException; tasks.md T003 says the caller does. Followed T003: the actions declare @throws and the controllers rethrow via RethrowsUniqueConflictAsValidation.
+plan-wrong: page_<code> (R6, T027) breaks for a code containing '.' or a space: PHP rewrites those to '_' in query-parameter names, so that pair never pages past 1. KeyTypeRules::store() allows such codes.
+plan-wrong: 'research.md R1' in a code comment is ambiguous, because spec 001's research.md also has an R1 (cited by ProjectKeyType's docblock). New comments cite specs/002-admin-web-console/research.md in full.
+redone: 2.2 found two faults in my own 2.1 tests. assertSessionHasErrors matches the whole message while REST's assertJsonValidationErrors matches a substring, so the 'не разобран' substring failed. And the card test had no active type, so the types form was correctly absent. Both fixed inside the 2.2 commit, plus a test for the empty-types card state.
+redone: 4.1 first set Paginator::defaultView('pagination::default'), a view Laravel 13 no longer ships (the vendor listing showed it); replaced with Paginator::useBootstrapThree() before the first test run.
+decided: the set_key_types trace reads its 'before' snapshot outside EnabledKeyTypes' row lock (the plan keeps EnabledKeyTypes unchanged). Two administrators setting one project at once can log a stale 'before'; if wrong, the trace misleads but the registry stays correct.
+decided: trace shape. A pair that did not exist logs enabled/seed_sequence as [null, value]. A create logs its non-null fillable fields as [null, value]. updated_at is never logged. UpdateProject/UpdateKeyType save and trace only when the model is dirty, because getChanges() keeps an earlier save's fields after a no-op save.
+decided: web requests drop undeclared fields (repo_url or key in the project update, code in the key-type update) rather than refusing them as REST's closed body does. The parity test covers rule refusals, not closed-body refusals.
+decided: retire and return are separate one-field forms (hidden is_active) so the confirmation can sit on onsubmit. A non-array 'types' input goes to the rules as-is so 'list' refuses it instead of disabling every type.
+decided: flash messages keep the layout's existing session('status') block instead of the new flash partial T018 lists. The issued-numbers author column shows the creator's email. Route::resource makes update answer PUT as well as the contract's PATCH.
+decided: pagination markup is switched app-wide in AppServiceProvider (useBootstrapThree, plain ul.pagination styled inline in the layout), which also sets the look of Step 5.1's journal; wrong if S2 wants other markup.
+decided: the CSRF test re-enables PreventRequestForgery through a container binding, and the role-removal test calls Auth::forgetGuards() between requests to stand in for a fresh process.
+
+### S1 — dispatch 1 (2026-09-23)
+`kind=bundle agent=implementer tier=strong model=claude-opus-5-5 effort=xhigh turns=84 minutes=29.7 input=168 cache_write=293516 cache_read=18031602 output=169599`
