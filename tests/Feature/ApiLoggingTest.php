@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 
 // FR-025: who of the colleagues called, with which token, what, and what came back. FR-024a: MCP on a par with REST.
+// Payloads compare with toEqual: MySQL's json column stores object keys in its own order.
 
 beforeEach(function () {
     enabledPair();
@@ -23,7 +24,7 @@ test('an issuance over REST leaves an entry with user, token name, endpoint, par
         ->token_name->toBe('laptop')
         ->method->toBe('POST')
         ->endpoint->toBe('/api/v1/sequence/next')
-        ->payload->toBe($input)
+        ->payload->toEqual($input)
         ->status_code->toBe(200)
         ->duration_ms->toBeInt()->toBeGreaterThanOrEqual(0)
         ->created_at->not->toBeNull();
@@ -35,7 +36,7 @@ test('a read over REST records its query parameters', function () {
     expect(ApiLog::query()->sole())
         ->method->toBe('GET')
         ->endpoint->toBe('/api/v1/sequence/list')
-        ->payload->toBe(['project_key' => 'gitlab.cas.ai/team/backend', 'type' => 'ADR']);
+        ->payload->toEqual(['project_key' => 'gitlab.cas.ai/team/backend', 'type' => 'ADR']);
 });
 
 test('a refused request is recorded with its status', function () {
@@ -55,7 +56,7 @@ test('a call over MCP leaves an entry with the tool and its arguments', function
         ->endpoint->toBe('/mcp')
         ->status_code->toBe(200)
         ->and($log->payload['method'])->toBe('tools/call')
-        ->and($log->payload['params'])->toBe([
+        ->and($log->payload['params'])->toEqual([
             'name' => 'next_id',
             'arguments' => ['project_key' => 'gitlab.cas.ai/team/backend', 'type' => 'ADR', 'name' => 'add-oauth-auth'],
         ]);
