@@ -537,10 +537,10 @@ tier: strong
 Решения автора от 2026-09-23 по отступлениям, которые подтвердила проверка S2. Документы уже приведены
 к ним (spec.md FR-005, FR-013, FR-015, Edge Cases; data-model.md §identifiers; contracts/rest-api.yaml).
 
-- [ ] T105 Хранить `formatted_id` в `identifiers` (FR-005, data-model.md §identifiers): колонка `varchar(255) NOT NULL` в исходной миграции реестра — приложение не развёрнуто, поэтому правка на месте, как в T010. `SequenceIssuer` записывает вид по шаблону в момент выдачи, повтор, перечень, REST и MCP читают сохранённое значение. Тест: после `PATCH` шаблона типа ранее выданный номер в повторе и в перечне сохраняет прежний вид, а новая выдача получает новый
-- [ ] T106 Закрепить тестом поведение FR-015 для повтора: после гашения проекта, типа и пары повтор уже выданной темы возвращает прежний номер с `is_new: false` через REST и MCP, а новая тема получает отказ со своим кодом. Код уже так работает (S2), теста на этот сценарий нет
-- [ ] T107 Применять `additionalProperties: false` и `minProperties: 1` из contracts/rest-api.yaml на всех операциях, где они объявлены: неизвестное поле тела и пустой `PATCH` дают 422 `ValidationError`. Одно общее средство для всех FormRequest, а не правило в каждом; MCP-инструменты используют те же FormRequest-правила и получают то же поведение
-- [ ] T108 Закрепить тестом правило `seed_sequence` из контракта: тип в `PUT …/key-types` без `seed_sequence` сохраняет текущий seed, у новой пары он 0
+- [x] T105 Хранить `formatted_id` в `identifiers` (FR-005, data-model.md §identifiers): колонка `varchar(255) NOT NULL` в исходной миграции реестра — приложение не развёрнуто, поэтому правка на месте, как в T010. `SequenceIssuer` записывает вид по шаблону в момент выдачи, повтор, перечень, REST и MCP читают сохранённое значение. Тест: после `PATCH` шаблона типа ранее выданный номер в повторе и в перечне сохраняет прежний вид, а новая выдача получает новый
+- [x] T106 Закрепить тестом поведение FR-015 для повтора: после гашения проекта, типа и пары повтор уже выданной темы возвращает прежний номер с `is_new: false` через REST и MCP, а новая тема получает отказ со своим кодом. Код уже так работает (S2), теста на этот сценарий нет
+- [x] T107 Применять `additionalProperties: false` и `minProperties: 1` из contracts/rest-api.yaml на всех операциях, где они объявлены: неизвестное поле тела и пустой `PATCH` дают 422 `ValidationError`. Одно общее средство для всех FormRequest, а не правило в каждом; MCP-инструменты используют те же FormRequest-правила и получают то же поведение
+- [x] T108 Закрепить тестом правило `seed_sequence` из контракта: тип в `PUT …/key-types` без `seed_sequence` сохраняет текущий seed, у новой пары он 0
 
 **Checkpoint**: выданный идентификатор неизменен, контракт применяется буквально
 
@@ -567,9 +567,9 @@ gate_commands:
 tier: standard
 -->
 
-- [ ] T087 Прогнать весь набор в Docker: `make test` — зелёный, включая `tests/Concurrency` (принцип VII, SC-006)
-- [ ] T088 [P] Прогнать `vendor/bin/pint` и `vendor/bin/phpstan analyse` до чистого вывода
-- [ ] T089 [P] Пройти [quickstart.md](./quickstart.md) целиком на чистом окружении, включая подключение MCP и выдачу номера из сессии ассистента без ручного ввода ключа проекта; расхождения исправить в самом quickstart (SC-004, SC-005)
+- [x] T087 Прогнать весь набор в Docker: `make test` — зелёный, включая `tests/Concurrency` (принцип VII, SC-006)
+- [x] T088 [P] Прогнать `vendor/bin/pint` и `vendor/bin/phpstan analyse` до чистого вывода
+- [x] T089 [P] Пройти [quickstart.md](./quickstart.md) целиком на чистом окружении, включая подключение MCP и выдачу номера из сессии ассистента без ручного ввода ключа проекта; расхождения исправить в самом quickstart (SC-004, SC-005)
 ### Step 8.2: Документация и закрытие пакета
 
 <!-- plan-meta:
@@ -584,12 +584,12 @@ gate_commands:
 tier: standard
 -->
 
-- [ ] T090 [P] Написать `CLAUDE.md` репозитория: непрозрачные решения (счётчик в pivot, нормализация ключа, граница MCP-поверхности) и указатели на живые документы
-- [ ] T091 [P] Написать ADR `docs/adr/adr-001-sequence-locking.md` — блокировка строки-счётчика против `SELECT MAX() FOR UPDATE`, с отвергнутыми альтернативами из research.md §R1
-- [ ] T092 [P] Написать ADR `docs/adr/adr-002-mcp-surface-boundary.md` — почему административные операции не публикуются в MCP
-- [ ] T093 Сократить принципы конституции до строк-указателей на CLAUDE.md и ADR там, где источник появился (Governance конституции)
-- [ ] T094 Закрыть пакет: отметить выполненные пункты [checklists/integrity.md](./checklists/integrity.md), обновить статус в [spec.md](./spec.md)
-- [ ] T102 Записать в ledger прогнанные гейты: `~/.claude/skills/speckit-gates/scripts/gates.sh record analyze --package specs/001-incremental-id-registry` и то же для `converge` после его прогона. `/speckit-analyze` read-only и сам ничего не фиксирует, поэтому без этой записи гейт остаётся `MISSING`, хотя анализ был выполнен
+- [x] T090 [P] Написать `CLAUDE.md` репозитория: непрозрачные решения (счётчик в pivot, нормализация ключа, граница MCP-поверхности) и указатели на живые документы
+- [x] T091 [P] Написать ADR `docs/adr/adr-001-sequence-locking.md` — блокировка строки-счётчика против `SELECT MAX() FOR UPDATE`, с отвергнутыми альтернативами из research.md §R1
+- [x] T092 [P] Написать ADR `docs/adr/adr-002-mcp-surface-boundary.md` — почему административные операции не публикуются в MCP
+- [x] T093 Сократить принципы конституции до строк-указателей на CLAUDE.md и ADR там, где источник появился (Governance конституции)
+- [x] T094 Закрыть пакет: отметить выполненные пункты [checklists/integrity.md](./checklists/integrity.md), обновить статус в [spec.md](./spec.md)
+- [x] T102 Записать в ledger прогнанные гейты: `~/.claude/skills/speckit-gates/scripts/gates.sh record analyze --package specs/001-incremental-id-registry` и то же для `converge` после его прогона. `/speckit-analyze` read-only и сам ничего не фиксирует, поэтому без этой записи гейт остаётся `MISSING`, хотя анализ был выполнен
 
 ---
 
@@ -846,3 +846,46 @@ decided: the token cabinet shows the new token once, together with a ready 'clau
 `kind=spec-verify agent=verifier model=claude-sonnet-5 effort=high turns=32 minutes=3.3 input=64 cache_write=82234 cache_read=1789092 output=13297`
 
 S3 verify: все пять шагов IMPLEMENTS, `make test` — 359 passed. Документы приведены к коду: data-model.md §api_logs (формат обрезанного `payload`), contracts/mcp-tools.md (`Response::structured`), plan.md (команды `PruneApiLogs` нет — `model:prune`). Решения автора по отступлениям S2 записаны в spec, data-model и контракт (commit 33793b4), код — в новом Step 7.3, S4 расширен до 7.3, 8.1, 8.2.
+
+### S4.step-7.3 — 2026-09-23
+**Completed steps:** 7.3
+**Commits:** d52755e
+
+### S4.step-8.1 — 2026-09-23
+**Completed steps:** 8.1
+**Commits:** 4405808
+
+### S4.step-8.2 — 2026-09-23
+**Completed steps:** 8.2
+**Commits:** fffe8e9
+
+### S4 — observations (2026-09-23, dispatch 7)
+plan-wrong: this harness has no TaskCreate tool, so the bundle was tracked without it.
+plan-wrong: T105 did not name the three S1 tests that write registry rows by hand (RegistrySchemaTest, IdentifierImmutabilityTest, RegistryModelsTest), nor IdentifierFactory; MySQL strict mode rejects them once formatted_id is NOT NULL, so all four gained the column.
+plan-wrong: T106 half-existed: the REST case (IdempotencyTest 'a repeat still returns its number after the pair is retired...', three retirement modes) came from S2; only MCP was missing. Green on arrival; calling openCounter() before find() turns all six cases red.
+plan-wrong: T108 was already pinned by S2's ProjectKeyTypeTest (resent seed stays 42; a new pair shows 0 in the first test). The uncovered path, a pair dropped from the set and re-enabled without a seed, became a dataset case; resetting the seed on drop reddens only that case, and '$seed ?? 0' reddens both.
+plan-wrong: T107: MCP tools validated with Laravel\Mcp\Request::validate(rules), which bypasses every FormRequest hook, so the same rules could not carry a closed body. Laravel 13.33 FormRequest already ships #[FailOnUnknownFields]; RegistryTool::validate now runs the endpoint's FormRequest itself.
+plan-wrong: T107 inverted two S2 tests that pinned the lenient behaviour: ProjectCrudTest 'the key cannot be set by hand' (201 -> 422) and the rename test, which sent repo_url in the PATCH.
+plan-wrong: rest-api.yaml listed no 422 on either PATCH although validation already answered 422, and nextSequence's 422 declared DomainError only while missing or unknown fields return ValidationError; 8.2 adds responses/InvalidUpdate and anyOf.
+plan-wrong: data-model.md still placed the FR-014b seed check in the FormRequest plus the domain (S2 drift); aligned in 8.2 to EnabledKeyTypes under the counter lock.
+plan-wrong: T089: quickstart hardcoded port 8080 with no word on APP_PORT (8080, 8090 and 8091 are all taken on this host, so make up fails with 'port is already allocated'), and the section 2 tinker check printed a UserRole enum dump instead of 'admin'.
+plan-wrong: T094: both checklists were already fully ticked (integrity 36/36, requirements 16/16); only spec.md's status changed.
+plan-wrong: T102: the analyze row already exists (f3eff42, '8 findings applied') and is STALE by 29 commits. A fresh row needs a real /speckit-analyze on HEAD, which this subagent cannot invoke; no row was added, since a HEAD row without a run would be false freshness.
+plan-wrong: constitution Governance asks for each amendment in its own commit naming the principle and the reason; one-commit-per-step put the 1.0.1 PATCH into the 8.2 commit, with the reason in the Sync Impact Report.
+redone: 8.1 added intl to the quickstart deploy extensions, claiming every issuance would 500 without it. While validating the contract YAML in 8.2, vendor/symfony/polyfill-intl-normalizer turned up (a prod dependency via symfony/string); php -n showed DocumentName producing the correct NFC slug without ext-intl. The line was reverted in 8.2 and the matching CLAUDE.md clause dropped; the 8.1 commit subject still says intl.
+redone: ClosedBodyRequest failed phpstan (rules() is not declared on FormRequest); rules() is now abstract on the base.
+redone: the FR-005 rationale was written twice (migration and SequenceIssuer::present); only the migration comment remains.
+decided: a minProperties violation is reported under the error key 'body' (documented in rest-api.yaml InvalidUpdate); breaks clients expecting every error keyed by a field.
+decided: GET query strings stay open, because the contract closes only bodies; pinned by ContractBodyTest. Breaks if the author wants closed query strings too.
+decided: MCP tools build the FormRequest with $endpoint::create('/', 'POST', $arguments), then setContainer, setRedirector and validateResolved(), with the arguments as the body. No user reaches authorize(); none of the three mapped requests defines it. Breaks for a future tool mapped to an authorizing FormRequest.
+decided: tool inputSchema does not advertise additionalProperties:false, since laravel/mcp Tool::toArray gives no hook; the refusal happens server-side only.
+decided: formatted_id uses the template read just before the counter lock, so a template PATCH committing in that window may or may not apply to that one issuance.
+decided: IdentifierFactory derives formatted_id from the key type's template, so factory rows look issued; a test needing a specific id passes it.
+decided: T089 ran on a fresh clone of HEAD under COMPOSE_PROJECT_NAME=get-id-qs, APP_PORT=8092, torn down with down -v --rmi local; the live get-id stack was untouched. Google sign-in was replaced by feeding a Socialite user to SignInWithGoogle in tinker (the ADMIN_EMAILS promotion ran through production code), and the cabinet token by createToken. REST sections 4-6 ran verbatim and matched; section 7 ran over HTTP JSON-RPC: initialize, tools/list (3 tools), resolve_project, next_id, 401 without a token. In the clone make test passed 379 and make test-race 2.
+decided: needs manual verification: quickstart section 2 (Google sign-in with a real OAuth client), section 3 (token cabinet UI), section 7 ('claude mcp add' and the 'claude mcp list' output, plus the assistant session; not run because it writes the user's Claude Code config), and section 'Развёртывание на LAMP' including the Cloudflare route('tokens.index') https check.
+decided: the live dev database getid (8090 stack) keeps the pre-7.3 identifiers schema (no formatted_id; holds 6 users, 3 projects, 3 tokens, 0 identifiers) and was not wiped. Issuance on that stack fails until 'make fresh' (which drops that data) or the column is added by hand.
+decided: spec.md status is 'Implemented' before converge and review; breaks if the author reserves the word for after review.
+decided: a ruby:3-alpine image was pulled to parse the OpenAPI YAML (no YAML parser in the app container or host python) and left in the local image store.
+
+### S4 — dispatch 7 (2026-09-23)
+`kind=bundle agent=implementer tier=strong model=claude-opus-5-5 effort=xhigh turns=105 minutes=28.7 input=210 cache_write=403102 cache_read=27938372 output=161752`
