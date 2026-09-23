@@ -12,6 +12,7 @@ use App\Models\KeyType;
 use App\Models\Project;
 use App\Models\ProjectKeyType;
 use App\Models\User;
+use App\Queries\IssuedIdentifiers;
 use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -44,7 +45,7 @@ class ProjectController extends Controller
         return to_route('admin.projects.show', $project)->with('status', "Проект «{$project->key}» заведён.");
     }
 
-    public function show(Project $project): View
+    public function show(Project $project, IssuedIdentifiers $issuedIdentifiers): View
     {
         $pairs = ProjectKeyType::query()->whereBelongsTo($project)->orderByTypeCode()->with('keyType')->get();
 
@@ -55,6 +56,8 @@ class ProjectController extends Controller
             'pairs' => $pairs->keyBy('key_type_id'),
             // Edge Cases: enabled before their type was retired; the form cannot re-enable them, so saving drops them.
             'retiredPairs' => $pairs->filter(fn (ProjectKeyType $pair): bool => $pair->is_enabled && ! $pair->keyType->is_active)->values(),
+            // FR-013: every pair, disabled ones and those of retired types included.
+            'issued' => $pairs->mapWithKeys(fn (ProjectKeyType $pair): array => [$pair->id => $issuedIdentifiers->forPair($pair)]),
         ]);
     }
 

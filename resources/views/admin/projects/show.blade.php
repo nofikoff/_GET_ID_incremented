@@ -99,4 +99,42 @@
         </form>
         @include('admin.partials.confirm-dropped-types', ['form' => 'project-key-types'])
     @endif
+
+    <h2>Выданные номера</h2>
+    <section id="issued">
+        @forelse ($pairs as $pair)
+            @php($identifiers = $issued[$pair->id])
+            <h3>
+                <code>{{ $pair->keyType->code }}</code> {{ $pair->keyType->name }}
+                @if (! $pair->keyType->is_active)
+                    <span class="muted">— тип выведен из обращения</span>
+                @elseif (! $pair->is_enabled)
+                    <span class="muted">— выключен в проекте</span>
+                @endif
+            </h3>
+            @if ($identifiers->isEmpty())
+                <p class="muted">Номеров не выдано.</p>
+            @else
+                <table>
+                    <thead>
+                    <tr><th>Номер</th><th>Идентификатор</th><th>Тема</th><th>Автор</th><th>Выдан</th></tr>
+                    </thead>
+                    <tbody>
+                    @foreach ($identifiers as $identifier)
+                        <tr>
+                            <td>{{ $identifier->sequence_number }}</td>
+                            <td><code>{{ $identifier->formatted_id }}</code></td>
+                            <td>{{ $identifier->name }}</td>
+                            <td>{{ $identifier->creator?->email ?? '—' }}</td>
+                            <td>{{ $identifier->created_at?->format('Y-m-d H:i') }}</td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+                {{ $identifiers->links() }}
+            @endif
+        @empty
+            <p class="muted">Типы в проекте ещё не включались.</p>
+        @endforelse
+    </section>
 @endsection

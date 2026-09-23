@@ -24,6 +24,9 @@
         input[type=number] { font: inherit; padding: .2rem .4rem; border: 1px solid var(--line); border-radius: 6px; width: 8rem; }
         textarea { width: 100%; max-width: 40rem; }
         form.inline { display: inline; }
+        .pagination { display: flex; flex-wrap: wrap; gap: .25rem; list-style: none; padding: 0; margin: 0 0 1rem; }
+        .pagination li > * { display: inline-block; min-width: 2rem; padding: .15rem .5rem; border: 1px solid var(--line); border-radius: 6px; text-align: center; }
+        .pagination .active > *, .pagination .disabled > * { color: var(--muted); }
         .notice { padding: .75rem 1rem; border: 1px solid var(--accent); border-radius: 6px; }
         .error { color: var(--bad); }
         .muted { color: var(--muted); }
