@@ -6,7 +6,9 @@ use App\Http\Controllers\Api\Admin\ProjectKeyTypeController;
 use App\Http\Controllers\Api\ProjectResolveController;
 use App\Http\Controllers\Api\SequenceController;
 use App\Http\Middleware\EnsureAdministrator;
+use App\Mcp\Servers\GetIdServer;
 use Illuminate\Support\Facades\Route;
+use Laravel\Mcp\Facades\Mcp;
 
 // No automatic /api prefix here (bootstrap/app.php): declare REST under api/v1, the MCP endpoint at /mcp.
 
@@ -26,3 +28,7 @@ Route::prefix('api/v1')->group(function (): void {
         Route::patch('key-types/{keyType}', [KeyTypeController::class, 'update']);
     });
 });
+
+// Repeats the api group's token check and per-token budget so the route stays closed if it ever leaves the group;
+// the router applies each once (tests/Feature/Http/RateLimiterTest.php).
+Mcp::web('/mcp', GetIdServer::class)->middleware(['auth:sanctum', 'throttle:getid']);
