@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers\Api\Admin;
 
+use App\Actions\Registry\CreateKeyType;
+use App\Actions\Registry\UpdateKeyType;
 use App\Http\Concerns\RethrowsUniqueConflictAsValidation;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\Admin\StoreKeyTypeRequest;
 use App\Http\Requests\Api\Admin\UpdateKeyTypeRequest;
 use App\Http\Resources\KeyTypeResource;
 use App\Models\KeyType;
+use App\Models\User;
+use Illuminate\Container\Attributes\CurrentUser;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
@@ -23,10 +27,10 @@ class KeyTypeController extends Controller
         return KeyTypeResource::collection(KeyType::query()->orderBy('code')->get());
     }
 
-    public function store(StoreKeyTypeRequest $request): KeyTypeResource
+    public function store(StoreKeyTypeRequest $request, CreateKeyType $createKeyType, #[CurrentUser] User $admin): KeyTypeResource
     {
         try {
-            $keyType = KeyType::query()->create($request->validated());
+            $keyType = $createKeyType($admin, $request->validated());
         } catch (UniqueConstraintViolationException $conflict) {
             $this->rethrowAsValidation($request, $request->rules(...), $conflict);
         }
@@ -34,10 +38,8 @@ class KeyTypeController extends Controller
         return new KeyTypeResource($keyType);
     }
 
-    public function update(UpdateKeyTypeRequest $request, KeyType $keyType): KeyTypeResource
+    public function update(UpdateKeyTypeRequest $request, KeyType $keyType, UpdateKeyType $updateKeyType, #[CurrentUser] User $admin): KeyTypeResource
     {
-        $keyType->update($request->validated());
-
-        return new KeyTypeResource($keyType);
+        return new KeyTypeResource($updateKeyType($admin, $keyType, $request->validated()));
     }
 }

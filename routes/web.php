@@ -4,6 +4,7 @@ use App\Http\Controllers\Web\Admin\KeyTypeController;
 use App\Http\Controllers\Web\Admin\ProjectController;
 use App\Http\Controllers\Web\GoogleAuthController;
 use App\Http\Controllers\Web\TokenController;
+use App\Http\Middleware\EnsureAdministrator;
 use Illuminate\Support\Facades\Route;
 
 // Guests reach the sign-in page through the auth redirect, signed-in people land in their token cabinet.
@@ -23,7 +24,8 @@ Route::middleware('auth')->group(function (): void {
     Route::post('tokens', [TokenController::class, 'store'])->name('tokens.store');
     Route::delete('tokens/{token}', [TokenController::class, 'destroy'])->whereNumber('token')->name('tokens.destroy');
 
-    Route::prefix('admin')->name('admin.')->middleware('can:administer')->group(function (): void {
+    // Not can:administer — that runs after route model binding and would tell a member which ids exist (FR-016).
+    Route::prefix('admin')->name('admin.')->middleware(EnsureAdministrator::class)->group(function (): void {
         Route::get('projects', [ProjectController::class, 'index'])->name('projects.index');
         Route::get('key-types', [KeyTypeController::class, 'index'])->name('key-types.index');
     });

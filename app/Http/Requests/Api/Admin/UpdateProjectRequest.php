@@ -4,10 +4,8 @@ namespace App\Http\Requests\Api\Admin;
 
 use App\Http\Requests\Api\ClosedBodyRequest;
 use App\Http\Requests\Attributes\MinProperties;
+use App\Http\Validation\ProjectRules;
 
-/**
- * repo_url is not editable: the key derived from it is what clients resolve their origin to.
- */
 #[MinProperties(1)]
 class UpdateProjectRequest extends ClosedBodyRequest
 {
@@ -21,10 +19,6 @@ class UpdateProjectRequest extends ClosedBodyRequest
      */
     public function rules(): array
     {
-        return [
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'description' => ['sometimes', 'nullable', 'string'],
-            'is_active' => ['sometimes', 'boolean'],
-        ];
+        return ProjectRules::update();
     }
 }
