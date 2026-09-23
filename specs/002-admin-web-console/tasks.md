@@ -220,10 +220,10 @@ gate_commands:
 tier: standard
 -->
 
-- [ ] T029 [P] [US4] `tests/Feature/Admin/Web/ApiLogScreenTest.php`: записи от новых к старым с полями FR-014; фильтр по сотруднику, по дню (обе границы включительно, часовой пояс сервиса), по поверхности `rest`/`mcp` по префиксу `endpoint`; фильтры вместе; ссылки пагинации сохраняют фильтр; деактивированный сотрудник есть в списке фильтра; `to` раньше `from` и несуществующий `user_id` — ошибки под полями; пустой результат — «записей нет» (FR-014, FR-015, Edge Cases)
-- [ ] T030 [US4] `app/Queries/ApiLogQuery.php`: фильтры `user_id`, `from`, `to`, `surface`; `created_at desc`; 50 на страницу; `withQueryString()` (research.md R7)
-- [ ] T031 [US4] `app/Http/Requests/Web/Admin/ApiLogFilterRequest.php` (GET-фильтр: даты, `to` не раньше `from` с текстом из contracts/web-console.md, `exists` для `user_id`, `surface` из двух значений) и `app/Http/Controllers/Web/Admin/ApiLogController.php`
-- [ ] T032 [P] [US4] `resources/views/admin/logs/index.blade.php`: GET-форма фильтра, таблица, раскрытие `payload` через `<details>`; пункт «Журнал» в меню `resources/views/layouts/app.blade.php`; маршрут `admin.logs.index` в `routes/web.php`
+- [x] T029 [P] [US4] `tests/Feature/Admin/Web/ApiLogScreenTest.php`: записи от новых к старым с полями FR-014; фильтр по сотруднику, по дню (обе границы включительно, часовой пояс сервиса), по поверхности `rest`/`mcp` по префиксу `endpoint`; фильтры вместе; ссылки пагинации сохраняют фильтр; деактивированный сотрудник есть в списке фильтра; `to` раньше `from` и несуществующий `user_id` — ошибки под полями; пустой результат — «записей нет» (FR-014, FR-015, Edge Cases)
+- [x] T030 [US4] `app/Queries/ApiLogQuery.php`: фильтры `user_id`, `from`, `to`, `surface`; `created_at desc`; 50 на страницу; `withQueryString()` (research.md R7)
+- [x] T031 [US4] `app/Http/Requests/Web/Admin/ApiLogFilterRequest.php` (GET-фильтр: даты, `to` не раньше `from` с текстом из contracts/web-console.md, `exists` для `user_id`, `surface` из двух значений) и `app/Http/Controllers/Web/Admin/ApiLogController.php`
+- [x] T032 [P] [US4] `resources/views/admin/logs/index.blade.php`: GET-форма фильтра, таблица, раскрытие `payload` через `<details>`; пункт «Журнал» в меню `resources/views/layouts/app.blade.php`; маршрут `admin.logs.index` в `routes/web.php`
 
 **Checkpoint**: журнал разбирается в браузере
 
@@ -250,10 +250,10 @@ gate_commands:
 tier: standard
 -->
 
-- [ ] T033 Прогнать `make test` в Docker — зелёный, включая `tests/Concurrency` и неизменённые тесты REST и MCP (принцип VII, SC-003)
-- [ ] T034 [P] `vendor/bin/pint` и `vendor/bin/phpstan analyse` до чистого вывода
-- [ ] T035 [P] Пройти [quickstart.md](./quickstart.md) на локальном стеке; вход через Google заменить сессией администратора; расхождения исправить в самом quickstart
-- [ ] T040 Параметр страницы выданных номеров строится из id типа (`page_<key_type_id>`), а не из кода: PHP переписывает `.` и пробел в именах GET-параметров в `_`, и пара с таким кодом не листается дальше первой страницы (FR-013, найдено spec-verify S1). `app/Queries/IssuedIdentifiers.php`, `resources/views/admin/projects/show.blade.php`, research.md R6; регрессионный тест в `tests/Feature/Admin/Web/IssuedIdentifiersTest.php` с кодом `RFC.v2`, красный до правки
+- [x] T033 Прогнать `make test` в Docker — зелёный, включая `tests/Concurrency` и неизменённые тесты REST и MCP (принцип VII, SC-003)
+- [x] T034 [P] `vendor/bin/pint` и `vendor/bin/phpstan analyse` до чистого вывода
+- [x] T035 [P] Пройти [quickstart.md](./quickstart.md) на локальном стеке; вход через Google заменить сессией администратора; расхождения исправить в самом quickstart
+- [x] T040 Параметр страницы выданных номеров строится из id типа (`page_<key_type_id>`), а не из кода: PHP переписывает `.` и пробел в именах GET-параметров в `_`, и пара с таким кодом не листается дальше первой страницы (FR-013, найдено spec-verify S1). `app/Queries/IssuedIdentifiers.php`, `resources/views/admin/projects/show.blade.php`, research.md R6; регрессионный тест в `tests/Feature/Admin/Web/IssuedIdentifiersTest.php` с кодом `RFC.v2`, красный до правки
 
 ### Step 6.2: Документация
 
@@ -269,10 +269,10 @@ gate_commands:
 tier: standard
 -->
 
-- [ ] T036 [P] ADR-002 `docs/adr/adr-002-mcp-surface-boundary.md`: следствие «Веб-экраны администратора справочник только показывают…» заменить на «Справочник меняет человек через REST `/api/v1/admin/*` или веб-консоль `/admin`; в MCP административных инструментов нет». Ветка не слита, поэтому ADR правится на месте, а не строкой Correction
-- [ ] T037 [P] `CLAUDE.md`: где живут правила справочника для трёх транспортов (`app/Http/Validation/`, `app/Actions/Registry/`), почему веб-группа закрыта `EnsureAdministrator`, а не `can:` — указателями на research.md, без пересказа
-- [ ] T038 [P] `specs/001-incremental-id-registry/quickstart.md` §5: заведение проекта — сначала консоль `/admin/projects`, curl остаётся альтернативой
-- [ ] T039 Закрыть пакет: `spec.md` статус, проверить отметки `checklists/`
+- [x] T036 [P] ADR-002 `docs/adr/adr-002-mcp-surface-boundary.md`: следствие «Веб-экраны администратора справочник только показывают…» заменить на «Справочник меняет человек через REST `/api/v1/admin/*` или веб-консоль `/admin`; в MCP административных инструментов нет». Ветка не слита, поэтому ADR правится на месте, а не строкой Correction
+- [x] T037 [P] `CLAUDE.md`: где живут правила справочника для трёх транспортов (`app/Http/Validation/`, `app/Actions/Registry/`), почему веб-группа закрыта `EnsureAdministrator`, а не `can:` — указателями на research.md, без пересказа
+- [x] T038 [P] `specs/001-incremental-id-registry/quickstart.md` §5: заведение проекта — сначала консоль `/admin/projects`, curl остаётся альтернативой
+- [x] T039 Закрыть пакет: `spec.md` статус, проверить отметки `checklists/`
 
 ---
 
@@ -350,3 +350,24 @@ decided: the CSRF test re-enables PreventRequestForgery through a container bind
 `kind=spec-verify agent=verifier model=claude-sonnet-5 effort=high turns=31 minutes=3.2 input=62 cache_write=110716 cache_read=2526816 output=14508`
 
 S1 verify: все пять шагов IMPLEMENTS, `make test` 470 passed, существующие тестовые файлы не тронуты. Подтверждён дефект: `page_<code>` не листается для кода с точкой или пробелом (PHP переписывает их в `_`), `KeyTypeRules::store()` такие коды пропускает — T040 в Step 6.1. Сброс неизвестных полей веб-формами и «было» вне блокировки в следе набора типов признаны осознанными решениями, записаны в contracts/web-console.md и data-model.md.
+
+### S2.step-5.1 — 2026-09-23
+**Completed steps:** 5.1
+**Commits:** 32dc20b
+
+### S2.step-6.1 — 2026-09-23
+**Completed steps:** 6.1
+**Commits:** 773fa97
+
+### S2.step-6.2 — 2026-09-23
+**Completed steps:** 6.2
+**Commits:** 2c6e72f
+
+### S2 — observations (2026-09-23, dispatch 3)
+plan-wrong: T038 named 'specs/001-incremental-id-registry/quickstart.md §5' for the project-registration edit, but §5 in the actual file is 'Включить типы в проекте' — project creation is §4. Read the intent as both steps (creation + enabling types, the pair quickstart 002 §1 covers as one console flow) and updated §4 and §5 alike, each pointing to the console first with curl kept as the alternative.
+redone: T035's own wording ('вход через Google заменить сессией администратора') assumes a way to mint a browser session without OAuth; there was none built. Minted one using Laravel's real Auth::guard('web')->login() + Crypt/CookieValuePrefix (the exact classes EncryptCookies itself calls, not a hand-rolled substitute), confirmed by a live 403-before/200-after check, then walked all four quickstart sections over curl against the actual nginx+app stack on port 8090 rather than the in-process test client, and cleaned up every row it created afterward via DB::table() (Identifier's Eloquent builder refuses delete() by design, so the raw query builder was the only way to remove the one issued number without touching migrate:fresh).
+decided: No divergence surfaced between specs/002-admin-web-console/quickstart.md and the live stack, so that file needed no edit for T035 — wrong only if a wording mismatch exists that this walk's specific assertions (exact error texts, exact route redirects, table columns) didn't happen to probe.
+decided: ApiLogFilterRequest has no REST twin, so unlike every other web request its validation rules live directly on the FormRequest rather than in a shared app/Http/Validation/*Rules class (research.md R1's rationale doesn't apply here) — wrong if a REST log-filter endpoint is added later, at which point the rules should move to a shared class.
+
+### S2 — dispatch 3 (2026-09-23)
+`kind=bundle agent=implementer tier=standard model=claude-sonnet-5 effort=xhigh turns=139 minutes=27.5 input=278 cache_write=275071 cache_read=25823764 output=115877`
