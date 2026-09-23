@@ -228,17 +228,17 @@ tier: strong
 Тесты пишутся первыми и падают до Step 3.2.
 
 
-- [ ] T033 [P] [US1] `tests/Feature/Sequence/NextIdTest.php`: первая выдача, `formatted_id` по шаблону, `is_new: true` (FR-001, FR-005)
-- [ ] T034 [P] [US1] `tests/Feature/Sequence/IdempotencyTest.php`: повтор той же тройки, повтор с другим регистром и разделителем, отсутствие второй записи в реестре (FR-002, FR-007)
-- [ ] T035 [P] [US1] `tests/Feature/Sequence/RejectionTest.php`: незарегистрированный проект, погашенный проект, невключённый тип, погашенный тип, пустая после нормализации тема — каждый со своим `error.code` и нормализованным ключом в теле (FR-010, FR-015, FR-007a, SC-003)
-- [ ] T036 [P] [US1] `tests/Feature/Sequence/ListTest.php`: порядок по убыванию, поля перечня, отказ по незарегистрированному проекту (FR-006)
-- [ ] T037 [P] [US1] `tests/Feature/Sequence/SeedSequenceTest.php`: при `seed_sequence = 42` первая выдача возвращает 43 (FR-014a)
-- [ ] T038 [US1] `tests/Concurrency/ConcurrentIssueTest.php`: 50 процессов через `Process::pool` на одну пару «проект + тип», все со своей меткой старта `--at`, проверка — ровно 50 различных номеров без пропусков; набор не оборачивается в транзакцию и чистит таблицы усечением (SC-001, принцип V)
-- [ ] T039 [US1] Команда `app/Console/Commands/IssueIdentifier.php` — точка входа для процессов теста конкурентности: принимает `--at=<unix ms>` и ждёт до этой метки перед вызовом `SequenceIssuer`, печатает выданный номер в stdout. Дочерние процессы запускаются с тем же `APP_ENV=testing` и `DB_DATABASE=getid_test`, что и сам тест, — окружение передаётся в `Process::env()` явно, а не наследуется на удачу. Барьер обязателен: `Process::pool` стартует процессы последовательно, холодный старт Laravel занимает сотни миллисекунд, и без общей метки первый процесс успевает закоммитить транзакцию раньше, чем второй дойдёт до `lockForUpdate()` — тест станет зелёным на заведомо сломанной реализации
-- [ ] T095 [US1] `tests/Concurrency/ConcurrentSameNameTest.php`: 10 процессов запрашивают номер с **одной и той же** темой одновременно, с тем же барьером `--at`, что и T038; проверка — все получают один номер, в реестре ровно одна запись, и `project_key_type.last_sequence` сдвинулся ровно на единицу — проигравшие гонку не сожгли номера (SC-002, FR-004a, FR-004b). Отличается от T038, где темы разные: тот проверяет сериализацию счётчика, этот — разрешение столкновения по уникальному индексу
-- [ ] T096 [P] [US1] `tests/Feature/Sequence/StorageFailureTest.php`: отказ хранилища в момент выдачи — клиент получает ошибку, номер не выдан, счётчик не сдвинут, повтор после восстановления безопасен (FR-004c)
-- [ ] T097 [P] [US1] `tests/Feature/Sequence/ImmutabilityTest.php`: реестр не допускает обновления и удаления записи; `down()` миграции реестра на непустой таблице бросает исключение, а на пустой отрабатывает (FR-004, FR-016)
-- [ ] T098 [P] [US1] `tests/Feature/UnauthenticatedAccessTest.php`: каждый маршрут `/api/v1/*` без заголовка авторизации и с отозванным токеном отвергается (FR-020); проект не заводится сам по факту обращения (FR-011)
+- [x] T033 [P] [US1] `tests/Feature/Sequence/NextIdTest.php`: первая выдача, `formatted_id` по шаблону, `is_new: true` (FR-001, FR-005)
+- [x] T034 [P] [US1] `tests/Feature/Sequence/IdempotencyTest.php`: повтор той же тройки, повтор с другим регистром и разделителем, отсутствие второй записи в реестре (FR-002, FR-007)
+- [x] T035 [P] [US1] `tests/Feature/Sequence/RejectionTest.php`: незарегистрированный проект, погашенный проект, невключённый тип, погашенный тип, пустая после нормализации тема — каждый со своим `error.code` и нормализованным ключом в теле (FR-010, FR-015, FR-007a, SC-003)
+- [x] T036 [P] [US1] `tests/Feature/Sequence/ListTest.php`: порядок по убыванию, поля перечня, отказ по незарегистрированному проекту (FR-006)
+- [x] T037 [P] [US1] `tests/Feature/Sequence/SeedSequenceTest.php`: при `seed_sequence = 42` первая выдача возвращает 43 (FR-014a)
+- [x] T038 [US1] `tests/Concurrency/ConcurrentIssueTest.php`: 50 процессов через `Process::pool` на одну пару «проект + тип», все со своей меткой старта `--at`, проверка — ровно 50 различных номеров без пропусков; набор не оборачивается в транзакцию и чистит таблицы усечением (SC-001, принцип V)
+- [x] T039 [US1] Команда `app/Console/Commands/IssueIdentifier.php` — точка входа для процессов теста конкурентности: принимает `--at=<unix ms>` и ждёт до этой метки перед вызовом `SequenceIssuer`, печатает выданный номер в stdout. Дочерние процессы запускаются с тем же `APP_ENV=testing` и `DB_DATABASE=getid_test`, что и сам тест, — окружение передаётся в `Process::env()` явно, а не наследуется на удачу. Барьер обязателен: `Process::pool` стартует процессы последовательно, холодный старт Laravel занимает сотни миллисекунд, и без общей метки первый процесс успевает закоммитить транзакцию раньше, чем второй дойдёт до `lockForUpdate()` — тест станет зелёным на заведомо сломанной реализации
+- [x] T095 [US1] `tests/Concurrency/ConcurrentSameNameTest.php`: 10 процессов запрашивают номер с **одной и той же** темой одновременно, с тем же барьером `--at`, что и T038; проверка — все получают один номер, в реестре ровно одна запись, и `project_key_type.last_sequence` сдвинулся ровно на единицу — проигравшие гонку не сожгли номера (SC-002, FR-004a, FR-004b). Отличается от T038, где темы разные: тот проверяет сериализацию счётчика, этот — разрешение столкновения по уникальному индексу
+- [x] T096 [P] [US1] `tests/Feature/Sequence/StorageFailureTest.php`: отказ хранилища в момент выдачи — клиент получает ошибку, номер не выдан, счётчик не сдвинут, повтор после восстановления безопасен (FR-004c)
+- [x] T097 [P] [US1] `tests/Feature/Sequence/ImmutabilityTest.php`: реестр не допускает обновления и удаления записи; `down()` миграции реестра на непустой таблице бросает исключение, а на пустой отрабатывает (FR-004, FR-016)
+- [x] T098 [P] [US1] `tests/Feature/UnauthenticatedAccessTest.php`: каждый маршрут `/api/v1/*` без заголовка авторизации и с отозванным токеном отвергается (FR-020); проект не заводится сам по факту обращения (FR-011)
 
 ### Step 3.2: Доменный сервис и REST
 
@@ -259,13 +259,13 @@ gate_commands:
 tier: strong
 -->
 
-- [ ] T040 [US1] `app/Domain/Sequence/IssuedIdentifier.php` — неизменяемый результат выдачи (номер, форматированный вид, признак новизны, исходная тема)
-- [ ] T041 [US1] `app/Domain/Sequence/SequenceIssuer.php`: поиск существующей записи по `(project, type, name_slug)` до транзакции; иначе транзакция с `lockForUpdate()` на строке `project_key_type`, следующий номер `GREATEST(seed_sequence, last_sequence) + 1`, инкремент счётчика, вставка (research.md §R1, FR-003, FR-004a)
-- [ ] T042 [US1] Обработать `UniqueConstraintViolationException` **снаружи** `DB::transaction()`, а не внутри: исключение обязано выйти из замыкания, чтобы транзакция откатилась целиком вместе с инкрементом счётчика. Если поймать его внутри и перечитать запись там же, инкремент закоммитится и номер сгорит — пропуск, который запрещает FR-004a. После отката перечитать запись по `name_slug`: нашлась — это штатный повтор, вернуть её с `is_new: false`; не нашлась — столкнулся `sequence_number`, то есть сериализация не сработала: дефект, запись в лог приложения и ошибка сервера (FR-004a, FR-004b). `DB::transaction()` вызывать с числом попыток больше единицы, чтобы редкий deadlock не дошёл до клиента (FR-003)
-- [ ] T043 [P] [US1] `app/Http/Requests/Api/NextSequenceRequest.php` и `ListSequenceRequest.php` по схемам contracts/rest-api.yaml
-- [ ] T044 [P] [US1] `app/Http/Resources/IssuedIdentifierResource.php` и `IdentifierListResource.php` — форма ответа из контракта, `name` отдаётся исходный, не нормализованный
-- [ ] T045 [US1] `app/Http/Controllers/Api/SequenceController.php` — два действия, вся работа делегируется `SequenceIssuer`
-- [ ] T046 [US1] Зарегистрировать `POST /api/v1/sequence/next` и `GET /api/v1/sequence/list` в `routes/api.php` под `Route::prefix('api/v1')`: `apiPrefix` в `bootstrap/app.php` пуст (T028a), автоматического префикса нет
+- [x] T040 [US1] `app/Domain/Sequence/IssuedIdentifier.php` — неизменяемый результат выдачи (номер, форматированный вид, признак новизны, исходная тема)
+- [x] T041 [US1] `app/Domain/Sequence/SequenceIssuer.php`: поиск существующей записи по `(project, type, name_slug)` до транзакции; иначе транзакция с `lockForUpdate()` на строке `project_key_type`, следующий номер `GREATEST(seed_sequence, last_sequence) + 1`, инкремент счётчика, вставка (research.md §R1, FR-003, FR-004a)
+- [x] T042 [US1] Обработать `UniqueConstraintViolationException` **снаружи** `DB::transaction()`, а не внутри: исключение обязано выйти из замыкания, чтобы транзакция откатилась целиком вместе с инкрементом счётчика. Если поймать его внутри и перечитать запись там же, инкремент закоммитится и номер сгорит — пропуск, который запрещает FR-004a. После отката перечитать запись по `name_slug`: нашлась — это штатный повтор, вернуть её с `is_new: false`; не нашлась — столкнулся `sequence_number`, то есть сериализация не сработала: дефект, запись в лог приложения и ошибка сервера (FR-004a, FR-004b). `DB::transaction()` вызывать с числом попыток больше единицы, чтобы редкий deadlock не дошёл до клиента (FR-003)
+- [x] T043 [P] [US1] `app/Http/Requests/Api/NextSequenceRequest.php` и `ListSequenceRequest.php` по схемам contracts/rest-api.yaml
+- [x] T044 [P] [US1] `app/Http/Resources/IssuedIdentifierResource.php` и `IdentifierListResource.php` — форма ответа из контракта, `name` отдаётся исходный, не нормализованный
+- [x] T045 [US1] `app/Http/Controllers/Api/SequenceController.php` — два действия, вся работа делегируется `SequenceIssuer`
+- [x] T046 [US1] Зарегистрировать `POST /api/v1/sequence/next` и `GET /api/v1/sequence/list` в `routes/api.php` под `Route::prefix('api/v1')`: `apiPrefix` в `bootstrap/app.php` пуст (T028a), автоматического префикса нет
 
 **Checkpoint**: MVP работает — номера выдаются, гонки нет, повтор идемпотентен
 
@@ -297,11 +297,11 @@ gate_commands:
 tier: standard
 -->
 
-- [ ] T047 [P] [US2] `tests/Feature/Admin/ProjectCrudTest.php`: заведение с вычислением ключа из адреса, переименование, гашение, повторный адрес как ошибка валидации (FR-008, FR-012)
-- [ ] T048 [P] [US2] `tests/Feature/Admin/KeyTypeCrudTest.php`: заведение, валидация шаблона (нет номера, неизвестный плейсхолдер), гашение (FR-013, FR-013a)
-- [ ] T049 [P] [US2] `tests/Feature/Admin/ProjectKeyTypeTest.php`: замена набора типов, `seed_sequence`, запрет `seed_sequence` ниже выданного, запрет включения погашенного типа, продолжение нумерации после выключения и повторного включения (FR-014, FR-014a, FR-014b, Edge Cases)
-- [ ] T050 [P] [US2] `tests/Feature/Admin/AuthorizationTest.php`: обычный пользователь получает 403 на каждой административной операции и не получает перечня проектов; 403 приходит и для несуществующего идентификатора, то есть проверка роли срабатывает до поиска сущности, и по коду ответа нельзя узнать, существует ли объект (FR-017)
-- [ ] T051 [P] [US2] `tests/Feature/ProjectResolveTest.php`: SSH- и HTTPS-формы дают один ключ, незарегистрированный проект отдаёт `registered: false` и `hint`, неразбираемый адрес — 422, перечень чужих проектов не раскрывается (FR-009, FR-010)
+- [x] T047 [P] [US2] `tests/Feature/Admin/ProjectCrudTest.php`: заведение с вычислением ключа из адреса, переименование, гашение, повторный адрес как ошибка валидации (FR-008, FR-012)
+- [x] T048 [P] [US2] `tests/Feature/Admin/KeyTypeCrudTest.php`: заведение, валидация шаблона (нет номера, неизвестный плейсхолдер), гашение (FR-013, FR-013a)
+- [x] T049 [P] [US2] `tests/Feature/Admin/ProjectKeyTypeTest.php`: замена набора типов, `seed_sequence`, запрет `seed_sequence` ниже выданного, запрет включения погашенного типа, продолжение нумерации после выключения и повторного включения (FR-014, FR-014a, FR-014b, Edge Cases)
+- [x] T050 [P] [US2] `tests/Feature/Admin/AuthorizationTest.php`: обычный пользователь получает 403 на каждой административной операции и не получает перечня проектов; 403 приходит и для несуществующего идентификатора, то есть проверка роли срабатывает до поиска сущности, и по коду ответа нельзя узнать, существует ли объект (FR-017)
+- [x] T051 [P] [US2] `tests/Feature/ProjectResolveTest.php`: SSH- и HTTPS-формы дают один ключ, незарегистрированный проект отдаёт `registered: false` и `hint`, неразбираемый адрес — 422, перечень чужих проектов не раскрывается (FR-009, FR-010)
 
 ### Step 4.2: Административные операции
 
@@ -322,14 +322,14 @@ gate_commands:
 tier: strong
 -->
 
-- [ ] T052 [P] [US2] `app/Policies/ProjectPolicy.php` и `app/Policies/KeyTypePolicy.php`, регистрация в `AppServiceProvider`
-- [ ] T053 [P] [US2] FormRequest'ы в `app/Http/Requests/Api/Admin/`: `StoreProjectRequest`, `UpdateProjectRequest`, `StoreKeyTypeRequest`, `UpdateKeyTypeRequest`, `SetProjectKeyTypesRequest` — правило валидации шаблона опирается на `IdentifierFormat`, правило `seed_sequence` сверяется с `last_sequence`
-- [ ] T054 [P] [US2] Ресурсы `app/Http/Resources/ProjectResource.php`, `KeyTypeResource.php`, `EnabledKeyTypeResource.php`
-- [ ] T055 [US2] `app/Http/Controllers/Api/Admin/ProjectController.php` — перечень, заведение, изменение
-- [ ] T056 [US2] `app/Http/Controllers/Api/Admin/KeyTypeController.php` — перечень, заведение, изменение
-- [ ] T057 [US2] `app/Http/Controllers/Api/Admin/ProjectKeyTypeController.php` — полная замена набора типов проекта: тип, пропавший из набора, получает `is_enabled = false`, вернувшийся — `true`; строки связи не удаляются никогда, иначе теряется счётчик (FR-016, data-model.md §project_key_type)
-- [ ] T058 [US2] `app/Http/Controllers/Api/ProjectResolveController.php` — нормализация адреса и статус проекта, без раскрытия перечня
-- [ ] T059 [US2] Зарегистрировать административные маршруты и `GET /api/v1/projects/resolve` в `routes/api.php`
+- [x] T052 [P] [US2] `app/Policies/ProjectPolicy.php` и `app/Policies/KeyTypePolicy.php`, регистрация в `AppServiceProvider`
+- [x] T053 [P] [US2] FormRequest'ы в `app/Http/Requests/Api/Admin/`: `StoreProjectRequest`, `UpdateProjectRequest`, `StoreKeyTypeRequest`, `UpdateKeyTypeRequest`, `SetProjectKeyTypesRequest` — правило валидации шаблона опирается на `IdentifierFormat`, правило `seed_sequence` сверяется с `last_sequence`
+- [x] T054 [P] [US2] Ресурсы `app/Http/Resources/ProjectResource.php`, `KeyTypeResource.php`, `EnabledKeyTypeResource.php`
+- [x] T055 [US2] `app/Http/Controllers/Api/Admin/ProjectController.php` — перечень, заведение, изменение
+- [x] T056 [US2] `app/Http/Controllers/Api/Admin/KeyTypeController.php` — перечень, заведение, изменение
+- [x] T057 [US2] `app/Http/Controllers/Api/Admin/ProjectKeyTypeController.php` — полная замена набора типов проекта: тип, пропавший из набора, получает `is_enabled = false`, вернувшийся — `true`; строки связи не удаляются никогда, иначе теряется счётчик (FR-016, data-model.md §project_key_type)
+- [x] T058 [US2] `app/Http/Controllers/Api/ProjectResolveController.php` — нормализация адреса и статус проекта, без раскрытия перечня
+- [x] T059 [US2] Зарегистрировать административные маршруты и `GET /api/v1/projects/resolve` в `routes/api.php`
 
 **Checkpoint**: справочник ведётся администратором, реестр закрыт для остальных
 
@@ -361,11 +361,11 @@ gate_commands:
 tier: standard
 -->
 
-- [ ] T060 [P] [US3] `tests/Feature/Auth/GoogleLoginTest.php`: корпоративный домен проходит, посторонний отвергается и пользователь не создаётся, адрес из `ADMIN_EMAILS` получает роль администратора при первом входе (FR-018, FR-021)
-- [ ] T061 [P] [US3] `tests/Feature/Auth/TokenManagementTest.php`: несколько именованных токенов, значение показывается один раз, отзыв одного не трогает остальные (FR-019, FR-019a)
-- [ ] T062 [P] [US3] `tests/Feature/Auth/AdminLifecycleTest.php`: снятие роли у последнего администратора отвергается; деактивация сотрудника сносит его токены и сохраняет авторство в реестре (FR-021a, FR-021b)
-- [ ] T063 [P] [US3] `tests/Feature/Auth/RateLimitTest.php`: превышение порога даёт 429 с кодом, отличным от отказа по правам (FR-020a)
-- [ ] T099 [P] [US3] `tests/Feature/Auth/ProviderOutageTest.php`: при недоступности Google вход людей отвергается, а запросы с уже выданными токенами продолжают обслуживаться — проверка токена не обращается к провайдеру (FR-021c)
+- [x] T060 [P] [US3] `tests/Feature/Auth/GoogleLoginTest.php`: корпоративный домен проходит, посторонний отвергается и пользователь не создаётся, адрес из `ADMIN_EMAILS` получает роль администратора при первом входе (FR-018, FR-021)
+- [x] T061 [P] [US3] `tests/Feature/Auth/TokenManagementTest.php`: несколько именованных токенов, значение показывается один раз, отзыв одного не трогает остальные (FR-019, FR-019a)
+- [x] T062 [P] [US3] `tests/Feature/Auth/AdminLifecycleTest.php`: снятие роли у последнего администратора отвергается; деактивация сотрудника сносит его токены и сохраняет авторство в реестре (FR-021a, FR-021b)
+- [x] T063 [P] [US3] `tests/Feature/Auth/RateLimitTest.php`: превышение порога даёт 429 с кодом, отличным от отказа по правам (FR-020a)
+- [x] T099 [P] [US3] `tests/Feature/Auth/ProviderOutageTest.php`: при недоступности Google вход людей отвергается, а запросы с уже выданными токенами продолжают обслуживаться — проверка токена не обращается к провайдеру (FR-021c)
 
 ### Step 5.2: Google OAuth, токены и интерфейс
 
@@ -712,3 +712,54 @@ decided: the skeleton's tests/Unit/ExampleTest.php was removed in 2.3; tests/Fea
 
 ### S1 — dispatch 2 (2026-09-23)
 `kind=spec-verify agent=verifier model=claude-sonnet-5 effort=high turns=27 minutes=4.3 input=54 cache_write=112070 cache_read=1838713 output=24401`
+
+S1 verify: 2.1 и 2.4 — DEVIATES (collation `utf8mb4_bin`, нет DESC-индекса, нет отдельной группы MCP). Решение автора (2026-09-23): код верен, документы приведены к нему — commit 76602c7.
+
+### S2.step-3.1 — 2026-09-23
+**Completed steps:** 3.1
+**Commits:** 1aa8d5b
+
+### S2.step-3.2 — 2026-09-23
+**Completed steps:** 3.2
+**Commits:** fd9deac
+
+### S2.step-4.1 — 2026-09-23
+**Completed steps:** 4.1
+**Commits:** 20fe168
+
+### S2.step-4.2 — 2026-09-23
+**Completed steps:** 4.2
+**Commits:** 711b268
+
+### S2.step-5.1 — 2026-09-23
+**Completed steps:** 5.1
+**Commits:** c7bd71e
+
+### S2 — observations (2026-09-23, dispatch 3)
+plan-wrong: T039 (IssueIdentifier command) sits in tests step 3.1 but calls SequenceIssuer from T041 (step 3.2); it would not type-check at 3.1, so it landed in the 3.2 commit and the 3.1 race tests were red on 'no commands in the getid namespace'.
+plan-wrong: T050/FR-017 cannot hold with framework defaults: the default middleware priority runs SubstituteBindings before Authorize, so any can: check comes after the id lookup (404 for a missing id). bootstrap/app.php was edited outside T028a/T103 to rank EnsureAdministrator ahead of SubstituteBindings.
+plan-wrong: data-model.md project_key_type and spec Edge Cases say a seed below the issued numbers would make the next issuance repeat one; under GREATEST(seed,last)+1 a lower seed changes nothing. The FR-014b refusal is kept as specified, and its message states the rule, not that consequence.
+plan-wrong: data-model.md validation table checks seed_sequence in the FormRequest and again in the domain service; the unlocked FormRequest copy is a TOCTOU duplicate, so the check lives only in EnabledKeyTypes under the counter row lock SequenceIssuer takes (T053 carries no seed rule).
+plan-wrong: identifiers has no formatted-id column, so formatted_id is derived from the key type's current template. PATCH format_template retroactively changes formatted_id of every issued number in listings and repeats, while consumer file names keep the old form. Needs a decision: freeze the template once a pair has issued, or store formatted_id at issuance.
+plan-wrong: T097 overlaps S1's IdentifierImmutabilityTest and RegistrySchemaTest; ImmutabilityTest references them and adds only the API surface plus down() on an empty table, restoring the table in finally because the DDL commits the RefreshDatabase transaction.
+plan-wrong: T063 and the token half of T099 are green on arrival. FR-020a was built in S1 (T028), and token checks never reach Google; the tests now pin that on real endpoints.
+redone: EnabledKeyTypes first dropped pairs via $counters->except(array_keys($enabled)) on a keyBy('key_type_id') collection. Eloquent\Collection::except() filters by model primary key, not collection key, so the wrong pairs were disabled; 5 ProjectKeyTypeTest cases went red, and it became reject() on key_type_id.
+redone: the three admin not-found tests passed before any route existed (404 either way); each gained a positive control on an existing id.
+redone: IssueRace START_DELAY_MS went from 10 s to 5 s after measuring 50 concurrent boots finishing within 1.7 s (min waited_ms 8296 of 10000).
+redone: the GoogleLoginTest ADMIN_EMAILS case signed in twice in one test, which tied it to how 5.2 treats an already-authenticated session; split into two single-sign-in tests.
+decided: race tests were verified against deliberately broken issuers. Without lockForUpdate the 50-process test fails with SequenceNumberCollision. With the unique violation caught inside the transaction, the same-theme test fails with last_sequence 17 instead of 8 (nine losers burned numbers). Each child prints waited_ms and IssueRace fails if any process booted after the start mark. Breaks if a slower host needs more than 5 s for 50 boots; the test then fails loudly asking to raise START_DELAY_MS.
+decided: principle I over the literal FR-015: a repeat of an existing theme returns its number even after the project, type or pair is retired; only new themes are refused. Breaks if the product wants retirement to block repeats too.
+decided: refusal order is unparsable key, unknown project, empty theme, unknown type; then for a new theme project_inactive, type_inactive, type_not_enabled. The unknown project comes before the empty theme so every such refusal carries the key (SC-003). An unknown type code answers type_not_enabled, so the admin-only type list is not revealed.
+decided: type codes compare case-insensitively via the key_types.code unicode_ci collation (issuer lookups, unique validation, distinct:ignore_case). Breaks if codes differing only in case must coexist.
+decided: SequenceIssuer must be called outside any open transaction (documented on the class): the re-read after a lost same-theme race needs a fresh snapshot. Breaks if the MCP tool (T078) wraps the call in a transaction.
+decided: a storage failure and the sequence-number collision defect both render the framework's 500 (the contract has no code for them); SequenceNumberCollision::context() puts project_key, type and sequence_number in the log.
+decided: getid:issue is #[Hidden]; it issues without auth or author and exists for the race suite.
+decided: admin authorization uses Gate 'administer' in EnsureAdministrator (ahead of binding) plus ProjectPolicy/KeyTypePolicy (viewAny/create/update, no delete) in the FormRequests and index actions. T070 web admin screens can use can:administer.
+decided: in PUT key-types, a type sent without seed_sequence keeps its current seed (0 for a new pair) instead of the contract default 0, which would silently drop a seed of 42. Any retired type in the set is refused even if already enabled; an empty set disables every type; the response lists the pairs now issuing, ordered by code.
+decided: resolve also sets a hint for a retired project, reusing the refusal messages of issuance; types lists only enabled pairs of active types.
+decided: contract additionalProperties:false and minProperties:1 are not enforced: unknown fields are dropped via validated(), and an empty PATCH is a 200 no-op. Breaks if clients rely on typos being rejected.
+decided: Project and KeyType got $attributes is_active=true mirroring the column default, so a created model renders is_active without a refresh.
+decided: the 31 red 5.1 tests (route not defined, command not found) are committed red per the gate rule, not skipped. They fix the 5.2 surface: route names login, auth.google.redirect, auth.google.callback, tokens.index, plus tokens.store and tokens.destroy (the last two are not in T070); config getid.allowed_email_domain (string) and getid.admin_emails (list, applied only when an account is created); positional 'user:role <email> <admin|member>' and 'user:deactivate <email>' exiting non-zero on refusal; refused sign-ins redirect to route('login'); token names unique per user; revoking another user's token is a 404; the last-administrator rule counts only active admins and covers deactivation too; the callback must call Socialite::driver('google')->user() directly, since a chained stateless() would bypass Socialite::fake.
+
+### S2 — dispatch 3 (2026-09-23)
+`kind=bundle agent=implementer tier=strong model=claude-opus-5-5 effort=xhigh turns=108 minutes=35.3 input=216 cache_write=375568 cache_read=25923796 output=210545`
