@@ -19,6 +19,16 @@ test('an administrator is appointed and demoted from the command line', function
     expect($ada->refresh()->role)->toBe(UserRole::Member);
 });
 
+test('the commands find an account whatever the case of the address typed', function () {
+    User::factory()->admin()->create();
+    $ada = User::factory()->create(['email' => 'ada@cas.ai']);
+
+    $this->artisan('user:role Ada@CAS.ai admin')->assertSuccessful();
+    $this->artisan('user:deactivate ADA@cas.ai')->assertSuccessful();
+
+    expect($ada->refresh())->role->toBe(UserRole::Admin)->deactivated_at->not->toBeNull();
+});
+
 // FR-021a: without an administrator the registry becomes unmanageable short of editing the database.
 test('the last active administrator cannot be demoted', function () {
     $boss = User::factory()->admin()->create(['email' => 'boss@cas.ai']);

@@ -63,7 +63,8 @@ return [
 
     'providers' => [
         'users' => [
-            'driver' => 'eloquent',
+            // Eloquent without deactivated users; registered in AppServiceProvider.
+            'driver' => 'active-users',
             'model' => env('AUTH_MODEL', User::class),
         ],
 

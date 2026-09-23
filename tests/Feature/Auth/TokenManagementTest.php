@@ -82,6 +82,8 @@ test('revoking one token stops it at once and leaves the others working', functi
 
     ($this->api)($laptop->plainTextToken)->assertOk();
 
+    // The API call left sanctum as the default guard; the cabinet is a web-session screen.
+    $this->actingAs($this->user, 'web');
     $this->delete(route('tokens.destroy', $laptop->accessToken->id))->assertRedirect(route('tokens.index'));
 
     ($this->api)($laptop->plainTextToken)->assertUnauthorized();

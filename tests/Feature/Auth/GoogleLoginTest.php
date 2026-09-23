@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Models\User;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\InvalidStateException;
 use Laravel\Socialite\Two\User as GoogleUser;
 
 beforeEach(function () {
@@ -64,6 +65,23 @@ test('an account outside the corporate domain is refused and no account is creat
     'corporate domain as a suffix' => 'eve@evilcas.ai',
     'subdomain' => 'eve@mail.cas.ai',
 ]);
+
+test('an address Google has not verified is refused', function () {
+    Socialite::fake('google', GoogleUser::fake(['id' => '1001', 'email' => 'eve@cas.ai', 'email_verified' => false]));
+
+    $this->get(route('auth.google.callback'))->assertRedirect(route('login'));
+
+    $this->assertGuest();
+    expect(User::query()->count())->toBe(0);
+});
+
+test('a callback whose state does not match the one sent is refused', function () {
+    Socialite::fake('google', fn () => throw new InvalidStateException);
+
+    $this->get(route('auth.google.callback'))->assertRedirect(route('login'))->assertSessionHasErrors();
+
+    $this->assertGuest();
+});
 
 test('the corporate domain comes from configuration', function () {
     config(['getid.allowed_email_domain' => 'example.org']);
