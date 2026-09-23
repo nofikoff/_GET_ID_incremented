@@ -60,6 +60,10 @@ export GETID_URL=http://localhost:8080
 
 Проект заводит администратор; ключ вычисляется из адреса и не задаётся руками (FR-008).
 
+Из браузера — `/admin/projects` → «Новый проект»
+([specs/002-admin-web-console/quickstart.md](../002-admin-web-console/quickstart.md) §1). Ниже —
+альтернатива через curl, тем же результатом отвечает и консоль (SC-002):
+
 ```bash
 curl -s -X POST "$GETID_URL/api/v1/admin/projects" \
   -H "Authorization: Bearer $GETID_TOKEN" -H "Content-Type: application/json" \
@@ -72,7 +76,10 @@ SCP-форма сняты.
 ## 5. Включить типы в проекте
 
 В репозитории уже лежат `ADR-0001..0042`, поэтому нумерация продолжается с 43 (FR-014a). `1` в
-адресе — `id` проекта из ответа шага 4:
+адресе — `id` проекта из ответа шага 4.
+
+Из браузера — форма типов на карточке проекта, там же, §1.3 квикстарта консоли. Ниже — альтернатива
+через curl:
 
 ```bash
 curl -s -X PUT "$GETID_URL/api/v1/admin/projects/1/key-types" \

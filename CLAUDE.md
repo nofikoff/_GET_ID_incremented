@@ -55,7 +55,13 @@
 
 - Новый административный маршрут — только в группе `EnsureAdministrator`. Он стоит в priority list
   перед `SubstituteBindings`, поэтому 403 приходит до поиска сущности и не выдаёт, существует ли она
-  (FR-017).
+  (FR-017). Группа `/admin` в `routes/web.php` закрыта тем же `EnsureAdministrator`, а не `can:`, —
+  `can:` это `Authorize`, который фреймворк ставит после `SubstituteBindings`
+  (specs/002-admin-web-console/research.md R2).
+- Правила справочника (`ProjectRules`, `KeyTypeRules`, `ProjectKeyTypeRules` в `app/Http/Validation/`)
+  и запись следа изменений (`app/Actions/Registry/`) общие для REST-админки и веб-консоли; MCP
+  административных операций не несёт вовсе — [ADR-002](docs/adr/adr-002-mcp-surface-boundary.md).
+  Почему правила не живут в самих FormRequest — specs/002-admin-web-console/research.md R1.
 - API без токена отвечает 401 DomainError, а не redirect (`redirectGuestsTo` и `App\Http\ApiSurface`).
   Веб-страница входа обязана называться `login`.
 - Пользователями управляют только `user:role` и `user:deactivate`; `ADMIN_EMAILS` действует лишь при
