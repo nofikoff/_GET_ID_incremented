@@ -381,3 +381,11 @@ S2 verify: все три шага IMPLEMENTS; `make test` 481 passed, pint и ph
 `kind=converge agent=verifier model=claude-sonnet-5 effort=high turns=19 minutes=1.5 input=38 cache_write=56356 cache_read=830041 output=5339`
 
 `/speckit-converge`: converged, задач не дописано.
+
+### review — observations (2026-09-23, dispatch 7)
+decided: Dropped assertSessionHasErrors('surface') from the follow-up-render test after confirming it double-ages Laravel's test-harness flash session data (session('errors') is wiped one request early when that assertion runs between two $this->get() calls) — a testing-harness quirk, not a defect in the fix. Breaks nothing: the rendered error paragraph the test checks for is strictly stronger evidence than the session assertion it replaces.
+
+### review — dispatch 7 (2026-09-23)
+`kind=review-fix agent=implementer tier=standard model=claude-sonnet-5 effort=xhigh turns=45 minutes=6.8 input=90 cache_write=99586 cache_read=2944229 output=31954`
+
+`/review2 since 1e60b9d` попытка 1: Critical 0, High 0, Medium 1 (фильтр журнала после отказа показывал прошлые значения), Low 1 (ошибка `surface` не выводилась). Исправлено в ac7104f.
