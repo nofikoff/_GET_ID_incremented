@@ -763,3 +763,8 @@ decided: the 31 red 5.1 tests (route not defined, command not found) are committ
 
 ### S2 — dispatch 3 (2026-09-23)
 `kind=bundle agent=implementer tier=strong model=claude-opus-5-5 effort=xhigh turns=108 minutes=35.3 input=216 cache_write=375568 cache_read=25923796 output=210545`
+
+### S2 — dispatch 4 (2026-09-23)
+`kind=spec-verify agent=verifier model=claude-sonnet-5 effort=high turns=43 minutes=4.3 input=86 cache_write=86711 cache_read=2443963 output=19487`
+
+S2 verify: все пять шагов IMPLEMENTS; 264 passed, 31 failed — только `tests/Feature/Auth` (ждут 5.2). Подтверждены незаписанные в spec отступления, вынесены автору: повтор существующей темы после гашения (FR-015), `additionalProperties`/`minProperties` контракта не применяются, `seed_sequence` без значения сохраняет текущий вместо `default: 0`, `formatted_id` вычисляется по текущему шаблону.
