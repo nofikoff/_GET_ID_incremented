@@ -77,7 +77,8 @@ REST-изменений — тот же вопрос «кто поменял» �
 ## R6. Выданные номера — пагинация по нескольким парам на одной странице
 
 **Decision**: `IssuedIdentifiers::forPair(ProjectKeyType $pair, int $perPage = 50)` возвращает
-`LengthAwarePaginator` с именем параметра страницы `page_<code>`, от новых к старым по
+`LengthAwarePaginator` с именем параметра страницы `page_<key_type_id>` (не код: PHP переписывает `.` и
+пробел в именах GET-параметров в `_`, а код типа их допускает), от новых к старым по
 `sequence_number`. Индекс — UNIQUE `(project_id, key_type_id, sequence_number)`, обратный проход
 без filesort (spec 001 data-model.md §identifiers).
 

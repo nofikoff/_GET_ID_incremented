@@ -253,6 +253,7 @@ tier: standard
 - [ ] T033 Прогнать `make test` в Docker — зелёный, включая `tests/Concurrency` и неизменённые тесты REST и MCP (принцип VII, SC-003)
 - [ ] T034 [P] `vendor/bin/pint` и `vendor/bin/phpstan analyse` до чистого вывода
 - [ ] T035 [P] Пройти [quickstart.md](./quickstart.md) на локальном стеке; вход через Google заменить сессией администратора; расхождения исправить в самом quickstart
+- [ ] T040 Параметр страницы выданных номеров строится из id типа (`page_<key_type_id>`), а не из кода: PHP переписывает `.` и пробел в именах GET-параметров в `_`, и пара с таким кодом не листается дальше первой страницы (FR-013, найдено spec-verify S1). `app/Queries/IssuedIdentifiers.php`, `resources/views/admin/projects/show.blade.php`, research.md R6; регрессионный тест в `tests/Feature/Admin/Web/IssuedIdentifiersTest.php` с кодом `RFC.v2`, красный до правки
 
 ### Step 6.2: Документация
 
@@ -344,3 +345,8 @@ decided: the CSRF test re-enables PreventRequestForgery through a container bind
 
 ### S1 — dispatch 1 (2026-09-23)
 `kind=bundle agent=implementer tier=strong model=claude-opus-5-5 effort=xhigh turns=84 minutes=29.7 input=168 cache_write=293516 cache_read=18031602 output=169599`
+
+### S1 — dispatch 2 (2026-09-23)
+`kind=spec-verify agent=verifier model=claude-sonnet-5 effort=high turns=31 minutes=3.2 input=62 cache_write=110716 cache_read=2526816 output=14508`
+
+S1 verify: все пять шагов IMPLEMENTS, `make test` 470 passed, существующие тестовые файлы не тронуты. Подтверждён дефект: `page_<code>` не листается для кода с точкой или пробелом (PHP переписывает их в `_`), `KeyTypeRules::store()` такие коды пропускает — T040 в Step 6.1. Сброс неизвестных полей веб-формами и «было» вне блокировки в следе набора типов признаны осознанными решениями, записаны в contracts/web-console.md и data-model.md.

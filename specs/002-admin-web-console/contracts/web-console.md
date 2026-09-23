@@ -10,7 +10,7 @@ redirect с flash-сообщением; отказ валидации — redire
 | GET | `/admin/projects` | `admin.projects.index` | — | список |
 | GET | `/admin/projects/create` | `admin.projects.create` | — | форма |
 | POST | `/admin/projects` | `admin.projects.store` | `repo_url`, `name`, `description?` | → `admin.projects.show` |
-| GET | `/admin/projects/{project}` | `admin.projects.show` | query `page_<code>` | карточка |
+| GET | `/admin/projects/{project}` | `admin.projects.show` | query `page_<key_type_id>` | карточка |
 | PATCH | `/admin/projects/{project}` | `admin.projects.update` | `name`, `description?`, `is_active` | → `admin.projects.show` |
 | PUT | `/admin/projects/{project}/key-types` | `admin.projects.key-types.update` | `types[<code>][enabled]`, `types[<code>][seed_sequence]?` | → `admin.projects.show` |
 | GET | `/admin/key-types` | `admin.key-types.index` | — | список |
@@ -42,6 +42,13 @@ redirect с flash-сообщением; отказ валидации — redire
 Возврат проекта или типа в обращение подтверждения не требует.
 
 Подтверждение — только на стороне браузера (research.md R4).
+
+## Отличие формы от REST
+
+Поле, которого форма не объявляет (`repo_url` или `key` в изменении проекта, `code` в изменении типа),
+отбрасывается, а не отвергается: закрытое тело REST на форму не переносится (research.md R1 — оно
+отвергло бы `_token` и `_method`). Значение такого поля не меняется, FR-004 и FR-011 соблюдены.
+Изменение отвечает и на `PUT`, и на `PATCH` — так регистрирует `Route::resource`; маршрутов удаления нет.
 
 ## Что не меняется
 
