@@ -14,10 +14,13 @@
   создаёт — в том числе после гашения проекта, типа или пары: гашение останавливает новые номера, а
   выданные не отнимает (FR-015). Идемпотентность держат тесты, а не review:
   `tests/Feature/Sequence/IdempotencyTest.php`, `tests/Concurrency/ConcurrentSameNameTest.php`.
-- Номер не переиспользуется никогда. `identifiers` — append-only: `AppendOnlyQueryBuilder` бросает на
-  любую запись Eloquent, кроме вставки, а `DB::table()` и `truncate` открыты — ими чистит набор
-  `Concurrency`. `down()` миграции реестра на непустой таблице бросает исключение. Проекты и типы
-  гасятся `is_active`, а не `DELETE`.
+- Номер переиспользуется только после того, как администратор снял его с хвоста пары, — это делает
+  `App\Domain\Sequence\SequenceWithdrawer` ([ADR-003](docs/adr/adr-003-withdraw-last-identifier.md)).
+  Снятая тема выдаётся заново как первая выдача. Удаления из середины нет.
+- `identifiers` — append-only: `AppendOnlyQueryBuilder` бросает на любую запись Eloquent, кроме
+  вставки; открыт только `toBase()->withdraw()`, и зовёт его только `SequenceWithdrawer`. `DB::table()`
+  и `truncate` открыты — ими чистит набор `Concurrency`. `down()` миграции реестра на непустой таблице
+  бросает исключение. Проекты и типы гасятся `is_active`, а не `DELETE`.
 - `project_key_type` — не pivot, а счётчик пары: строки не удаляются (ADR-001), выключение —
   `is_enabled`. Следующий номер считает только `ProjectKeyType::nextSequence()`.
 - `formatted_id` фиксируется при выдаче, поэтому правка шаблона типа действует только на следующие

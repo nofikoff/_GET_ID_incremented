@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Web\Admin\ApiLogController;
+use App\Http\Controllers\Web\Admin\IdentifierController;
 use App\Http\Controllers\Web\Admin\KeyTypeController;
 use App\Http\Controllers\Web\Admin\ProjectController;
 use App\Http\Controllers\Web\Admin\ProjectKeyTypeController;
@@ -34,6 +35,8 @@ Route::middleware('auth')->group(function (): void {
     Route::prefix('admin')->name('admin.')->middleware(EnsureAdministrator::class)->group(function (): void {
         Route::resource('projects', ProjectController::class)->only(['index', 'create', 'store', 'show', 'update']);
         Route::put('projects/{project}/key-types', ProjectKeyTypeController::class)->name('projects.key-types.update');
+        // scoped(): a number is found through its project, so another project's id is a 404 (spec 003, FR-007).
+        Route::resource('projects.identifiers', IdentifierController::class)->only(['destroy'])->scoped();
 
         Route::resource('key-types', KeyTypeController::class)
             ->only(['index', 'create', 'store', 'edit', 'update'])

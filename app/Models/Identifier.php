@@ -10,7 +10,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * An issued number. Rows are inserted and read, never rewritten or removed (FR-004, principle II).
+ * An issued number. Rows are inserted and read, never rewritten; the only removal is SequenceWithdrawer taking a
+ * pair's tail (principle II, specs/003-delete-last-identifier).
  *
  * @property int $sequence_number
  * @property string $formatted_id

@@ -85,13 +85,14 @@ test('the numbers of a disabled pair and of a retired type stay on the card', fu
         ->toContain('SPEC-001');
 });
 
-test('the card offers no way to change or remove an issued number', function () {
-    ($this->issue)($this->adr, 3);
+// Spec 003, FR-001: the tail is the one number that can be removed, and nothing can be edited.
+test('the card offers removal of the last number only, and no way to change one', function () {
+    $issued = ($this->issue)($this->adr, 3);
+    $block = ($this->issuedBlock)(($this->card)()->assertOk());
 
-    expect(($this->issuedBlock)(($this->card)()->assertOk()))
-        ->toContain('ADR-0003')
-        ->not->toContain('<form')
-        ->not->toContain('<input');
+    expect(substr_count($block, '<form'))->toBe(1)
+        ->and($block)->toContain(route('admin.projects.identifiers.destroy', [$this->adr->project, $issued->last()]))
+        ->and(preg_match_all('/<input(?![^>]*type="hidden")/', $block))->toBe(0);
 });
 
 test('the card makes as many queries for fifty numbers a pair as for one', function () {

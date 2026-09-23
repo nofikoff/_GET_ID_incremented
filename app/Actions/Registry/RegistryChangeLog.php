@@ -2,6 +2,7 @@
 
 namespace App\Actions\Registry;
 
+use App\Domain\Sequence\WithdrawnIdentifier;
 use App\Models\KeyType;
 use App\Models\Project;
 use App\Models\ProjectKeyType;
@@ -69,6 +70,20 @@ final class RegistryChangeLog
         }
 
         return new KeyTypesSetResult($pairs, $changes->isNotEmpty());
+    }
+
+    /**
+     * Spec 003, FR-008: the number, its theme and the counter it rolled back, keyed by type code like a key-types set.
+     */
+    public function withdrawn(User $admin, Project $project, KeyType $keyType, WithdrawnIdentifier $withdrawn): void
+    {
+        $this->write($admin, 'withdraw_identifier', $project, [
+            $keyType->code => [
+                'identifier' => [$withdrawn->formattedId, null],
+                'name' => [$withdrawn->name, null],
+                'last_sequence' => [$withdrawn->previousLastSequence, $withdrawn->lastSequence],
+            ],
+        ]);
     }
 
     /**

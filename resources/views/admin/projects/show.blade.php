@@ -114,12 +114,13 @@
                     <span class="muted">— выключен в проекте</span>
                 @endif
             </h3>
+            @include('admin.partials.error', ['field' => "identifiers.{$pair->key_type_id}"])
             @if ($identifiers->isEmpty())
                 <p class="muted">Номеров не выдано.</p>
             @else
                 <table>
                     <thead>
-                    <tr><th>Номер</th><th>Идентификатор</th><th>Тема</th><th>Автор</th><th>Выдан</th></tr>
+                    <tr><th>Номер</th><th>Идентификатор</th><th>Тема</th><th>Автор</th><th>Выдан</th><th></th></tr>
                     </thead>
                     <tbody>
                     @foreach ($identifiers as $identifier)
@@ -129,6 +130,17 @@
                             <td>{{ $identifier->name }}</td>
                             <td>{{ $identifier->creator?->email ?? '—' }}</td>
                             <td>{{ $identifier->created_at?->format('Y-m-d H:i') }}</td>
+                            <td>
+                                {{-- Newest first, so only the first row of the first page is the pair's tail (spec 003, FR-001). --}}
+                                @if ($loop->first && $identifiers->onFirstPage())
+                                    <form class="inline" method="POST" action="{{ route('admin.projects.identifiers.destroy', [$project, $identifier]) }}"
+                                          onsubmit="return confirm(@js("Удалить {$identifier->formatted_id}? Номер может быть выдан снова другой теме."))">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" title="Удалить последний номер">×</button>
+                                    </form>
+                                @endif
+                            </td>
                         </tr>
                     @endforeach
                     </tbody>

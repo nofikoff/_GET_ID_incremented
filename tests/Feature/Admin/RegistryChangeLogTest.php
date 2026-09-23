@@ -1,5 +1,8 @@
 <?php
 
+use App\Actions\Registry\WithdrawIdentifier;
+use App\Domain\Sequence\SequenceIssuer;
+use App\Models\Identifier;
 use App\Models\KeyType;
 use App\Models\Project;
 use App\Models\ProjectKeyType;
@@ -132,4 +135,33 @@ test('a trace that cannot be written is reported, and the change stands', functi
     Log::shouldHaveReceived('error')->once()->withArgs(
         fn (string $message, array $context = []): bool => ($context['exception'] ?? null) === $failure,
     );
+});
+
+test('a withdrawn number is traced with its theme and the counter it rolled back', function () {
+    $pair = enabledPair(counter: ['seed_sequence' => 31]);
+    $issuer = app(SequenceIssuer::class);
+    $issuer->issue('gitlab.cas.ai/team/backend', 'ADR', 'test-spec');
+    $tail = Identifier::query()->where('sequence_number', $issuer->issue('gitlab.cas.ai/team/backend', 'ADR', 'test2')->sequenceNumber)->sole();
+    $traces = registryTraces();
+
+    app(WithdrawIdentifier::class)($this->admin, $tail);
+
+    expect($traces->getArrayCopy())->toBe([($this->trace)('withdraw_identifier', 'project', $pair->project_id, [
+        'ADR' => [
+            'identifier' => ['ADR-0033', null],
+            'name' => ['test2', null],
+            'last_sequence' => [33, 32],
+        ],
+    ])]);
+});
+
+test('a withdrawal whose trace cannot be written still stands', function () {
+    enabledPair();
+    $issued = app(SequenceIssuer::class)->issue('gitlab.cas.ai/team/backend', 'ADR', 'test');
+    Log::shouldReceive('info')->with('registry change', Mockery::type('array'))->andThrow(new RuntimeException('log channel is unavailable'));
+
+    app(WithdrawIdentifier::class)($this->admin, Identifier::query()->where('sequence_number', $issued->sequenceNumber)->sole());
+
+    expect(Identifier::query()->count())->toBe(0);
+    Log::shouldHaveReceived('error')->once();
 });

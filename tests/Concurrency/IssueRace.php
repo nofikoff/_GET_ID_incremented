@@ -9,8 +9,9 @@ use Illuminate\Support\Facades\Process;
 use PHPUnit\Framework\Assert;
 
 /**
- * Runs each request in its own `php artisan getid:issue` process, all released at one shared instant
- * (research.md R3): without that mark, cold starts serialize the processes and a broken issuer passes.
+ * Runs each request in its own artisan process — `getid:issue`, or `getid:withdraw` for spec 003 — all
+ * released at one shared instant (research.md R3): without that mark, cold starts serialize the processes
+ * and a broken issuer passes.
  */
 final class IssueRace
 {
@@ -23,6 +24,16 @@ final class IssueRace
      */
     public static function run(array $requests): array
     {
+        /** @var list<array{sequence_number: int, is_new: bool, waited_ms: int}> */
+        return self::race(array_map(fn (array $request): array => ['getid:issue', ...$request], $requests));
+    }
+
+    /**
+     * @param  list<list<string>>  $commands  an artisan command name followed by its arguments
+     * @return list<array<string, mixed>> each process's JSON, in the order given
+     */
+    public static function race(array $commands): array
+    {
         $at = (int) floor(microtime(true) * 1000) + self::START_DELAY_MS;
 
         // Stated, not inherited: a child on another database would race nothing and could not fail.
@@ -33,13 +44,13 @@ final class IssueRace
             'DB_URL' => '',
         ];
 
-        $results = Process::pool(function (Pool $pool) use ($requests, $at, $environment): void {
-            foreach ($requests as $index => [$projectKey, $type, $name]) {
+        $results = Process::pool(function (Pool $pool) use ($commands, $at, $environment): void {
+            foreach ($commands as $index => $command) {
                 $pool->as((string) $index)
                     ->path(base_path())
                     ->env($environment)
                     ->timeout(120)
-                    ->command([PHP_BINARY, 'artisan', 'getid:issue', $projectKey, $type, $name, "--at={$at}"]);
+                    ->command([PHP_BINARY, 'artisan', ...$command, "--at={$at}"]);
             }
         })->start()->wait();
 
@@ -49,9 +60,9 @@ final class IssueRace
 
                 return json_decode($result->output(), true, flags: JSON_THROW_ON_ERROR);
             })
-            ->each(fn (array $issued, int|string $index) => Assert::assertGreaterThan(
+            ->each(fn (array $outcome, int|string $index) => Assert::assertGreaterThan(
                 0,
-                $issued['waited_ms'],
+                $outcome['waited_ms'],
                 "Process {$index} booted after the start mark, so the requests did not overlap; raise START_DELAY_MS.",
             ))
             ->values()

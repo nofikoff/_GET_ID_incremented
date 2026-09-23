@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Console\Commands\Concerns\WaitsForStartMark;
 use App\Domain\Sequence\Exceptions\DomainRejection;
 use App\Domain\Sequence\SequenceIssuer;
 use Illuminate\Console\Attributes\Description;
@@ -23,16 +24,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 #[Hidden]
 final class IssueIdentifier extends Command
 {
+    use WaitsForStartMark;
+
     public function handle(SequenceIssuer $issuer): int
     {
-        $at = $this->option('at');
-        if ($at !== null && filter_var($at, FILTER_VALIDATE_INT) === false) {
-            $this->error('--at takes a Unix time in milliseconds.');
-
+        $waitedMs = $this->waitForStartMark();
+        if ($waitedMs === null) {
             return self::INVALID;
         }
-
-        $waitedMs = $at === null ? 0 : $this->waitUntil((int) $at);
 
         try {
             $issued = $issuer->issue(
@@ -54,16 +53,5 @@ final class IssueIdentifier extends Command
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE), OutputInterface::OUTPUT_RAW);
 
         return self::SUCCESS;
-    }
-
-    private function waitUntil(int $atMs): int
-    {
-        $delayUs = $atMs * 1000 - (int) (microtime(true) * 1_000_000);
-
-        if ($delayUs > 0) {
-            usleep($delayUs);
-        }
-
-        return intdiv($delayUs, 1000);
     }
 }

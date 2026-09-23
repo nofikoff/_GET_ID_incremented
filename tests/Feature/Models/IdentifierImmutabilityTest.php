@@ -44,6 +44,14 @@ test('an issued identifier cannot be changed or removed', function (Closure $wri
     'relation delete' => fn (Identifier $i, Project $p) => $p->identifiers()->delete(),
 ]);
 
+test('withdraw on the base builder is the one open removal', function () {
+    $sibling = $this->identifier->replicate()->fill(['name_slug' => 'drop-oauth', 'sequence_number' => 8, 'formatted_id' => 'ADR-0008']);
+    $sibling->save();
+
+    expect(Identifier::query()->whereKey($sibling->getKey())->toBase()->withdraw())->toBe(1)
+        ->and(Identifier::query()->pluck('sequence_number')->all())->toBe([7]);
+});
+
 test('reading and inserting stay open', function () {
     expect(Identifier::query()->where('sequence_number', 7)->exists())->toBeTrue();
 

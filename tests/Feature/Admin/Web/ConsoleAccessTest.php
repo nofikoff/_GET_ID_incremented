@@ -16,15 +16,19 @@ use Illuminate\Support\Facades\Route;
 beforeEach(function () {
     $this->project = Project::factory()->create(['repo_url' => 'git@gitlab.cas.ai:team/secret.git', 'name' => 'Secret']);
     $this->keyType = KeyType::factory()->create(['code' => 'ADR']);
+    // The pair's tail, so the withdrawal below is one an administrator gets accepted (spec 003).
+    ProjectKeyType::factory()->for($this->project)->for($this->keyType)->create(['last_sequence' => 1]);
+    $this->identifier = Identifier::factory()->for($this->project)->for($this->keyType)->create(['sequence_number' => 1]);
 
-    // Every route of contracts/web-console.md, with input an administrator would get accepted.
-    $this->operations = fn (int $projectId, int $keyTypeId): array => [
+    // Every route of contracts/web-console.md (and spec 003's), with input an administrator would get accepted.
+    $this->operations = fn (int $projectId, int $keyTypeId, int $identifierId): array => [
         ['GET', 'admin.projects.index', [], []],
         ['GET', 'admin.projects.create', [], []],
         ['POST', 'admin.projects.store', [], ['repo_url' => 'git@gitlab.cas.ai:team/new.git', 'name' => 'New']],
         ['GET', 'admin.projects.show', ['project' => $projectId], []],
         ['PATCH', 'admin.projects.update', ['project' => $projectId], ['name' => 'Renamed']],
         ['PUT', 'admin.projects.key-types.update', ['project' => $projectId], ['types' => ['ADR' => ['enabled' => '1', 'seed_sequence' => '']]]],
+        ['DELETE', 'admin.projects.identifiers.destroy', ['project' => $projectId, 'identifier' => $identifierId], []],
         ['GET', 'admin.key-types.index', [], []],
         ['GET', 'admin.key-types.create', [], []],
         ['POST', 'admin.key-types.store', [], ['code' => 'RFC', 'name' => 'RFC', 'format_template' => 'RFC-{number}']],
@@ -33,7 +37,7 @@ beforeEach(function () {
         ['GET', 'admin.logs.index', [], []],
     ];
     $this->writes = fn (): array => array_values(array_filter(
-        ($this->operations)($this->project->id, $this->keyType->id),
+        ($this->operations)($this->project->id, $this->keyType->id, $this->identifier->id),
         fn (array $operation): bool => $operation[0] !== 'GET',
     ));
 
@@ -48,7 +52,7 @@ beforeEach(function () {
 
 // The list above is what the other tests walk, so a console route missing from it would go unchecked.
 test('every console route is in the list the access tests walk', function () {
-    $listed = collect(($this->operations)(1, 1))->pluck(1)->sort()->values();
+    $listed = collect(($this->operations)(1, 1, 1))->pluck(1)->sort()->values();
     $registered = collect(Route::getRoutes()->getRoutesByName())->keys()
         ->filter(fn (string $name): bool => str_starts_with($name, 'admin.'))
         ->sort()
@@ -61,7 +65,7 @@ test('a member is refused every page and form, sees nothing of the registry and 
     $this->actingAs(User::factory()->create());
     $before = ($this->registry)();
 
-    foreach (($this->operations)($this->project->id, $this->keyType->id) as [$method, $name, $parameters, $input]) {
+    foreach (($this->operations)($this->project->id, $this->keyType->id, $this->identifier->id) as [$method, $name, $parameters, $input]) {
         $response = $this->call($method, route($name, $parameters), $input)->assertForbidden();
 
         expect($response->getContent())->not->toContain('gitlab.cas.ai/team/secret')->not->toContain('Secret');
@@ -81,15 +85,15 @@ test('a member gets the same refusal for an id that does not exist', function ()
         return [$response->status(), $response->getContent()];
     });
 
-    $existing = $answers(($this->operations)($this->project->id, $this->keyType->id));
-    $missing = $answers(($this->operations)(999999, 999999));
+    $existing = $answers(($this->operations)($this->project->id, $this->keyType->id, $this->identifier->id));
+    $missing = $answers(($this->operations)(999999, 999999, 999999));
 
     expect($missing->all())->toBe($existing->all())
         ->and($missing->pluck(0)->unique()->all())->toBe([403]);
 });
 
 test('a guest is sent to sign in from every page and form', function () {
-    foreach (($this->operations)($this->project->id, $this->keyType->id) as [$method, $name, $parameters, $input]) {
+    foreach (($this->operations)($this->project->id, $this->keyType->id, $this->identifier->id) as [$method, $name, $parameters, $input]) {
         $this->call($method, route($name, $parameters), $input)->assertRedirect(route('login'));
     }
 
@@ -99,7 +103,7 @@ test('a guest is sent to sign in from every page and form', function () {
 test('an administrator is let through every page and form', function () {
     $this->actingAs(User::factory()->admin()->create());
 
-    foreach (($this->operations)($this->project->id, $this->keyType->id) as [$method, $name, $parameters, $input]) {
+    foreach (($this->operations)($this->project->id, $this->keyType->id, $this->identifier->id) as [$method, $name, $parameters, $input]) {
         $response = $this->call($method, route($name, $parameters), $input);
 
         expect($response->status())->toBe($method === 'GET' ? 200 : 302, "{$method} {$name}");
