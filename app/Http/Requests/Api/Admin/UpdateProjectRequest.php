@@ -2,12 +2,14 @@
 
 namespace App\Http\Requests\Api\Admin;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\Api\ClosedBodyRequest;
+use App\Http\Requests\Attributes\MinProperties;
 
 /**
  * repo_url is not editable: the key derived from it is what clients resolve their origin to.
  */
-class UpdateProjectRequest extends FormRequest
+#[MinProperties(1)]
+class UpdateProjectRequest extends ClosedBodyRequest
 {
     public function authorize(): bool
     {

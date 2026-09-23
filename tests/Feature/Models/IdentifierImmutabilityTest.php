@@ -13,7 +13,7 @@ beforeEach(function () {
     $this->project->creator()->associate($user)->save();
     $keyType = KeyType::create(['code' => 'ADR', 'name' => 'Architecture Decision Record', 'format_template' => 'ADR-{number:04d}']);
 
-    $this->identifier = new Identifier(['name' => 'Add OAuth', 'name_slug' => 'add-oauth', 'sequence_number' => 7]);
+    $this->identifier = new Identifier(['name' => 'Add OAuth', 'name_slug' => 'add-oauth', 'sequence_number' => 7, 'formatted_id' => 'ADR-0007']);
     $this->identifier->project()->associate($this->project);
     $this->identifier->keyType()->associate($keyType);
     $this->identifier->save();
@@ -47,7 +47,7 @@ test('an issued identifier cannot be changed or removed', function (Closure $wri
 test('reading and inserting stay open', function () {
     expect(Identifier::query()->where('sequence_number', 7)->exists())->toBeTrue();
 
-    $next = $this->identifier->replicate()->fill(['name_slug' => 'drop-oauth', 'sequence_number' => 8]);
+    $next = $this->identifier->replicate()->fill(['name_slug' => 'drop-oauth', 'sequence_number' => 8, 'formatted_id' => 'ADR-0008']);
     $next->save();
 
     expect(Identifier::query()->count())->toBe(2);

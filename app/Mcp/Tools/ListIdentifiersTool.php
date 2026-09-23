@@ -27,7 +27,7 @@ final class ListIdentifiersTool extends RegistryTool
 {
     public function handle(Request $request, SequenceIssuer $issuer): Response|ResponseFactory
     {
-        $this->validate($request, (new ListSequenceRequest)->rules());
+        $this->validate($request, ListSequenceRequest::class);
 
         try {
             return $this->result(new IdentifierListResource($issuer->list(

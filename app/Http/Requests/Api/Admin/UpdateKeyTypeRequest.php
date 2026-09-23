@@ -2,14 +2,16 @@
 
 namespace App\Http\Requests\Api\Admin;
 
+use App\Http\Requests\Api\ClosedBodyRequest;
+use App\Http\Requests\Attributes\MinProperties;
 use App\Rules\FormatTemplate;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * The code is not editable: clients and the registry refer to the type by it.
  */
-class UpdateKeyTypeRequest extends FormRequest
+#[MinProperties(1)]
+class UpdateKeyTypeRequest extends ClosedBodyRequest
 {
     public function authorize(): bool
     {

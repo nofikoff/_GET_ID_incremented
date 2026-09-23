@@ -17,6 +17,8 @@ return new class extends Migration
             // Exact comparison: a folding collation would treat "café" and "cafe" as one theme.
             $table->string('name_slug')->collation('utf8mb4_bin');
             $table->unsignedInteger('sequence_number');
+            // Stored, not derived from the template: a later template edit must not rename an issued id (FR-005).
+            $table->string('formatted_id');
             $table->foreignId('created_by')->nullable()->constrained('users')->restrictOnDelete();
             $table->timestamps();
 

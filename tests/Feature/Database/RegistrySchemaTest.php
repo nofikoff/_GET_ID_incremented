@@ -24,7 +24,7 @@ beforeEach(function () {
     $this->issue = function (string $slug, int $number, ?int $keyTypeId = null): void {
         DB::table('identifiers')->insert([
             'project_id' => $this->projectId, 'key_type_id' => $keyTypeId ?? $this->keyTypeId,
-            'name' => $slug, 'name_slug' => $slug, 'sequence_number' => $number,
+            'name' => $slug, 'name_slug' => $slug, 'sequence_number' => $number, 'formatted_id' => "ADR-{$number}",
             'created_by' => $this->userId, 'created_at' => now(), 'updated_at' => now(),
         ]);
     };
@@ -68,6 +68,14 @@ test('a number is issued once per project and key type', function () {
     ($this->issue)('add-oauth', 1);
     ($this->issue)('drop-oauth', 1);
 })->throws(UniqueConstraintViolationException::class);
+
+// FR-005: the id is fixed at issuance, so a row cannot exist without it.
+test('an issued number cannot be recorded without its formatted id', function () {
+    DB::table('identifiers')->insert([
+        'project_id' => $this->projectId, 'key_type_id' => $this->keyTypeId,
+        'name' => 'add-oauth', 'name_slug' => 'add-oauth', 'sequence_number' => 1,
+    ]);
+})->throws(QueryException::class, 'formatted_id');
 
 test('the same name and number are free in another key type', function () {
     $specTypeId = DB::table('key_types')->insertGetId([

@@ -49,17 +49,18 @@ final class SequenceIssuer
         }
 
         $counter = $this->openCounter($key, $project, $keyType);
+        $format = IdentifierFormat::parse($keyType->format_template);
         $attempted = null;
 
         try {
-            $issued = DB::transaction(function () use ($counter, $documentName, $author, &$attempted): Identifier {
+            $issued = DB::transaction(function () use ($counter, $format, $documentName, $author, &$attempted): Identifier {
                 $locked = ProjectKeyType::query()->lockForUpdate()->findOrFail($counter->id);
                 $attempted = $locked->nextSequence();
 
                 $locked->last_sequence = $attempted;
                 $locked->save();
 
-                return $this->insert($locked, $documentName, $attempted, $author);
+                return $this->insert($locked, $documentName, $attempted, $format->format($attempted, $documentName), $author);
             }, self::ATTEMPTS);
         } catch (UniqueConstraintViolationException $violation) {
             // Caught out here, not inside the closure: only a propagated exception rolls the increment back,
@@ -150,9 +151,14 @@ final class SequenceIssuer
             ->first();
     }
 
-    private function insert(ProjectKeyType $counter, DocumentName $name, int $number, ?User $author): Identifier
+    private function insert(ProjectKeyType $counter, DocumentName $name, int $number, string $formattedId, ?User $author): Identifier
     {
-        $identifier = new Identifier(['name' => $name->original, 'name_slug' => $name->slug, 'sequence_number' => $number]);
+        $identifier = new Identifier([
+            'name' => $name->original,
+            'name_slug' => $name->slug,
+            'sequence_number' => $number,
+            'formatted_id' => $formattedId,
+        ]);
         $identifier->project_id = $counter->project_id;
         $identifier->key_type_id = $counter->key_type_id;
         $identifier->creator()->associate($author);
@@ -168,8 +174,7 @@ final class SequenceIssuer
             type: $keyType->code,
             name: $identifier->name,
             sequenceNumber: $identifier->sequence_number,
-            formattedId: IdentifierFormat::parse($keyType->format_template)
-                ->format($identifier->sequence_number, DocumentName::fromString($identifier->name)),
+            formattedId: $identifier->formatted_id,
             isNew: $isNew,
             issuedAt: $identifier->created_at->toImmutable(),
         );

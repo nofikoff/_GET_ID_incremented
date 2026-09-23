@@ -78,7 +78,7 @@ test('an api log keeps a creation time only', function () {
 });
 
 test('an identifier belongs to its project, key type and author', function () {
-    $identifier = new Identifier(['name' => 'Add OAuth', 'name_slug' => 'add-oauth', 'sequence_number' => 1]);
+    $identifier = new Identifier(['name' => 'Add OAuth', 'name_slug' => 'add-oauth', 'sequence_number' => 1, 'formatted_id' => 'ADR-0001']);
     $identifier->project()->associate($this->project);
     $identifier->keyType()->associate($this->adr);
     $identifier->creator()->associate($this->user);

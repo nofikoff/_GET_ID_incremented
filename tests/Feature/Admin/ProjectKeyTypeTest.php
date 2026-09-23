@@ -97,14 +97,19 @@ test('a seed at or above the last issued number is accepted', function (int $see
     'raised past it' => [100, 101],
 ]);
 
-test('a type sent without a seed keeps the seed it had', function () {
+// contracts/rest-api.yaml seed_sequence: omitted keeps the pair's value (a new pair gets 0, see the first test).
+test('a type sent without a seed keeps the seed it had', function (array $between) {
     ($this->setTypes)([['code' => 'ADR', 'seed_sequence' => 42]])->assertOk();
+    ($this->setTypes)($between)->assertOk();
 
     ($this->setTypes)([['code' => 'ADR']])
         ->assertOk()
         ->assertJsonPath('data.0.seed_sequence', 42)
         ->assertJsonPath('data.0.next_number', 43);
-});
+})->with([
+    'kept enabled' => [[['code' => 'ADR', 'seed_sequence' => 42]]],
+    'dropped from the set' => [[]],
+]);
 
 // Edge Cases: a type retired globally cannot be enabled in any project.
 test('a retired type cannot be enabled', function () {

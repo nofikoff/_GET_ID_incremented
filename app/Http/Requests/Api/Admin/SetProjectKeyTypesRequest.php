@@ -2,15 +2,15 @@
 
 namespace App\Http\Requests\Api\Admin;
 
+use App\Http\Requests\Api\ClosedBodyRequest;
 use App\Rules\EnableableKeyType;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Foundation\Http\FormRequest;
 
 /**
  * Shape, existence and retirement only. The seed is checked against the issued numbers by
  * EnabledKeyTypes under the counter row lock, where an issuance cannot slip in between.
  */
-class SetProjectKeyTypesRequest extends FormRequest
+class SetProjectKeyTypesRequest extends ClosedBodyRequest
 {
     public function authorize(): bool
     {

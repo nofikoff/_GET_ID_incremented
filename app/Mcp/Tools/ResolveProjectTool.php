@@ -28,7 +28,7 @@ final class ResolveProjectTool extends RegistryTool
 {
     public function handle(Request $request, ProjectResolver $resolver): Response|ResponseFactory
     {
-        $this->validate($request, (new ResolveProjectRequest)->rules());
+        $this->validate($request, ResolveProjectRequest::class);
 
         try {
             return $this->result(new ProjectResolutionResource($resolver->resolve($request->string('origin')->value())));

@@ -2,13 +2,13 @@
 
 namespace App\Http\Requests\Api\Admin;
 
+use App\Http\Requests\Api\ClosedBodyRequest;
 use App\Models\KeyType;
 use App\Rules\FormatTemplate;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreKeyTypeRequest extends FormRequest
+class StoreKeyTypeRequest extends ClosedBodyRequest
 {
     public function authorize(): bool
     {

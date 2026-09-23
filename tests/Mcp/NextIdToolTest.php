@@ -5,6 +5,7 @@ use App\Domain\Sequence\Exceptions\UnknownProject;
 use App\Mcp\Servers\GetIdServer;
 use App\Mcp\Tools\NextIdTool;
 use App\Models\Identifier;
+use App\Models\ProjectKeyType;
 use App\Models\User;
 
 beforeEach(function () {
@@ -54,6 +55,36 @@ test('a repeat in other wording returns the first number and wording', function 
 
     expect(Identifier::query()->count())->toBe(1);
 });
+
+// FR-005: the id comes back as it was issued, not rebuilt from the current template.
+test('a repeat after a template edit returns the id as issued, while a new theme takes the new template', function () {
+    ($this->nextId)()->assertOk();
+
+    $this->pair->keyType->update(['format_template' => 'DEC-{number:03d}-{name}']);
+
+    ($this->nextId)(['name' => 'Add OAuth Auth'])
+        ->assertStructuredContent(fn ($json) => $json->where('formatted_id', 'ADR-0001')->where('is_new', false)->etc());
+    ($this->nextId)(['name' => 'drop-oauth'])
+        ->assertStructuredContent(fn ($json) => $json->where('formatted_id', 'DEC-002-drop-oauth')->where('is_new', true)->etc());
+});
+
+// FR-015: retiring stops new numbers; it does not take back one already issued.
+test('a repeat still returns its number after the pair is retired, while a new theme is refused', function (Closure $retire, string $code) {
+    ($this->nextId)()->assertOk();
+
+    $retire($this->pair);
+
+    ($this->nextId)()
+        ->assertOk()
+        ->assertStructuredContent(fn ($json) => $json->where('sequence_number', 1)->where('is_new', false)->etc());
+    ($this->nextId)(['name' => 'drop-oauth'])->assertHasErrors(["{$code}: "]);
+
+    expect(Identifier::query()->count())->toBe(1);
+})->with([
+    'project retired' => [fn (ProjectKeyType $pair) => $pair->project->update(['is_active' => false]), 'project_inactive'],
+    'type disabled in the project' => [fn (ProjectKeyType $pair) => $pair->update(['is_enabled' => false]), 'type_not_enabled'],
+    'type retired' => [fn (ProjectKeyType $pair) => $pair->keyType->update(['is_active' => false]), 'type_inactive'],
+]);
 
 // FR-024: the code comes first so a client can branch on it, the rest tells the model what to do.
 test('a refusal is led by the REST error code, then names the key and the next step', function () {

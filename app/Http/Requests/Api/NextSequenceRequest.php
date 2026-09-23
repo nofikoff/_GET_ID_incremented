@@ -2,13 +2,11 @@
 
 namespace App\Http\Requests\Api;
 
-use Illuminate\Foundation\Http\FormRequest;
-
 /**
  * Shape only. A theme that normalizes to nothing is left to DocumentName, so the client gets the
  * contract's name_empty_after_normalization code instead of a generic validation error.
  */
-class NextSequenceRequest extends FormRequest
+class NextSequenceRequest extends ClosedBodyRequest
 {
     /**
      * @return array<string, list<string>>

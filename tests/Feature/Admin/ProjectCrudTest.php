@@ -36,7 +36,9 @@ test('the key cannot be set by hand', function () {
         'repo_url' => 'https://gitlab.cas.ai/team/backend',
         'name' => 'Backend',
         'key' => 'something/else',
-    ])->assertCreated()->assertJsonPath('key', 'gitlab.cas.ai/team/backend');
+    ])->assertStatus(422)->assertJsonValidationErrors(['key']);
+
+    expect(Project::query()->count())->toBe(0);
 });
 
 test('another address form of a registered repository is a validation error', function (string $repoUrl) {
@@ -70,16 +72,20 @@ test('the address and the name are required', function () {
 test('an administrator renames a project, and its key and address stay', function () {
     $project = Project::factory()->create(['repo_url' => 'git@gitlab.cas.ai:team/backend.git', 'name' => 'Backend']);
 
-    $this->patchJson("api/v1/admin/projects/{$project->id}", [
-        'name' => 'Backend API',
-        'description' => 'Renamed',
-        'repo_url' => 'git@gitlab.cas.ai:team/other.git',
-    ])
+    $this->patchJson("api/v1/admin/projects/{$project->id}", ['name' => 'Backend API', 'description' => 'Renamed'])
         ->assertOk()
         ->assertJsonPath('name', 'Backend API')
         ->assertJsonPath('description', 'Renamed')
         ->assertJsonPath('key', 'gitlab.cas.ai/team/backend')
         ->assertJsonPath('repo_url', 'git@gitlab.cas.ai:team/backend.git');
+
+    $this->patchJson("api/v1/admin/projects/{$project->id}", ['repo_url' => 'git@gitlab.cas.ai:team/other.git'])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['repo_url']);
+
+    expect($project->refresh())
+        ->key->toBe('gitlab.cas.ai/team/backend')
+        ->repo_url->toBe('git@gitlab.cas.ai:team/backend.git');
 });
 
 test('retiring a project stops issuance, and returning it resumes the numbering', function () {

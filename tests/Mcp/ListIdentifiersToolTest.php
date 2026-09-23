@@ -37,6 +37,19 @@ test('issued numbers come newest first, each with its first wording, formatted i
     ]);
 });
 
+// FR-005: listed ids are the ones issued, not rebuilt from the current template.
+test('a template edit leaves listed ids as they were issued', function () {
+    $issuer = app(SequenceIssuer::class);
+    $issuer->issue('gitlab.cas.ai/team/backend', 'spec', 'init-project');
+    $this->pair->keyType->update(['format_template' => 'SPEC-{number}']);
+    $issuer->issue('gitlab.cas.ai/team/backend', 'spec', 'add-docker-support');
+
+    ($this->list)()->assertOk()->assertStructuredContent(fn ($json) => $json
+        ->where('items.0.formatted_id', 'SPEC-2')
+        ->where('items.1.formatted_id', '001-init-project')
+        ->etc());
+});
+
 test('a pair with nothing issued yet lists nothing', function () {
     ($this->list)()->assertOk()->assertStructuredContent([
         'project_key' => 'gitlab.cas.ai/team/backend',

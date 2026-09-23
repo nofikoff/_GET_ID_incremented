@@ -13,8 +13,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * An issued number. Rows are inserted and read, never rewritten or removed (FR-004, principle II).
  *
  * @property int $sequence_number
+ * @property string $formatted_id
  */
-#[Fillable(['name', 'name_slug', 'sequence_number'])]
+#[Fillable(['name', 'name_slug', 'sequence_number', 'formatted_id'])]
 class Identifier extends Model
 {
     /** @use HasFactory<IdentifierFactory> */

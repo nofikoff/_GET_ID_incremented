@@ -26,7 +26,7 @@ final class NextIdTool extends RegistryTool
 {
     public function handle(Request $request, SequenceIssuer $issuer): Response|ResponseFactory
     {
-        $this->validate($request, (new NextSequenceRequest)->rules());
+        $this->validate($request, NextSequenceRequest::class);
         $author = $request->user();
 
         try {

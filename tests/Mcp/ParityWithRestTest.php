@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Identifier;
 use App\Models\ProjectKeyType;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -87,6 +88,16 @@ test('next_id refuses for the same reason, with the same code and text, as POST 
     'origin unparsable' => [fn () => null, ['project_key' => 'not a repository'], 'origin_unparsable'],
     'theme empty after normalization' => [fn () => null, ['name' => ' _.- '], 'name_empty_after_normalization'],
 ]);
+
+// The tool validates through the endpoint's FormRequest, so the contract's closed body closes the arguments too.
+test('next_id refuses an argument the contract does not declare, as POST /sequence/next refuses the field', function () {
+    $input = ['project_key' => 'gitlab.cas.ai/team/backend', 'type' => 'ADR', 'name' => 'add-oauth-auth', 'sequence_number' => 7];
+
+    $rest = $this->postJson('api/v1/sequence/next', $input)->assertStatus(422)->assertJsonValidationErrors(['sequence_number'])->json();
+
+    expect(($this->toolRefusal)('next_id', $input))->toBe($rest['message'])
+        ->and(Identifier::query()->count())->toBe(0);
+});
 
 test('list_identifiers and resolve_project refuse as their endpoints do', function (string $tool, array $input, string $uri, string $code) {
     $rest = $this->getJson($uri.'?'.http_build_query($input))->assertStatus(422)->assertJsonPath('error.code', $code)->json();
