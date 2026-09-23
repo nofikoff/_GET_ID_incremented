@@ -144,15 +144,17 @@ make test-race      # только tests/Concurrency
 
 ## Развёртывание на LAMP
 
-Целевая площадка: сервер `ruspan.pogonyalo.com`, каталог `/home/develop/domains/id.x3mal.com`,
-публичный адрес `https://id.x3mal.com` за Cloudflare. Сводка — в [README](../../README.md)
-§Развёртывание.
+Целевая площадка: сервер `ruslan.pogonyalo.com`, код в `/home/develop/domains/id.x3mal.com/app`,
+публичный адрес `https://id.x3mal.com` за Cloudflare. Сводка и ловушки хоста (MariaDB, `bin/php-cli`,
+Composer 2) — в [README](../../README.md) §Развёртывание.
 
 - PHP 8.3 с расширениями `pdo_mysql`, `bcmath`, `mbstring`, `curl`, `openssl`.
-- DocumentRoot — `/home/develop/domains/id.x3mal.com/public`, а не корень каталога домена.
-- `.env`: доступы к базе провайдера, ключи Google, `APP_URL=https://id.x3mal.com`, `ADMIN_EMAILS`.
-- `php artisan migrate --force`, затем `config:cache`, `route:cache`, `view:cache`.
-- Планировщик: `php artisan schedule:run` раз в минуту — им чистится журнал обращений.
+- DocumentRoot — `app/public` каталога домена (`virtualmin modify-web --document-dir app/public`).
+- `.env`: `DB_CONNECTION=mariadb`, база и пользователь из Virtualmin, ключи Google,
+  `APP_URL=https://id.x3mal.com`, `ADMIN_EMAILS`, `SESSION_SECURE_COOKIE=true`.
+- `bin/php-cli artisan migrate --force`, `db:seed --force`, затем `config:cache`, `route:cache`, `view:cache`.
+- Планировщик: cron пользователя `develop` раз в минуту запускает `bin/php-cli artisan schedule:run`,
+  им чистится журнал обращений.
 - Redirect URI в Google Cloud Console — `https://id.x3mal.com/auth/google/callback`, дословно
   совпадающий с `APP_URL`.
 

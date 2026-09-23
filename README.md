@@ -13,10 +13,23 @@
 | Что | Значение |
 |-----|----------|
 | Публичный адрес | `https://id.x3mal.com` |
-| Сервер хостинга | `ruspan.pogonyalo.com` |
+| Сервер хостинга | `ruslan.pogonyalo.com` (CentOS 7, Apache под Virtualmin) |
 | Каталог на сервере | `/home/develop/domains/id.x3mal.com` |
-| DocumentRoot | `/home/develop/domains/id.x3mal.com/public` |
+| Код приложения | `/home/develop/domains/id.x3mal.com/app` |
+| DocumentRoot | `/home/develop/domains/id.x3mal.com/app/public` |
+| PHP | 8.3 (remi) через fcgid |
+| База | MariaDB 10.4, база `id`, пользователь `develop` |
 | DNS и TLS | Cloudflare (проксирование включено) |
+
+Хост отличается от окружения разработки в трёх местах. Все три — ловушки, и ни одна не
+сообщает о себе понятной ошибкой:
+
+- **СУБД.** Тесты гоняются на MySQL 8, а production работает на MariaDB 10.4 (`DB_CONNECTION=mariadb`).
+- **PHP в консоли.** `php` в консоли хоста — это 8.2, а `disable_functions` в ini домена
+  запрещает `proc_open`. Composer, artisan и cron поэтому запускаются через
+  `bin/php-cli` каталога домена: он берёт ini домена и снимает запрет только для CLI.
+- **Composer.** Системный composer на хосте версии 1.x. Laravel 13 ставится только через
+  `bin/composer.phar` 2.x каталога домена.
 
 `APP_URL=https://id.x3mal.com`, redirect URI в Google Cloud Console —
 `https://id.x3mal.com/auth/google/callback`. Адрес должен совпадать с `APP_URL` дословно, иначе
