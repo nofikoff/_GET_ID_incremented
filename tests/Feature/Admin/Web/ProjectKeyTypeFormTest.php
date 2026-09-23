@@ -162,6 +162,26 @@ test('the set is validated under the field of each type', function (array $types
     'seed not a number' => [['ADR' => ['enabled' => '1', 'seed_sequence' => 'many']], ['types.ADR.seed_sequence']],
 ]);
 
+// Production bug: a seed typed under an unchecked box was silently dropped, and the admin saw a save that did nothing.
+test('a seed on an unchecked type is refused instead of silently dropped', function () {
+    ($this->submit)(['ADR' => ['seed_sequence' => '175']])
+        ->assertRedirect(route('admin.projects.show', $this->project))
+        ->assertSessionHasErrors(['types.ADR.seed_sequence' => 'Отметьте тип, чтобы задать начальный номер.'])
+        ->assertSessionHasInput('types.ADR.seed_sequence', '175');
+
+    expect(ProjectKeyType::query()->count())->toBe(0);
+});
+
+test('a seed on an unchecked type of a project that already has other pairs is refused the same way', function () {
+    enabledPair($this->project, $this->spec, ['seed_sequence' => 5]);
+
+    ($this->submit)(['spec' => ['enabled' => '1', 'seed_sequence' => ''], 'ADR' => ['seed_sequence' => '9']])
+        ->assertSessionHasErrors(['types.ADR.seed_sequence' => 'Отметьте тип, чтобы задать начальный номер.']);
+
+    expect(($this->pair)($this->adr))->toBeNull()
+        ->and(($this->pair)($this->spec))->seed_sequence->toBe(5)->is_enabled->toBeTrue();
+});
+
 // FR-009: dropping an enabled type stops its issuance, so the form lists what it drops and asks first.
 test('the form marks the enabled pairs its confirmation lists', function () {
     enabledPair($this->project, $this->adr);

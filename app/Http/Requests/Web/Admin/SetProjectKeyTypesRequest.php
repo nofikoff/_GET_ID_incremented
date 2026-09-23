@@ -4,9 +4,10 @@ namespace App\Http\Requests\Web\Admin;
 
 use App\Http\Validation\ProjectKeyTypeRules;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Contracts\Validation\Validator as ValidatorContract;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Validator;
 
 /**
  * The form sends types[<code>][enabled|seed_sequence] for every type it lists. The API's rules run on the list of the
@@ -68,7 +69,33 @@ class SetProjectKeyTypesRequest extends FormRequest
         return $code === null ? $key : "types.{$code}.".($match[2] === 'code' ? 'enabled' : 'seed_sequence');
     }
 
-    protected function failedValidation(Validator $validator): never
+    /**
+     * Bug fix: checked() drops an unchecked type's whole entry, seed included, before rules() ever sees it — an
+     * admin who typed a seed but forgot the box got a silent no-op instead of a refusal. Runs against the raw
+     * form, since validationData() has already stripped the unchecked entries by the time rules() run.
+     */
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $validator): void {
+            $form = $this->input('types', []);
+            if (! is_array($form)) {
+                return;
+            }
+
+            foreach ($form as $code => $type) {
+                if (! is_array($type) || filter_var($type['enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+                    continue;
+                }
+
+                $seed = $type['seed_sequence'] ?? null;
+                if ($seed !== null && $seed !== '') {
+                    $validator->errors()->add("types.{$code}.seed_sequence", 'Отметьте тип, чтобы задать начальный номер.');
+                }
+            }
+        });
+    }
+
+    protected function failedValidation(ValidatorContract $validator): never
     {
         $messages = collect($validator->errors()->messages())
             ->mapWithKeys(fn (array $messages, string $key): array => [$this->formField($key) => $messages]);
