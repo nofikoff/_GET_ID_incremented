@@ -83,6 +83,18 @@ test('an accepted operation leaves the registry as REST leaves it', function (Cl
             'spec' => ['enabled' => '1', 'seed_sequence' => ''],
         ]]],
     ],
+    'register a key type' => [
+        fn () => ['POST', 'api/v1/admin/key-types', ['code' => 'RFC', 'name' => 'Request for Comments', 'format_template' => 'RFC-{number:03d}', 'description' => 'Proposals']],
+        fn () => ['POST', 'admin.key-types.store', [], ['code' => 'RFC', 'name' => 'Request for Comments', 'format_template' => 'RFC-{number:03d}', 'description' => 'Proposals']],
+    ],
+    'change a key type' => [
+        fn (ProjectKeyType $pair) => ['PATCH', "api/v1/admin/key-types/{$pair->key_type_id}", ['name' => 'Decision', 'format_template' => 'ADR-{number:05d}']],
+        fn (ProjectKeyType $pair) => ['PATCH', 'admin.key-types.update', ['keyType' => $pair->key_type_id], ['name' => 'Decision', 'format_template' => 'ADR-{number:05d}']],
+    ],
+    'retire a key type' => [
+        fn (ProjectKeyType $pair) => ['PATCH', "api/v1/admin/key-types/{$pair->key_type_id}", ['is_active' => false]],
+        fn (ProjectKeyType $pair) => ['PATCH', 'admin.key-types.update', ['keyType' => $pair->key_type_id], ['is_active' => '0']],
+    ],
 ]);
 
 test('a refused operation gets the text REST gives, under the form field, and changes nothing', function (Closure $arrange, Closure $rest, string $restField, Closure $console, string $consoleField) {
@@ -143,5 +155,20 @@ test('a refused operation gets the text REST gives, under the form field, and ch
         fn (ProjectKeyType $pair) => ['PUT', 'admin.projects.key-types.update', ['project' => $pair->project_id], ['types' => [
             'RFC' => ['enabled' => '1'],
         ]]], 'types.RFC.enabled',
+    ],
+    'template without a number' => [
+        fn () => null,
+        fn () => ['POST', 'api/v1/admin/key-types', ['code' => 'RFC', 'name' => 'RFC', 'format_template' => 'RFC-{name}']], 'format_template',
+        fn () => ['POST', 'admin.key-types.store', [], ['code' => 'RFC', 'name' => 'RFC', 'format_template' => 'RFC-{name}']], 'format_template',
+    ],
+    'code registered in another case' => [
+        fn () => null,
+        fn () => ['POST', 'api/v1/admin/key-types', ['code' => 'adr', 'name' => 'Again', 'format_template' => 'ADR-{number}']], 'code',
+        fn () => ['POST', 'admin.key-types.store', [], ['code' => 'adr', 'name' => 'Again', 'format_template' => 'ADR-{number}']], 'code',
+    ],
+    'broken template on update' => [
+        fn () => null,
+        fn (ProjectKeyType $pair) => ['PATCH', "api/v1/admin/key-types/{$pair->key_type_id}", ['format_template' => 'ADR']], 'format_template',
+        fn (ProjectKeyType $pair) => ['PATCH', 'admin.key-types.update', ['keyType' => $pair->key_type_id], ['format_template' => 'ADR']], 'format_template',
     ],
 ]);

@@ -4,7 +4,7 @@
 
 @section('content')
     <h1>Типы ключей</h1>
-    <p class="muted">Типы заводятся и меняются через административный API: <code>/api/v1/admin/key-types</code>.</p>
+    <p><a class="button" href="{{ route('admin.key-types.create') }}">Новый тип</a></p>
 
     @if ($keyTypes->isEmpty())
         <p class="muted">Типов пока нет.</p>
@@ -16,7 +16,7 @@
             <tbody>
             @foreach ($keyTypes as $keyType)
                 <tr>
-                    <td><code>{{ $keyType->code }}</code></td>
+                    <td><a href="{{ route('admin.key-types.edit', $keyType) }}"><code>{{ $keyType->code }}</code></a></td>
                     <td>{{ $keyType->name }}</td>
                     <td><code>{{ $keyType->format_template }}</code></td>
                     <td>{{ $keyType->is_active ? 'действует' : 'выведен из обращения' }}</td>

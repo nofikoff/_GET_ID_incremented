@@ -26,6 +26,10 @@ beforeEach(function () {
         ['PATCH', 'admin.projects.update', ['project' => $projectId], ['name' => 'Renamed']],
         ['PUT', 'admin.projects.key-types.update', ['project' => $projectId], ['types' => ['ADR' => ['enabled' => '1', 'seed_sequence' => '']]]],
         ['GET', 'admin.key-types.index', [], []],
+        ['GET', 'admin.key-types.create', [], []],
+        ['POST', 'admin.key-types.store', [], ['code' => 'RFC', 'name' => 'RFC', 'format_template' => 'RFC-{number}']],
+        ['GET', 'admin.key-types.edit', ['keyType' => $keyTypeId], []],
+        ['PATCH', 'admin.key-types.update', ['keyType' => $keyTypeId], ['name' => 'Renamed']],
     ];
     $this->writes = fn (): array => array_values(array_filter(
         ($this->operations)($this->project->id, $this->keyType->id),

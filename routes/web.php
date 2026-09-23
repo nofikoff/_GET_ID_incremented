@@ -30,6 +30,8 @@ Route::middleware('auth')->group(function (): void {
         Route::resource('projects', ProjectController::class)->only(['index', 'create', 'store', 'show', 'update']);
         Route::put('projects/{project}/key-types', ProjectKeyTypeController::class)->name('projects.key-types.update');
 
-        Route::get('key-types', [KeyTypeController::class, 'index'])->name('key-types.index');
+        Route::resource('key-types', KeyTypeController::class)
+            ->only(['index', 'create', 'store', 'edit', 'update'])
+            ->parameters(['key-types' => 'keyType']);
     });
 });
