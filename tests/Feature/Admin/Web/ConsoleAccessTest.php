@@ -30,6 +30,7 @@ beforeEach(function () {
         ['POST', 'admin.key-types.store', [], ['code' => 'RFC', 'name' => 'RFC', 'format_template' => 'RFC-{number}']],
         ['GET', 'admin.key-types.edit', ['keyType' => $keyTypeId], []],
         ['PATCH', 'admin.key-types.update', ['keyType' => $keyTypeId], ['name' => 'Renamed']],
+        ['GET', 'admin.logs.index', [], []],
     ];
     $this->writes = fn (): array => array_values(array_filter(
         ($this->operations)($this->project->id, $this->keyType->id),

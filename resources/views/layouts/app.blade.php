@@ -41,6 +41,7 @@
             @can('administer')
                 <a href="{{ route('admin.projects.index') }}">Проекты</a>
                 <a href="{{ route('admin.key-types.index') }}">Типы ключей</a>
+                <a href="{{ route('admin.logs.index') }}">Журнал</a>
             @endcan
         </nav>
         <form method="POST" action="{{ route('logout') }}">

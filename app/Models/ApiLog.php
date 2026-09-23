@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Database\Factories\ApiLogFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,7 +16,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['user_id', 'token_name', 'method', 'endpoint', 'payload', 'status_code', 'duration_ms'])]
 class ApiLog extends Model
 {
-    use MassPrunable;
+    /** @use HasFactory<ApiLogFactory> */
+    use HasFactory, MassPrunable;
 
     public const UPDATED_AT = null;
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Web\Admin\ApiLogController;
 use App\Http\Controllers\Web\Admin\KeyTypeController;
 use App\Http\Controllers\Web\Admin\ProjectController;
 use App\Http\Controllers\Web\Admin\ProjectKeyTypeController;
@@ -33,5 +34,7 @@ Route::middleware('auth')->group(function (): void {
         Route::resource('key-types', KeyTypeController::class)
             ->only(['index', 'create', 'store', 'edit', 'update'])
             ->parameters(['key-types' => 'keyType']);
+
+        Route::get('logs', [ApiLogController::class, 'index'])->name('logs.index');
     });
 });
