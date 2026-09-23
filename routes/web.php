@@ -5,6 +5,7 @@ use App\Http\Controllers\Web\Admin\KeyTypeController;
 use App\Http\Controllers\Web\Admin\ProjectController;
 use App\Http\Controllers\Web\Admin\ProjectKeyTypeController;
 use App\Http\Controllers\Web\GoogleAuthController;
+use App\Http\Controllers\Web\HelpController;
 use App\Http\Controllers\Web\TokenController;
 use App\Http\Middleware\EnsureAdministrator;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +22,9 @@ Route::middleware('guest')->group(function (): void {
 
 Route::middleware('auth')->group(function (): void {
     Route::post('logout', [GoogleAuthController::class, 'logout'])->name('logout');
+
+    // Every signed-in employee, not only administrators: it explains their own MCP connection, not the registry.
+    Route::get('help', HelpController::class)->name('help');
 
     Route::get('tokens', [TokenController::class, 'index'])->name('tokens.index');
     Route::post('tokens', [TokenController::class, 'store'])->name('tokens.store');

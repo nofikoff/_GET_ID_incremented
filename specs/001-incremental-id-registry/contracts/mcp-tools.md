@@ -18,9 +18,13 @@ Mcp::web('/mcp', GetIdServer::class)->middleware(['auth:sanctum', 'throttle:geti
 Подключение на стороне клиента:
 
 ```bash
-claude mcp add --transport http get-id https://id.x3mal.com/mcp \
+claude mcp add --scope user --transport http get-id https://id.x3mal.com/mcp \
   --header "Authorization: Bearer <token>"
 ```
+
+`--scope user` — сервер виден во всех проектах клиента, а не только в текущем (умолчание
+`local`). Сессия, уже запущенная в момент подключения, сервер сама не подхватывает —
+`/reload-plugins` или перезапуск сессии.
 
 Инструментов три, и они отображаются на REST один к одному. Домен общий: tool вызывает тот же
 `SequenceIssuer`, что и контроллер, поэтому FR-024 («результат через MCP совпадает с результатом

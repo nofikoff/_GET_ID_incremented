@@ -10,7 +10,7 @@
             <p><strong>Новый токен.</strong> Скопируйте его сейчас — больше он показан не будет.</p>
             <pre>{{ session('plainTextToken') }}</pre>
             <p>Подключение к Claude Code:</p>
-            <pre>claude mcp add --transport http get-id {{ url('/mcp') }} --header "Authorization: Bearer {{ session('plainTextToken') }}"</pre>
+            @include('partials.mcp-connect-command', ['token' => session('plainTextToken')])
         </div>
     @endif
 

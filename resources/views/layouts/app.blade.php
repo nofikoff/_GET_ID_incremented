@@ -43,6 +43,7 @@
                 <a href="{{ route('admin.key-types.index') }}">Типы ключей</a>
                 <a href="{{ route('admin.logs.index') }}">Журнал</a>
             @endcan
+            <a href="{{ route('help') }}">Помощь</a>
         </nav>
         <form method="POST" action="{{ route('logout') }}">
             @csrf

@@ -123,10 +123,14 @@ curl -s -X POST "$GETID_URL/api/v1/sequence/next" \
 ## 7. Подключить MCP
 
 ```bash
-claude mcp add --transport http get-id "$GETID_URL/mcp" \
+claude mcp add --scope user --transport http get-id "$GETID_URL/mcp" \
   --header "Authorization: Bearer $GETID_TOKEN"
 claude mcp list
 ```
+
+`--scope user` — сервер виден во всех проектах, а не только в текущем (умолчание `local`).
+Уже запущенная сессия Claude Code не подхватывает добавленный сервер сама — `/reload-plugins`
+или перезапуск сессии.
 
 Ожидаемо: сервер `get-id` в списке, три инструмента — `resolve_project`, `next_id`,
 `list_identifiers`.
