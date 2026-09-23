@@ -93,11 +93,14 @@ paths:
         "422":
           description: |
             Запрос синтаксически верен, но не может быть обработан: проект не зарегистрирован,
-            выведен из обращения, тип не включён в проекте, либо тема пуста после нормализации.
+            выведен из обращения, тип не включён в проекте, либо тема пуста после нормализации —
+            DomainError. Тело не по схеме, в том числе с полем вне неё, — ValidationError.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DomainError"
+                anyOf:
+                  - $ref: "#/components/schemas/DomainError"
+                  - $ref: "#/components/schemas/ValidationError"
               examples:
                 unknown_project:
                   value:
@@ -322,6 +325,7 @@ paths:
               schema: { $ref: "#/components/schemas/Project" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/InvalidUpdate" }
 
   /v1/admin/projects/{project}/key-types:
     parameters:
@@ -469,6 +473,7 @@ paths:
               schema: { $ref: "#/components/schemas/KeyType" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/InvalidUpdate" }
 
 components:
   securitySchemes:
@@ -498,6 +503,13 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/DomainError" }
+    InvalidUpdate:
+      description: |
+        Неверное значение, поле вне схемы или пустое тело. Нарушение minProperties приходит под
+        ключом `body`.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ValidationError" }
 
   schemas:
     IssuedIdentifier:

@@ -96,8 +96,9 @@ UNIQUE), `abilities`, `last_used_at`, `expires_at`. Хранится хеш — 
 
 - UNIQUE `(project_id, key_type_id)`.
 - Следующий номер = `GREATEST(seed_sequence, last_sequence) + 1`.
-- `seed_sequence` не может быть уменьшен ниже `last_sequence` (FR-014b); проверка — в FormRequest и
-  повторно в доменном сервисе.
+- `seed_sequence` не может быть уменьшен ниже `last_sequence` (FR-014b). Проверка — только в
+  `EnabledKeyTypes`, под той же блокировкой строки, что берёт выдача: копия в FormRequest шла бы без
+  блокировки, и выдача успевала бы проскочить между проверкой и записью.
 - Строка не удаляется никогда: выключение типа в проекте снимает `is_enabled`, а не связь (FR-016).
   Удаление строки унесло бы `last_sequence`, и повторное включение начало бы выдачу с единицы —
   прямо в уже выданный номер 1, то есть в дефект по FR-004b. FK с `identifiers` сюда не ведёт, поэтому
@@ -185,7 +186,7 @@ projects   1──∞ identifiers      ∞──1 key_types
 | `repo_url` разбирается в ключ | FR-008 | `ProjectKey`, FormRequest создания проекта |
 | Тема непуста после нормализации | FR-007a | `DocumentName`, FormRequest выдачи |
 | Шаблон содержит `{number}` и только известные плейсхолдеры | FR-013a | `IdentifierFormat`, FormRequest типа |
-| `seed_sequence >= last_sequence` | FR-014b | FormRequest включения типа + доменный сервис |
+| `seed_sequence >= last_sequence` | FR-014b | `EnabledKeyTypes`, под блокировкой строки-счётчика |
 | Проект активен и тип включён и активен | FR-015 | `SequenceIssuer`, до открытия транзакции |
 | Тип, выведенный из обращения глобально, нельзя включить в проекте | Edge Cases | FormRequest включения типа |
 

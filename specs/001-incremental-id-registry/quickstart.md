@@ -148,8 +148,7 @@ make test-race      # только tests/Concurrency
 публичный адрес `https://id.x3mal.com` за Cloudflare. Сводка — в [README](../../README.md)
 §Развёртывание.
 
-- PHP 8.3 с расширениями `pdo_mysql`, `bcmath`, `intl`, `mbstring`, `curl`, `openssl`. `intl` несёт
-  `Normalizer`, на котором стоит нормализация темы (FR-007): без него каждая выдача номера — 500.
+- PHP 8.3 с расширениями `pdo_mysql`, `bcmath`, `mbstring`, `curl`, `openssl`.
 - DocumentRoot — `/home/develop/domains/id.x3mal.com/public`, а не корень каталога домена.
 - `.env`: доступы к базе провайдера, ключи Google, `APP_URL=https://id.x3mal.com`, `ADMIN_EMAILS`.
 - `php artisan migrate --force`, затем `config:cache`, `route:cache`, `view:cache`.

@@ -128,6 +128,9 @@ project_not_registered: проект gitlab.cas.ai/team/sandbox не зарег�
 разбирает ответ программно, опирается на неё, а не на формулировку. Остальной текст адресован
 модели и через неё человеку, поэтому он говорит, что делать, а не только что произошло.
 
+Аргументы проверяет FormRequest REST-аналога, поэтому аргумент вне схемы (`additionalProperties:
+false` в `rest-api.yaml`) — `Response::error` с тем же текстом, что `message` ответа 422 у REST.
+
 **REST-аналог**: `POST /v1/sequence/next`.
 
 ## list_identifiers

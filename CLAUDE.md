@@ -1,0 +1,82 @@
+# get-id
+
+Что сервис обязан делать — `specs/001-incremental-id-registry/` (spec, contracts, data-model). Решения,
+закрывающие альтернативы, — `docs/adr/`. Принципы — `.specify/memory/constitution.md`, они указывают
+сюда и в ADR. Ниже — то, чего из кода не видно или что легко сломать.
+
+## Выдача номера
+
+- Номер выдаёт только `App\Domain\Sequence\SequenceIssuer`. REST-контроллер и MCP-tool его
+  транспортируют и не держат своей логики выдачи, нормализации или проверки реестра. Блокировка,
+  повтор по `name_slug` и дефект по `sequence_number` — [ADR-001](docs/adr/adr-001-sequence-locking.md).
+  Вызывать вне открытой транзакции.
+- Повтор тройки «проект + тип + тема» возвращает выданный номер с `is_new: false` и нового не
+  создаёт — в том числе после гашения проекта, типа или пары: гашение останавливает новые номера, а
+  выданные не отнимает (FR-015). Идемпотентность держат тесты, а не review:
+  `tests/Feature/Sequence/IdempotencyTest.php`, `tests/Concurrency/ConcurrentSameNameTest.php`.
+- Номер не переиспользуется никогда. `identifiers` — append-only: `AppendOnlyQueryBuilder` бросает на
+  любую запись Eloquent, кроме вставки, а `DB::table()` и `truncate` открыты — ими чистит набор
+  `Concurrency`. `down()` миграции реестра на непустой таблице бросает исключение. Проекты и типы
+  гасятся `is_active`, а не `DELETE`.
+- `project_key_type` — не pivot, а счётчик пары: строки не удаляются (ADR-001), выключение —
+  `is_enabled`. Следующий номер считает только `ProjectKeyType::nextSequence()`.
+- `formatted_id` фиксируется при выдаче, поэтому правка шаблона типа действует только на следующие
+  номера (FR-005).
+
+## Нормализация
+
+- Ключ проекта всегда выводится из origin (`App\Domain\Project\ProjectKey`) и руками не задаётся.
+  `project_key` в запросах проходит ту же нормализацию, поэтому ключ идемпотентен. Незарегистрированный
+  ключ и не включённый в проекте тип — отказ, который называет ключ и следующий шаг; проект по факту
+  обращения не заводится.
+- SCP-форму `git@host:path` `parse_url` не разбирает, поэтому разбор ручной и следует правилу git:
+  двоеточие до первого `/`.
+- Нормализуют `ProjectKey` и `App\Domain\KeyType\DocumentName`, а база сравнивает побайтно:
+  `projects.key` и `identifiers.name_slug` — `utf8mb4_bin`, потому что `unicode_ci` склеивает
+  `cafe`/`café` и `елка`/`ёлка` и слил бы разные темы. `key_types.code`, наоборот, сравнивается без
+  учёта регистра — `ADR` и `adr` один тип.
+
+## REST и MCP
+
+- `apiPrefix` пуст (`bootstrap/app.php`): REST сам объявляет `api/v1`, а MCP живёт на `/mcp` в
+  `routes/api.php` и наследует группу `api` целиком — токен, limiter `getid` с бюджетом на токен,
+  общим для обеих поверхностей, и журнал.
+- Тело, закрытое в контракте (`additionalProperties: false`), принимает наследник
+  `App\Http\Requests\Api\ClosedBodyRequest`: `#[FailOnUnknownFields]` фреймворка плюс
+  `#[MinProperties]` для PATCH, чья ошибка приходит под ключом `body`. Query string открыт, как и в
+  контракте.
+- MCP-tool проверяет аргументы через FormRequest своего endpoint (`RegistryTool::validate`) и отвечает
+  его JsonResource, поэтому правило, добавленное в FormRequest, действует на обеих поверхностях. Строки
+  tool обрезает сам: `TrimStrings` тело JSON-RPC не видит. Отказ — `{code}: {message}`, где `code`
+  равен `error.code` REST.
+- Административных операций в MCP нет намеренно — [ADR-002](docs/adr/adr-002-mcp-surface-boundary.md).
+
+## Доступ
+
+- Новый административный маршрут — только в группе `EnsureAdministrator`. Он стоит в priority list
+  перед `SubstituteBindings`, поэтому 403 приходит до поиска сущности и не выдаёт, существует ли она
+  (FR-017).
+- API без токена отвечает 401 DomainError, а не redirect (`redirectGuestsTo` и `App\Http\ApiSurface`).
+  Веб-страница входа обязана называться `login`.
+- Пользователями управляют только `user:role` и `user:deactivate`; `ADMIN_EMAILS` действует лишь при
+  создании учётной записи. Провайдер `active-users` отсекает деактивированного и в открытой сессии.
+
+## Журнал
+
+- `LogApiRequest` пишет в `terminate()`, после ответа, и переживает собственный сбой (FR-026).
+- 401 и 429 в журнал не попадают: middleware стоит в группе после `auth:sanctum` и `throttle:getid`.
+- У MCP `status_code` — HTTP 200 даже при отказе инструмента; вызов и аргументы лежат в `payload`.
+
+## Тесты и окружение
+
+- Всё запускается в контейнере `app` (`Makefile`): платформа PHP закреплена в `composer.json`, и
+  локальный PHP ей не является. Готовность — зелёный `make test` в этой же сессии, все четыре suite,
+  включая `Concurrency`.
+- Тесты идут на MySQL `getid_test`, потому что sqlite не умеет `FOR UPDATE`. `DB_*` в `phpunit.xml`
+  заданы дважды намеренно, причина — в комментарии там: без этого набор уходит в рабочую базу, а
+  `Concurrency` её усекает.
+- Гонку доказывает только `tests/Concurrency`: отдельные процессы `getid:issue`, общая метка старта
+  `--at`, `DatabaseTruncation` вместо транзакции на тест. Последовательный цикл зелёный и на сломанной
+  реализации.
+- Приложение ещё не развёрнуто, поэтому исходные миграции правились на месте (`users`,
+  `identifiers`). После первой выкладки — только новые миграции.
