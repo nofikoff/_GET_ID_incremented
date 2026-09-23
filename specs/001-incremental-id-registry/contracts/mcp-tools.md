@@ -54,7 +54,7 @@ public function schema(JsonSchema $schema): array
 }
 ```
 
-**Выход** (`Response::json`):
+**Выход** (`Response::structured`: тот же JSON текстом плюс `structuredContent`; `Response::json` в `laravel/mcp` 1.0 помечен `@internal`):
 
 ```json
 {

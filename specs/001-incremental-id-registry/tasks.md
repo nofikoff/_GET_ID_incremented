@@ -841,3 +841,8 @@ decided: the token cabinet shows the new token once, together with a ready 'clau
 
 ### S3 — dispatch 5 (2026-09-23)
 `kind=bundle agent=implementer tier=strong model=claude-opus-5-5 effort=xhigh turns=101 minutes=26.1 input=202 cache_write=365192 cache_read=25004167 output=149340`
+
+### S3 — dispatch 6 (2026-09-23)
+`kind=spec-verify agent=verifier model=claude-sonnet-5 effort=high turns=32 minutes=3.3 input=64 cache_write=82234 cache_read=1789092 output=13297`
+
+S3 verify: все пять шагов IMPLEMENTS, `make test` — 359 passed. Документы приведены к коду: data-model.md §api_logs (формат обрезанного `payload`), contracts/mcp-tools.md (`Response::structured`), plan.md (команды `PruneApiLogs` нет — `model:prune`). Решения автора по отступлениям S2 записаны в spec, data-model и контракт (commit 33793b4), код — в новом Step 7.3, S4 расширен до 7.3, 8.1, 8.2.

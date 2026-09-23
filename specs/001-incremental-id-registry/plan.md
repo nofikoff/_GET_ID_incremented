@@ -119,7 +119,7 @@ app/
 │   ├── Servers/GetIdServer.php
 │   └── Tools/                         # ResolveProjectTool, NextIdTool, ListIdentifiersTool
 ├── Policies/                          # ProjectPolicy, KeyTypePolicy
-└── Console/Commands/                  # PruneApiLogs, IssueIdentifier (тест гонки),
+└── Console/Commands/                  # IssueIdentifier (тест гонки; журнал чистит model:prune),
                                        # SetUserRoleCommand, DeactivateUserCommand
 
 database/

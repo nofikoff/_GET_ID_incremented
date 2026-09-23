@@ -145,7 +145,7 @@ UNIQUE), `abilities`, `last_used_at`, `expires_at`. Хранится хеш — 
 | `token_name` | `varchar(255)` | nullable — имя токена на момент запроса, то есть с какой машины он пришёл |
 | `method` | `varchar(10)` | |
 | `endpoint` | `varchar(255)` | путь маршрута |
-| `payload` | `json` | nullable, параметры запроса, обрезаются до 4 КБ при записи |
+| `payload` | `json` | nullable, параметры запроса; больше 4 КБ — хранится `{truncated, bytes, head}`, где `head` обрезан по границе символа: обрезанный JSON-текст колонка `json` не примет |
 | `status_code` | `smallint unsigned` | |
 | `duration_ms` | `int unsigned` | |
 | `created_at` | `timestamp` | INDEX — по нему чистит регламентная команда |
