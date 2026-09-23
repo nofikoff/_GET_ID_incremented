@@ -6,6 +6,8 @@
     @php
         // Old input belongs to the types form only when it came from it: a refused rename carries none, and must not uncheck every type.
         $typesSent = is_array(old('types'));
+        // FR-006: a project with no project_key_type rows yet has no real state to show, so every active type starts checked.
+        $noPairsYet = $pairs->isEmpty();
     @endphp
 
     <p><a href="{{ route('admin.projects.index') }}">← Проекты</a></p>
@@ -67,7 +69,7 @@
                     <tr>
                         <td>
                             <label>
-                                <input type="checkbox" name="types[{{ $keyType->code }}][enabled]" value="1" @checked($typesSent ? old("types.{$keyType->code}.enabled") : $pair?->is_enabled) @if ($pair?->is_enabled) data-enabled-code="{{ $keyType->code }}" @endif>
+                                <input type="checkbox" name="types[{{ $keyType->code }}][enabled]" value="1" @checked($typesSent ? old("types.{$keyType->code}.enabled") : ($noPairsYet || $pair?->is_enabled)) @if ($pair?->is_enabled) data-enabled-code="{{ $keyType->code }}" @endif>
                                 <code>{{ $keyType->code }}</code>
                             </label>
                             @include('admin.partials.error', ['field' => "types.{$keyType->code}.enabled"])

@@ -131,6 +131,25 @@ test('the form lists every active type and checks the enabled ones', function ()
         ->assertDontSee('types[RFC]', false);
 });
 
+// FR-006: a brand-new project has nothing to compare against, so the form offers every active type ready to enable.
+test('a brand-new project with no pairs at all pre-checks every active type, unenabled', function () {
+    ($this->card)()
+        ->assertOk()
+        ->assertSee('name="types[ADR][enabled]" value="1" checked', false)
+        ->assertSee('name="types[spec][enabled]" value="1" checked', false)
+        // None of them is an actually enabled pair, so unticking one is not a "dropped" type the confirm script warns about.
+        ->assertDontSee('data-enabled-code="', false);
+});
+
+test('a project with an existing pair shows its real state instead of pre-checking every type', function () {
+    enabledPair($this->project, $this->adr, ['is_enabled' => false]);
+
+    ($this->card)()
+        ->assertOk()
+        ->assertDontSee('name="types[ADR][enabled]" value="1" checked', false)
+        ->assertDontSee('name="types[spec][enabled]" value="1" checked', false);
+});
+
 test('a card with no active type to offer points to the key type registry instead of an empty form', function () {
     KeyType::query()->update(['is_active' => false]);
 
