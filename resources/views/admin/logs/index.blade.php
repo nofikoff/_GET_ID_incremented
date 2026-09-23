@@ -11,7 +11,7 @@
                 <select name="user_id">
                     <option value="">— любой —</option>
                     @foreach ($users as $user)
-                        <option value="{{ $user->id }}" @selected((string) request('user_id') === (string) $user->id)>
+                        <option value="{{ $user->id }}" @selected((string) old('user_id', request('user_id')) === (string) $user->id)>
                             {{ $user->email }}@if ($user->deactivated_at) (деактивирован) @endif
                         </option>
                     @endforeach
@@ -20,18 +20,19 @@
             @include('admin.partials.error', ['field' => 'user_id'])
         </p>
         <p>
-            <label>С<br><input type="date" name="from" value="{{ request('from') }}"></label>
-            <label>По<br><input type="date" name="to" value="{{ request('to') }}"></label>
+            <label>С<br><input type="date" name="from" value="{{ old('from', request('from')) }}"></label>
+            <label>По<br><input type="date" name="to" value="{{ old('to', request('to')) }}"></label>
             @include('admin.partials.error', ['field' => 'to'])
         </p>
         <p>
             <label>Поверхность<br>
                 <select name="surface">
                     <option value="">— любая —</option>
-                    <option value="rest" @selected(request('surface') === 'rest')>REST</option>
-                    <option value="mcp" @selected(request('surface') === 'mcp')>MCP</option>
+                    <option value="rest" @selected(old('surface', request('surface')) === 'rest')>REST</option>
+                    <option value="mcp" @selected(old('surface', request('surface')) === 'mcp')>MCP</option>
                 </select>
             </label>
+            @include('admin.partials.error', ['field' => 'surface'])
         </p>
         <button type="submit">Показать</button>
     </form>

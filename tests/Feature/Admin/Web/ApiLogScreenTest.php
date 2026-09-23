@@ -129,6 +129,38 @@ test('an unknown employee id is refused under user_id', function () {
         ->assertSessionHasErrors('user_id');
 });
 
+test('an unknown surface is refused, and the error shows under the surface field', function () {
+    $this->from(route('admin.logs.index'))
+        ->get(route('admin.logs.index', ['surface' => 'invalid']))
+        ->assertRedirect(route('admin.logs.index'));
+
+    $response = $this->get(route('admin.logs.index'))->assertOk();
+
+    $surfaceField = Str::between($response->getContent(), 'name="surface"', '</p>');
+    expect($surfaceField)->toContain('class="error"');
+});
+
+test('a refused filter re-renders the refused values, not the ones the redirect landed on', function () {
+    $ada = User::factory()->create(['email' => 'ada@cas.ai']);
+
+    $this->from(route('admin.logs.index'))
+        ->get(route('admin.logs.index', [
+            'user_id' => $ada->id,
+            'from' => '2026-09-21',
+            'to' => '2026-09-20',
+            'surface' => 'rest',
+        ]))
+        ->assertRedirect(route('admin.logs.index'));
+
+    // The redirect lands on the bare index URL: only session-flashed old() input carries the refused values here.
+    $response = $this->get(route('admin.logs.index'))->assertOk();
+
+    $response->assertSee('value="2026-09-21"', false);
+    $response->assertSee('value="2026-09-20"', false);
+    $response->assertSee('value="'.$ada->id.'" selected', false);
+    $response->assertSee('value="rest" selected', false);
+});
+
 test('an empty result says so explicitly', function () {
     $this->get(route('admin.logs.index', ['surface' => 'mcp']))
         ->assertOk()
