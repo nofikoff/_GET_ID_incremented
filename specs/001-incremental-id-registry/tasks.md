@@ -894,3 +894,8 @@ decided: a ruby:3-alpine image was pulled to parse the OpenAPI YAML (no YAML par
 `kind=spec-verify agent=verifier model=claude-sonnet-5 effort=high turns=43 minutes=4.0 input=86 cache_write=86782 cache_read=2538300 output=19011`
 
 S4 verify: все три шага IMPLEMENTS; `make test` 379 passed, pint и phpstan чистые.
+
+### converge — dispatch 9 (2026-09-23)
+`kind=converge agent=verifier model=claude-sonnet-5 effort=high turns=8 minutes=0.8 input=16 cache_write=73453 cache_read=353984 output=4215`
+
+`/speckit-converge`: converged, задач не дописано; записано в gates.md.
