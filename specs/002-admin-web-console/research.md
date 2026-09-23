@@ -37,7 +37,9 @@
 (пустое = не менять). Веб-запрос приводит её к тому же `list<array{code, seed_sequence|null}>`, что
 отдаёт `SetProjectKeyTypesRequest::types()`, и вызывает тот же `EnabledKeyTypes::replace()`. Отказы
 `SeedBelowIssued` и `RetiredKeyType` веб-контроллер переводит в ошибку поля
-`types.<code>.seed_sequence` / `types.<code>.enabled`.
+`types.<code>.seed_sequence` / `types.<code>.enabled`. И ошибки валидации (индексные ключи
+`types.<index>.*`), и доменные отказы (`position`) переводятся в ключи по коду через одну карту
+`index → code` приведённого списка.
 
 **Rationale**: форма перечисляет все активные типы, поэтому «набор целиком» совпадает с тем, что
 видит администратор; неотмеченный тип выключается осознанно (FR-009). Позиционные ключи REST

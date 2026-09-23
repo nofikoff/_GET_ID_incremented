@@ -116,9 +116,9 @@ tier: strong
 -->
 
 - [ ] T014 [US1] Веб-запросы `app/Http/Requests/Web/Admin/StoreProjectRequest.php`, `UpdateProjectRequest.php` на наборах T001; `authorize()` — те же Policy, что у API
-- [ ] T015 [US1] `app/Http/Requests/Web/Admin/SetProjectKeyTypesRequest.php`: форма `types[<code>][enabled|seed_sequence]` приводится к тому же `list<array{code, seed_sequence|null}>`, что у API; правила — `ProjectKeyTypeRules::set()`, применённые к приведённому набору; ошибки адресуются полям формы по коду типа (research.md R3)
+- [ ] T015 [US1] `app/Http/Requests/Web/Admin/SetProjectKeyTypesRequest.php`: форма `types[<code>][enabled|seed_sequence]` приводится к тому же `list<array{code, seed_sequence|null}>`, что у API; правила — `ProjectKeyTypeRules::set()`, применённые к приведённому набору; ошибки адресуются полям формы по коду типа (research.md R3). Механизм один на весь веб-слой: запрос держит карту `index → code` приведённого списка, `failedValidation()` переписывает ключи `types.<index>.code` → `types.<code>.enabled` и `types.<index>.seed_sequence` → `types.<code>.seed_sequence`; тексты сообщений не меняются
 - [ ] T016 [US1] `app/Http/Controllers/Web/Admin/ProjectController.php`: `index`, `create`, `store`, `show`, `update` на actions T003; гонка на UNIQUE — `RethrowsUniqueConflictAsValidation`; redirect с flash-сообщением
-- [ ] T017 [US1] `app/Http/Controllers/Web/Admin/ProjectKeyTypeController.php`: вызывает `EnabledKeyTypes::replace()`, `SeedBelowIssued` и `RetiredKeyType` переводит в ошибки полей `types.<code>.seed_sequence` / `types.<code>.enabled`
+- [ ] T017 [US1] `app/Http/Controllers/Web/Admin/ProjectKeyTypeController.php`: вызывает `EnabledKeyTypes::replace()`, `SeedBelowIssued` и `RetiredKeyType` переводит в ошибки полей `types.<code>.seed_sequence` / `types.<code>.enabled`; код берётся по `$refused->position` из того же списка, что передан в `replace()`, через ту же карту `index → code`, что в T015
 - [ ] T018 [P] [US1] Шаблоны `resources/views/admin/projects/{index,create,show}.blade.php` и partials `resources/views/admin/partials/` (поле с ошибкой, flash): список со ссылкой «Новый проект»; карточка — реквизиты и форма изменения, форма типов со всеми активными типами, `last_sequence` и следующим номером, строки включённых пар погашенных типов с пометкой (FR-005, FR-006, Edge Cases); текст «заводятся через API» убирается
 - [ ] T019 [US1] Подтверждения (research.md R4): `onsubmit="return confirm(...)"` на погашении проекта; инлайн-скрипт формы типов перечисляет снимаемые включённые пары, включая пары погашенных типов, и спрашивает подтверждение, если их больше нуля (FR-004, FR-009)
 - [ ] T020 [US1] Маршруты в `routes/web.php` по `contracts/web-console.md` внутри группы T006; ссылки меню в `resources/views/layouts/app.blade.php` не меняются
@@ -155,7 +155,7 @@ tier: standard
 - [ ] T021 [P] [US2] `tests/Feature/Admin/Web/KeyTypeFormTest.php`: заведение; шаблон без номера и с неизвестным плейсхолдером — ошибка под `format_template`; код, отличающийся только регистром, — ошибка под `code`; код в форме изменения не принимается; правка шаблона не меняет `formatted_id` выданных номеров; погашение и возврат; гонка на UNIQUE кода — ошибка под `code` (FR-011, FR-012)
 - [ ] T022 [US2] Веб-запросы `app/Http/Requests/Web/Admin/StoreKeyTypeRequest.php`, `UpdateKeyTypeRequest.php` на наборах T001
 - [ ] T023 [US2] `app/Http/Controllers/Web/Admin/KeyTypeController.php`: `index`, `create`, `store`, `edit`, `update` на actions T003
-- [ ] T024 [P] [US2] Шаблоны `resources/views/admin/key-types/{index,create,edit}.blade.php`; подтверждение погашения типа (FR-011)
+- [ ] T024 [P] [US2] Шаблоны `resources/views/admin/key-types/{index,create,edit}.blade.php`; подтверждение погашения типа (FR-011); текст «заводятся через API» в `index` убирается, как в T018
 - [ ] T025 [US2] Маршруты типов в `routes/web.php` по `contracts/web-console.md`
 
 **Checkpoint**: справочник типов ведётся в браузере
