@@ -14,8 +14,8 @@ use PHPUnit\Framework\Assert;
  */
 final class IssueRace
 {
-    // Fifty concurrent Laravel boots take about four seconds on the local stack; the mark has to clear all of them.
-    private const START_DELAY_MS = 10_000;
+    // Fifty concurrent boots finished within 1.7 s on the local stack (2026-09-23); the mark has to clear all of them.
+    private const START_DELAY_MS = 5_000;
 
     /**
      * @param  list<array{string, string, string}>  $requests  project key, key type code, theme
