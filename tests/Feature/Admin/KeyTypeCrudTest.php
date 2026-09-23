@@ -2,6 +2,7 @@
 
 use App\Models\KeyType;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
@@ -39,6 +40,26 @@ test('a template without a number or with an unknown placeholder is refused on s
     'printf-style width' => ['RFC-{number:4d}', 'неизвестный плейсхолдер'],
     'stray brace' => ['RFC-{number}}', 'непарную'],
 ]);
+
+// Same shape as the project race: the loser's INSERT hits the index after its own validation passed.
+test('a duplicate code from a concurrent insert is a validation error, not a crash', function () {
+    KeyType::creating(function (KeyType $keyType): void {
+        DB::table('key_types')->insert([
+            'code' => $keyType->code,
+            'name' => 'Racer',
+            'format_template' => 'RFC-{number}',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    });
+
+    $this->postJson('api/v1/admin/key-types', ['code' => 'RFC', 'name' => 'Request for Comments', 'format_template' => 'RFC-{number:03d}-{name}'])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['code']);
+
+    expect(KeyType::query()->count())->toBe(1);
+});
 
 test('a code is registered once, whatever its case', function (string $code) {
     KeyType::factory()->create(['code' => 'ADR']);

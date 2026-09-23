@@ -2,6 +2,7 @@
 
 use App\Models\Project;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
@@ -54,6 +55,29 @@ test('another address form of a registered repository is a validation error', fu
     'https form' => 'https://gitlab.cas.ai/team/backend',
     'other case' => 'ssh://git@GitLab.cas.ai:2222/Team/Backend.git',
 ]);
+
+// A racing insert lands between validation's SELECT and this request's own INSERT: the unique index
+// still refuses the second row, and that refusal must reach the client as the rule's own 422, not a 500.
+test('a duplicate key from a concurrent insert is a validation error, not a crash', function () {
+    $racerId = $this->admin->id;
+    Project::creating(function (Project $project) use ($racerId): void {
+        DB::table('projects')->insert([
+            'key' => $project->key,
+            'name' => 'Racer',
+            'repo_url' => 'git@gitlab.cas.ai:team/backend.git',
+            'is_active' => true,
+            'created_by' => $racerId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    });
+
+    $this->postJson('api/v1/admin/projects', ['repo_url' => 'git@gitlab.cas.ai:team/backend.git', 'name' => 'Backend'])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['repo_url' => 'уже зарегистрирован']);
+
+    expect(Project::query()->count())->toBe(1);
+});
 
 test('an address that does not parse is a validation error that says why', function () {
     $this->postJson('api/v1/admin/projects', ['repo_url' => 'not a repository', 'name' => 'Broken'])

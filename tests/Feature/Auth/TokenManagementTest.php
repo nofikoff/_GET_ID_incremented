@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\PersonalAccessToken;
 
 beforeEach(function () {
@@ -74,6 +75,26 @@ test('a token needs a name of its own', function (array $input) {
     'name already taken' => [['name' => 'laptop']],
     'too long' => [['name' => str_repeat('n', 256)]],
 ]);
+
+// Same race as the project/key-type stores, on the compound unique index the migration adds for
+// (tokenable_type, tokenable_id, name): the loser's INSERT must render as a session error, not a 500.
+test('a duplicate token name from a concurrent insert is a validation error, not a crash', function () {
+    $owner = $this->user;
+    PersonalAccessToken::creating(function (PersonalAccessToken $token) use ($owner): void {
+        DB::table('personal_access_tokens')->insert([
+            'tokenable_type' => $owner->getMorphClass(),
+            'tokenable_id' => $owner->id,
+            'name' => $token->name,
+            'token' => hash('sha256', 'racer-'.$token->name),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    });
+
+    $this->post(route('tokens.store'), ['name' => 'laptop'])->assertSessionHasErrors('name');
+
+    expect($this->user->tokens()->count())->toBe(1);
+});
 
 // FR-019: revocation takes effect on the next request and touches no other token.
 test('revoking one token stops it at once and leaves the others working', function () {
