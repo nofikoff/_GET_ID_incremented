@@ -32,9 +32,13 @@
     <h2>Что написать в CLAUDE.md проекта</h2>
     <p>
         Без этой инструкции ассистент возьмёт номер по привычке — листингом каталога, и сервис не спасёт от
-        гонки. Скопируйте блок в корневой <code>CLAUDE.md</code> репозитория, на английском:
+        гонки. Добавьте блок в корневой <code>CLAUDE.md</code> репозитория, на английском. Это
+        демонстрационный черновик: первая заметка в нём — задание ассистенту подогнать раздел под проект и
+        убрать прежние правила нумерации, после чего он удалит заметку сам.
     </p>
     <pre>## Document numbers (ADR, specs)
+
+> Note to the agent: this section is a demo draft copied from the get-id help page, not a finished rule. Before relying on it, adapt it to this repository instead of keeping it verbatim — check where ADRs and specs actually live here, how they are named and whether the project uses Spec Kit, and rewrite or drop the lines that do not apply. Then find and remove every other rule that numbers ADRs or specs another way (listing `docs/adr/` or `specs/`, "last number + 1", a local counter) in CLAUDE.md and the other agent instructions of the repository — AGENTS.md, `.claude/`, `.specify/`, `docs/` — so that this section is the only numbering rule. Tell the user what you changed and removed, then delete this note.
 
 ADR and spec numbers are issued by the get-id service, never derived from listing `docs/adr/` or `specs/`: two sessions listing the same directory take the same number.
 

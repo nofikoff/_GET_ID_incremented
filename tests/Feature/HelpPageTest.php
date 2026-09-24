@@ -47,6 +47,22 @@ test('the CLAUDE.md block has the repository build the name from the bare number
         ->assertDontSee('formatted_id', false);
 });
 
+// The note sits inside the section, so a verbatim paste still carries it to the agent that reads CLAUDE.md.
+test('the CLAUDE.md block tells the agent to adapt the draft and remove the repository\'s old numbering rules', function () {
+    $this->actingAs(User::factory()->create());
+
+    $this->get(route('help'))
+        ->assertOk()
+        ->assertSeeInOrder([
+            '<pre>## Document numbers (ADR, specs)',
+            '&gt; Note to the agent: this section is a demo draft copied from the get-id help page, not a finished rule',
+            'instead of keeping it verbatim',
+            'find and remove every other rule that numbers ADRs or specs another way',
+            'then delete this note',
+            'ADR and spec numbers are issued by the get-id service',
+        ], false);
+});
+
 test('the help link is offered to every signed-in employee, not only administrators', function () {
     $this->actingAs(User::factory()->create());
 
