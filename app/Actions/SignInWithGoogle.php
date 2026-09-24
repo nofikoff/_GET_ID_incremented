@@ -60,13 +60,13 @@ final class SignInWithGoogle
     }
 
     /**
-     * FR-021: ADMIN_EMAILS promotes only here, at creation; later changes belong to user:role.
+     * FR-021: ADMIN_EMAILS and the default role apply only here, at creation; later changes belong to user:role.
      */
     private function newAccount(string $email): User
     {
         $user = new User(['email' => $email]);
         $admins = array_map(Str::lower(...), (array) config('getid.admin_emails'));
-        $user->role = in_array($email, $admins, true) ? UserRole::Admin : UserRole::Member;
+        $user->role = in_array($email, $admins, true) ? UserRole::Admin : config('getid.default_role');
 
         return $user;
     }

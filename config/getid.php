@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\UserRole;
+
 return [
 
     // FR-018: only this exact domain signs in; subdomains and look-alikes do not.
@@ -10,6 +12,9 @@ return [
         trim(...),
         explode(',', (string) env('ADMIN_EMAILS', '')),
     ))),
+
+    // FR-021: the role of every other new account; from() throws on a typo instead of silently falling back.
+    'default_role' => UserRole::from((string) env('DEFAULT_USER_ROLE', UserRole::Member->value)),
 
     'api_log_retention_days' => (int) env('API_LOG_RETENTION_DAYS', 90),
 

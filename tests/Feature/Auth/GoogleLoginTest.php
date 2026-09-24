@@ -11,6 +11,7 @@ beforeEach(function () {
         'services.google' => ['client_id' => 'test-client', 'client_secret' => 'test-secret', 'redirect' => 'http://localhost/auth/google/callback'],
         'getid.allowed_email_domain' => 'cas.ai',
         'getid.admin_emails' => [],
+        'getid.default_role' => UserRole::Member,
     ]);
 
     // Google's answer at the callback; everything before it is Google's side of the flow.
@@ -126,4 +127,59 @@ test('ADMIN_EMAILS does not override the role of an existing account', function 
     ($this->returnFromGoogle)('boss@cas.ai', '2002')->assertRedirect(route('tokens.index'));
 
     expect($boss->refresh()->role)->toBe(UserRole::Member);
+});
+
+test('a new account gets the role DEFAULT_USER_ROLE names', function (UserRole $role) {
+    config(['getid.default_role' => $role]);
+
+    ($this->returnFromGoogle)('ada@cas.ai')->assertRedirect(route('tokens.index'));
+
+    expect(User::query()->sole()->role)->toBe($role);
+})->with([
+    'member' => UserRole::Member,
+    'admin' => UserRole::Admin,
+]);
+
+test('ADMIN_EMAILS promotes over a member default role', function () {
+    config(['getid.admin_emails' => ['boss@cas.ai'], 'getid.default_role' => UserRole::Member]);
+
+    ($this->returnFromGoogle)('boss@cas.ai', '2002')->assertRedirect(route('tokens.index'));
+
+    expect(User::query()->sole()->role)->toBe(UserRole::Admin);
+});
+
+// Switching the default back to member must not demote everyone who joined while it was admin.
+test('the default role does not override the role of an existing account', function () {
+    config(['getid.default_role' => UserRole::Member]);
+    $ada = User::factory()->create(['email' => 'ada@cas.ai', 'google_id' => '1001', 'role' => UserRole::Admin]);
+
+    ($this->returnFromGoogle)('ada@cas.ai')->assertRedirect(route('tokens.index'));
+
+    expect($ada->refresh()->role)->toBe(UserRole::Admin);
+});
+
+test('the default role is member when DEFAULT_USER_ROLE is unset', function () {
+    // A local .env may set it; env() reads all three sources.
+    $saved = [$_SERVER['DEFAULT_USER_ROLE'] ?? null, $_ENV['DEFAULT_USER_ROLE'] ?? null, getenv('DEFAULT_USER_ROLE')];
+    unset($_SERVER['DEFAULT_USER_ROLE'], $_ENV['DEFAULT_USER_ROLE']);
+    putenv('DEFAULT_USER_ROLE');
+
+    try {
+        expect((require config_path('getid.php'))['default_role'])->toBe(UserRole::Member);
+    } finally {
+        [$server, $env, $process] = $saved;
+        $server === null ?: $_SERVER['DEFAULT_USER_ROLE'] = $server;
+        $env === null ?: $_ENV['DEFAULT_USER_ROLE'] = $env;
+        $process === false ?: putenv("DEFAULT_USER_ROLE={$process}");
+    }
+});
+
+test('an unknown DEFAULT_USER_ROLE fails configuration loading', function () {
+    $_SERVER['DEFAULT_USER_ROLE'] = 'owner';
+
+    try {
+        expect(fn () => require config_path('getid.php'))->toThrow(ValueError::class, 'owner');
+    } finally {
+        unset($_SERVER['DEFAULT_USER_ROLE']);
+    }
 });

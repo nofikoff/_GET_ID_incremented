@@ -68,8 +68,9 @@
   Почему правила не живут в самих FormRequest — specs/002-admin-web-console/research.md R1.
 - API без токена отвечает 401 DomainError, а не redirect (`redirectGuestsTo` и `App\Http\ApiSurface`).
   Веб-страница входа обязана называться `login`.
-- Пользователями управляют только `user:role` и `user:deactivate`; `ADMIN_EMAILS` действует лишь при
-  создании учётной записи. Провайдер `active-users` отсекает деактивированного и в открытой сессии.
+- Пользователями управляют только `user:role` и `user:deactivate`; `ADMIN_EMAILS` и
+  `DEFAULT_USER_ROLE` действуют лишь при создании учётной записи: смена `DEFAULT_USER_ROLE` не
+  повышает и не понижает уже заведённых. Провайдер `active-users` отсекает деактивированного и в открытой сессии.
 
 ## Журнал
 
