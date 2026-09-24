@@ -30,6 +30,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Token clients get a 401, never a redirect to the sign-in page, even without an Accept header.
         $middleware->redirectGuestsTo(fn (Request $request): ?string => ApiSurface::includes($request) ? null : route('login'));
+
+        // Explicit: the framework default is route('home'), which is the guest-only root itself and would loop.
+        $middleware->redirectUsersTo(fn (): string => route('tokens.index'));
     })
     ->withExceptions(new RenderApiErrors)
     ->create();

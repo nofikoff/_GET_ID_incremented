@@ -11,5 +11,5 @@
         <p class="error">{{ $message }}</p>
     @enderror
 
-    <p><a class="button" href="{{ route('auth.google.redirect') }}">Войти через Google</a></p>
+    <p>@include('partials.google-sign-in', ['label' => 'Войти с аккаунтом Google'])</p>
 @endsection

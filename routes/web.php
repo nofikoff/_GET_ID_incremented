@@ -11,11 +11,13 @@ use App\Http\Controllers\Web\TokenController;
 use App\Http\Middleware\EnsureAdministrator;
 use Illuminate\Support\Facades\Route;
 
-// Guests reach the sign-in page through the auth redirect, signed-in people land in their token cabinet.
-Route::redirect('/', '/tokens');
+// Public for Google brand verification: the homepage and the policies it links to must open without signing in.
+Route::view('privacy', 'legal.privacy')->name('privacy');
+Route::view('terms', 'legal.terms')->name('terms');
 
-// Named `login`: bootstrap/app.php sends web guests to route('login').
+// Named `login`: bootstrap/app.php sends web guests to route('login') and signed-in people to their token cabinet.
 Route::middleware('guest')->group(function (): void {
+    Route::view('/', 'home')->name('home');
     Route::view('login', 'auth.login')->name('login');
     Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('auth.google.redirect');
     Route::get('auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');

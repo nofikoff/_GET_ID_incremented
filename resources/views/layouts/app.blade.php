@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="@yield('lang', 'ru')">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -30,6 +30,10 @@
         .notice { padding: .75rem 1rem; border: 1px solid var(--accent); border-radius: 6px; }
         .error { color: var(--bad); }
         .muted { color: var(--muted); }
+        footer { max-width: 64rem; margin: 0 auto; padding: 1rem 1.5rem 2rem; border-top: 1px solid var(--line); display: flex; gap: 1rem; color: var(--muted); font-size: 13px; }
+        .legal { max-width: 46rem; }
+        .legal h2 { font-size: 1.1rem; margin-top: 1.75rem; }
+        .google-sign-in { display: inline-flex; align-items: center; gap: .75rem; padding: 0 .75rem; height: 40px; border: 1px solid #747775; border-radius: 4px; background: #fff; color: #1f1f1f; font: 500 14px/1 Roboto, system-ui, sans-serif; text-decoration: none; }
     </style>
 </head>
 <body>
@@ -59,5 +63,9 @@
 
     @yield('content')
 </main>
+<footer>
+    <a href="{{ route('privacy') }}">Privacy Policy</a>
+    <a href="{{ route('terms') }}">Terms of Service</a>
+</footer>
 </body>
 </html>
